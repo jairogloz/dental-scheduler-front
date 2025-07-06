@@ -6,9 +6,11 @@ import { getDay } from "date-fns/getDay";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
 import { enUS } from "date-fns/locale/en-US";
+import { es } from "date-fns/locale/es"; // Import Spanish locale
 
 const locales = {
   "en-US": enUS,
+  "es-MX": es,
 };
 
 const localizer = dateFnsLocalizer({
@@ -132,7 +134,7 @@ function App() {
 
   return (
     <div style={{ height: "100vh", padding: "20px" }}>
-      <h1>Agenda por Unidad Dental</h1>
+      <h1>Hola Brackets</h1>
 
       <div style={{ marginBottom: "20px" }}>
         <button
@@ -158,6 +160,7 @@ function App() {
       <Calendar
         localizer={localizer}
         events={events}
+        culture="es-MX" // Set culture to Spanish (Mexico)
         resources={view === "day" ? resources : undefined}
         resourceIdAccessor={view === "day" ? "resourceId" : undefined}
         resourceTitleAccessor="resourceTitle"
@@ -177,6 +180,12 @@ function App() {
           alert(`Evento: ${event.title}`);
         }}
         eventPropGetter={eventPropGetter}
+        formats={{
+          timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
+          agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
+        }}
+        min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
+        max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
       />
 
       {showModal && (
