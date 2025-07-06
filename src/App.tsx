@@ -8,6 +8,7 @@ import { useState } from "react";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
 import AppointmentModal from "./components/Modal/AppointmentModal";
+import type { View } from "react-big-calendar";
 
 const locales = {
   "en-US": enUS,
@@ -75,7 +76,7 @@ function App() {
     },
   ]);
 
-  const [view, setView] = useState<"month" | "week" | "day">("week");
+  const [view, setView] = useState<View>("week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
@@ -88,7 +89,12 @@ function App() {
     end: new Date(),
   });
 
-  const resources = [
+  type Units = {
+    resourceId: string;
+    resourceTitle: string;
+  };
+
+  const units: Units[] = [
     { resourceId: "unidad-1", resourceTitle: "Unidad 1" },
     { resourceId: "unidad-2", resourceTitle: "Unidad 2" },
     { resourceId: "unidad-3", resourceTitle: "Unidad 3" },
@@ -162,7 +168,7 @@ function App() {
         localizer={localizer}
         events={events}
         culture="es-MX" // Set culture to Spanish (Mexico)
-        resources={view === "day" ? resources : undefined}
+        resources={view === "day" ? units : undefined}
         resourceIdAccessor={view === "day" ? "resourceId" : undefined}
         resourceTitleAccessor="resourceTitle"
         startAccessor="start"
@@ -193,7 +199,7 @@ function App() {
         <AppointmentModal
           showModal={showModal}
           appointmentForm={appointmentForm}
-          resources={resources}
+          resources={units}
           handleCloseModal={handleCloseModal}
           handleAddAppointment={handleAddAppointment}
           setAppointmentForm={setAppointmentForm}
