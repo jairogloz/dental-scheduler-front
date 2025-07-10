@@ -1,14 +1,79 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import DoctorSelect from "../DoctorSelect";
 
 const AppointmentModal = ({
   showModal,
   appointmentForm,
   resources,
+  doctors,
   handleCloseModal,
   handleAddAppointment,
   setAppointmentForm,
 }: any) => {
+  const [filteredDoctors, setFilteredDoctors] = useState(doctors);
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
+  useEffect(() => {
+    // Validate the input when the dropdown is closed
+    if (!isDropdownVisible) {
+      const isValidDoctor = doctors.some(
+        (doctor: any) => doctor.name === appointmentForm.doctorName
+      );
+      if (!isValidDoctor) {
+        setAppointmentForm({
+          ...appointmentForm,
+          doctorName: "",
+        });
+      }
+    }
+  }, [isDropdownVisible, appointmentForm, doctors, setAppointmentForm]);
+
   if (!showModal) return null;
+
+  const handleDoctorSearch = (searchTerm: string) => {
+    const filtered = doctors.filter((doctor: any) =>
+      doctor.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredDoctors(filtered);
+    setAppointmentForm({
+      ...appointmentForm,
+      doctorName: searchTerm,
+    });
+    setIsDropdownVisible(true);
+    setHighlightedIndex(-1); // Reset highlighted index
+  };
+
+  const handleDoctorSelect = (doctorName: string) => {
+    setAppointmentForm({
+      ...appointmentForm,
+      doctorName,
+    });
+    setFilteredDoctors(doctors); // Reset the filtered list
+    setIsDropdownVisible(false);
+    setHighlightedIndex(-1); // Reset highlighted index
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isDropdownVisible || filteredDoctors.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prevIndex) =>
+        prevIndex < filteredDoctors.length - 1 ? prevIndex + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prevIndex) =>
+        prevIndex > 0 ? prevIndex - 1 : filteredDoctors.length - 1
+      );
+    } else if (e.key === "Enter" && highlightedIndex >= 0) {
+      e.preventDefault();
+      handleDoctorSelect(filteredDoctors[highlightedIndex].name);
+    } else if (e.key === "Escape") {
+      setIsDropdownVisible(false);
+    }
+  };
 
   return (
     <div
@@ -35,7 +100,23 @@ const AppointmentModal = ({
         }}
       >
         <h3>Nueva Cita Dental</h3>
-        {/* Form fields */}
+        {/* Replace Nombre del Doctor input with DoctorSelect */}
+        <div style={{ marginBottom: "15px" }}>
+          <DoctorSelect
+            doctors={doctors}
+            value={
+              doctors.find((doc) => doc.name === appointmentForm.doctorName) ||
+              null
+            }
+            onChange={(selectedDoctor) =>
+              setAppointmentForm({
+                ...appointmentForm,
+                doctorName: selectedDoctor ? selectedDoctor.name : "",
+              })
+            }
+          />
+        </div>
+
         <div style={{ marginBottom: "15px" }}>
           <label style={{ display: "block", marginBottom: "5px" }}>
             Nombre del Paciente:
@@ -47,27 +128,6 @@ const AppointmentModal = ({
               setAppointmentForm({
                 ...appointmentForm,
                 patientName: e.target.value,
-              })
-            }
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-          />
-        </div>
-        <div style={{ marginBottom: "15px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
-            Nombre del Doctor:
-          </label>
-          <input
-            type="text"
-            value={appointmentForm.doctorName}
-            onChange={(e) =>
-              setAppointmentForm({
-                ...appointmentForm,
-                doctorName: e.target.value,
               })
             }
             style={{

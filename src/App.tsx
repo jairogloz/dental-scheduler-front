@@ -89,6 +89,13 @@ function App() {
     end: new Date(),
   });
 
+  const doctors = [
+    { id: 1, name: "Dr. Pérez", specialty: "Ortodoncia" },
+    { id: 2, name: "Dr. López", specialty: "Endodoncia" },
+    { id: 3, name: "Dr. Martínez", specialty: "Periodoncia" },
+    { id: 4, name: "Dr. Gómez", specialty: "Odontopediatría" },
+  ];
+
   type Units = {
     resourceId: string;
     resourceTitle: string;
@@ -200,6 +207,7 @@ function App() {
           showModal={showModal}
           appointmentForm={appointmentForm}
           resources={units}
+          doctors={doctors}
           handleCloseModal={handleCloseModal}
           handleAddAppointment={handleAddAppointment}
           setAppointmentForm={setAppointmentForm}
