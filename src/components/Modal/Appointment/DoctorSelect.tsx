@@ -79,13 +79,15 @@ const DoctorSelect: React.FC<DoctorSelectProps> = ({
     }
   };
 
-  const handleBlur = () => {
-    setIsDropdownVisible(false);
-    const exactMatch = doctors.find((doctor) => doctor.name === searchTerm);
-    if (!exactMatch) {
-      setSearchTerm("");
-      onChange(null);
-      setError("No doctor found");
+  const handleBlur = (e: React.FocusEvent) => {
+    if (!e.relatedTarget || !(e.relatedTarget as HTMLElement).closest("ul")) {
+      setIsDropdownVisible(false);
+      const exactMatch = doctors.find((doctor) => doctor.name === searchTerm);
+      if (!exactMatch) {
+        setSearchTerm("");
+        onChange(null);
+        setError("No doctor found");
+      }
     }
   };
 
@@ -124,11 +126,13 @@ const DoctorSelect: React.FC<DoctorSelectProps> = ({
             width: "100%",
             zIndex: 1001,
           }}
+          tabIndex={-1} // Allow focus to prevent onBlur from triggering
         >
           {filteredDoctors.map((doctor, index) => (
             <li
               key={doctor.id}
               onClick={() => handleSelect(doctor)}
+              tabIndex={0} // Make clickable with keyboard focus
               style={{
                 padding: "8px",
                 cursor: "pointer",

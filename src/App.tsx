@@ -7,7 +7,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import { useState } from "react";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
-import AppointmentModal from "./components/Modal/AppointmentModal";
+import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import type { View } from "react-big-calendar";
 
 const locales = {

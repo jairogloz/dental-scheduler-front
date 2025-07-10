@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import DoctorSelect from "../DoctorSelect";
+import React, { useState, useEffect, useRef } from "react";
+import DoctorSelect from "./DoctorSelect";
 
 const AppointmentModal = ({
   showModal,
@@ -13,21 +13,26 @@ const AppointmentModal = ({
   const [filteredDoctors, setFilteredDoctors] = useState(doctors);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const prevDoctorNameRef = useRef(appointmentForm.doctorName);
 
   useEffect(() => {
     // Validate the input when the dropdown is closed
-    if (!isDropdownVisible) {
+    if (
+      !isDropdownVisible &&
+      prevDoctorNameRef.current !== appointmentForm.doctorName
+    ) {
       const isValidDoctor = doctors.some(
         (doctor: any) => doctor.name === appointmentForm.doctorName
       );
       if (!isValidDoctor) {
-        setAppointmentForm({
-          ...appointmentForm,
+        setAppointmentForm((prevForm: any) => ({
+          ...prevForm,
           doctorName: "",
-        });
+        }));
       }
+      prevDoctorNameRef.current = appointmentForm.doctorName;
     }
-  }, [isDropdownVisible, appointmentForm, doctors, setAppointmentForm]);
+  }, [isDropdownVisible, doctors, setAppointmentForm]);
 
   if (!showModal) return null;
 
