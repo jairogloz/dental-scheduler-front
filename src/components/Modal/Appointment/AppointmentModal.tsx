@@ -205,6 +205,60 @@ const AppointmentModal = ({
           </select>
         </div>
 
+        <div style={{ marginBottom: "15px" }}>
+          <label style={{ display: "block", marginBottom: "5px" }}>
+            Fecha y Hora de Inicio:
+          </label>
+          <input
+            type="datetime-local"
+            value={new Date(
+              appointmentForm.start.getTime() -
+                appointmentForm.start.getTimezoneOffset() * 60000
+            )
+              .toISOString()
+              .slice(0, 16)} // Adjust for local timezone
+            onChange={(e) =>
+              setAppointmentForm({
+                ...appointmentForm,
+                start: new Date(e.target.value),
+              })
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
+
+        <div style={{ marginBottom: "15px" }}>
+          <label style={{ display: "block", marginBottom: "5px" }}>
+            Fecha y Hora de Fin:
+          </label>
+          <input
+            type="datetime-local"
+            value={new Date(
+              appointmentForm.end.getTime() -
+                appointmentForm.end.getTimezoneOffset() * 60000
+            )
+              .toISOString()
+              .slice(0, 16)} // Adjust for local timezone
+            onChange={(e) =>
+              setAppointmentForm({
+                ...appointmentForm,
+                end: new Date(e.target.value),
+              })
+            }
+            style={{
+              width: "100%",
+              padding: "8px",
+              border: "1px solid #ccc",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
+
         <div style={{ marginBottom: "20px" }}>
           <p>
             <strong>Fecha y Hora:</strong>{" "}

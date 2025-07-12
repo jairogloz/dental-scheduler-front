@@ -135,8 +135,8 @@ function App() {
       doctorName: "",
       treatmentType: "",
       resourceId: slotInfo.resourceId || "",
-      start: slotInfo.start,
-      end: slotInfo.end,
+      start: slotInfo.start, // Use the exact start time from the calendar
+      end: slotInfo.end, // Use the exact end time from the calendar
     });
     setShowModal(true);
   };
