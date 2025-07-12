@@ -117,6 +117,13 @@ const AppointmentModal = ({
               setAppointmentForm({
                 ...appointmentForm,
                 doctorName: selectedDoctor ? selectedDoctor.name : "",
+                resourceId: selectedDoctor ? selectedDoctor.defaultUnit : "", // Automatically set default unit
+              })
+            }
+            onUnitChange={(unit) =>
+              setAppointmentForm({
+                ...appointmentForm,
+                resourceId: unit || "", // Update the unit when it changes
               })
             }
           />
@@ -187,7 +194,11 @@ const AppointmentModal = ({
           >
             <option value="">Seleccionar Unidad</option>
             {resources.map((resource) => (
-              <option key={resource.resourceId} value={resource.resourceId}>
+              <option
+                key={resource.resourceId}
+                value={resource.resourceId}
+                selected={resource.resourceId === appointmentForm.resourceId} // Ensure proper selection
+              >
                 {resource.resourceTitle}
               </option>
             ))}

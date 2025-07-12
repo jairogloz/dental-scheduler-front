@@ -90,10 +90,30 @@ function App() {
   });
 
   const doctors = [
-    { id: 1, name: "Dr. Pérez", specialty: "Ortodoncia" },
-    { id: 2, name: "Dr. López", specialty: "Endodoncia" },
-    { id: 3, name: "Dr. Martínez", specialty: "Periodoncia" },
-    { id: 4, name: "Dr. Gómez", specialty: "Odontopediatría" },
+    {
+      id: 1,
+      name: "Dr. Pérez",
+      specialty: "Ortodoncia",
+      defaultUnit: "unidad-1",
+    },
+    {
+      id: 2,
+      name: "Dr. López",
+      specialty: "Endodoncia",
+      defaultUnit: "unidad-2",
+    },
+    {
+      id: 3,
+      name: "Dr. Martínez",
+      specialty: "Periodoncia",
+      defaultUnit: "unidad-3",
+    },
+    {
+      id: 4,
+      name: "Dr. Gómez",
+      specialty: "Odontopediatría",
+      defaultUnit: "unidad-4",
+    },
   ];
 
   type Units = {

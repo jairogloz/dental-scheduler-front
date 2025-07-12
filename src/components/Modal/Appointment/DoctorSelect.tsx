@@ -12,12 +12,14 @@ type DoctorSelectProps = {
   doctors: Doctor[];
   value: Doctor | null;
   onChange: (selectedDoctor: Doctor | null) => void;
+  onUnitChange: (unit: string | null) => void; // New prop for unit selection
 };
 
 const DoctorSelect: React.FC<DoctorSelectProps> = ({
   doctors,
   value,
   onChange,
+  onUnitChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(doctors);
@@ -47,6 +49,7 @@ const DoctorSelect: React.FC<DoctorSelectProps> = ({
   const handleSelect = (doctor: Doctor) => {
     setSearchTerm(doctor.name);
     onChange(doctor);
+    onUnitChange(doctor.defaultUnit); // Select the doctor's default unit
     setIsDropdownVisible(false);
     setError("");
   };
@@ -86,6 +89,7 @@ const DoctorSelect: React.FC<DoctorSelectProps> = ({
       if (!exactMatch) {
         setSearchTerm("");
         onChange(null);
+        onUnitChange(null); // Clear the unit if no doctor is selected
         setError("No doctor found");
       }
     }
