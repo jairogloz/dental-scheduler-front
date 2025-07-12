@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import DoctorSelect from "./DoctorSelect";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css"; // Import styles for react-datepicker
 
 const AppointmentModal = ({
   showModal,
@@ -209,20 +211,19 @@ const AppointmentModal = ({
           <label style={{ display: "block", marginBottom: "5px" }}>
             Fecha y Hora de Inicio:
           </label>
-          <input
-            type="datetime-local"
-            value={new Date(
-              appointmentForm.start.getTime() -
-                appointmentForm.start.getTimezoneOffset() * 60000
-            )
-              .toISOString()
-              .slice(0, 16)} // Adjust for local timezone
-            onChange={(e) =>
+          <DatePicker
+            selected={appointmentForm.start}
+            onChange={(date) =>
               setAppointmentForm({
                 ...appointmentForm,
-                start: new Date(e.target.value),
+                start: date || appointmentForm.start, // Ensure date is not null
               })
             }
+            showTimeSelect
+            dateFormat="Pp" // Format for date and time
+            timeFormat="HH:mm"
+            timeIntervals={15} // Time intervals in minutes
+            className="form-control"
             style={{
               width: "100%",
               padding: "8px",
@@ -236,20 +237,19 @@ const AppointmentModal = ({
           <label style={{ display: "block", marginBottom: "5px" }}>
             Fecha y Hora de Fin:
           </label>
-          <input
-            type="datetime-local"
-            value={new Date(
-              appointmentForm.end.getTime() -
-                appointmentForm.end.getTimezoneOffset() * 60000
-            )
-              .toISOString()
-              .slice(0, 16)} // Adjust for local timezone
-            onChange={(e) =>
+          <DatePicker
+            selected={appointmentForm.end}
+            onChange={(date) =>
               setAppointmentForm({
                 ...appointmentForm,
-                end: new Date(e.target.value),
+                end: date || appointmentForm.end, // Ensure date is not null
               })
             }
+            showTimeSelect
+            dateFormat="Pp" // Format for date and time
+            timeFormat="HH:mm"
+            timeIntervals={15} // Time intervals in minutes
+            className="form-control"
             style={{
               width: "100%",
               padding: "8px",
