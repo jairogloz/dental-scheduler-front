@@ -37,6 +37,7 @@ export const createAppointment = async (appointment: Omit<Appointment, "id">): P
 
   const newAppointment = { id: uuidv4(), ...appointment };
   appointments.push(newAppointment);
+  console.log("appointments", appointments);
   return newAppointment;
 };
 

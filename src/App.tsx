@@ -4,11 +4,18 @@ import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
 import { getDay } from "date-fns/getDay";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
 import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import type { View } from "react-big-calendar";
+import {
+  getDoctors,
+  getUnits,
+  getAppointments,
+  createAppointment,
+} from "./api/useAPI";
+import type { Doctor } from "./api/entities/Doctor";
 
 const locales = {
   "en-US": enUS,
@@ -61,21 +68,7 @@ const eventPropGetter = (event: Event) => {
 };
 
 function App() {
-  const [events, setEvents] = useState<Event[]>([
-    {
-      title: "Paciente Juan con Dr. Pérez",
-      start: new Date(2024, 5, 5, 10, 0),
-      end: new Date(2024, 5, 5, 11, 0),
-      resourceId: "unidad-1",
-    },
-    {
-      title: "Paciente Ana con Dr. López",
-      start: new Date(2024, 5, 5, 11, 0),
-      end: new Date(2024, 5, 5, 12, 0),
-      resourceId: "unidad-2",
-    },
-  ]);
-
+  const [events, setEvents] = useState<Event[]>([]);
   const [view, setView] = useState<View>("week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
@@ -88,45 +81,39 @@ function App() {
     start: new Date(),
     end: new Date(),
   });
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [units, setUnits] = useState<
+    { resourceId: string; resourceTitle: string }[]
+  >([]);
 
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Pérez",
-      specialty: "Ortodoncia",
-      defaultUnit: "unidad-1",
-    },
-    {
-      id: 2,
-      name: "Dr. López",
-      specialty: "Endodoncia",
-      defaultUnit: "unidad-2",
-    },
-    {
-      id: 3,
-      name: "Dr. Martínez",
-      specialty: "Periodoncia",
-      defaultUnit: "unidad-3",
-    },
-    {
-      id: 4,
-      name: "Dr. Gómez",
-      specialty: "Odontopediatría",
-      defaultUnit: "unidad-4",
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      const [fetchedDoctors, fetchedUnits, fetchedAppointments] =
+        await Promise.all([
+          getDoctors(),
+          getUnits("clinic-1"), // Assuming clinicId is "clinic-1"
+          getAppointments(),
+        ]);
 
-  type Units = {
-    resourceId: string;
-    resourceTitle: string;
-  };
+      setDoctors(fetchedDoctors);
+      setUnits(
+        fetchedUnits.map((unit) => ({
+          resourceId: unit.id,
+          resourceTitle: unit.name,
+        }))
+      );
+      setEvents(
+        fetchedAppointments.map((appointment) => ({
+          title: `${appointment.patientId} - ${appointment.doctorId}`,
+          start: new Date(appointment.start),
+          end: new Date(appointment.end),
+          resourceId: appointment.unitId,
+        }))
+      );
+    };
 
-  const units: Units[] = [
-    { resourceId: "unidad-1", resourceTitle: "Unidad 1" },
-    { resourceId: "unidad-2", resourceTitle: "Unidad 2" },
-    { resourceId: "unidad-3", resourceTitle: "Unidad 3" },
-    { resourceId: "unidad-4", resourceTitle: "Unidad 4" },
-  ];
+    fetchData();
+  }, []);
 
   const handleSelectSlot = (slotInfo: any) => {
     setSelectedSlot(slotInfo);
@@ -141,24 +128,41 @@ function App() {
     setShowModal(true);
   };
 
-  const handleAddAppointment = () => {
-    const newEvent: Event = {
-      title: `${appointmentForm.patientName} - ${appointmentForm.doctorName}`,
+  const handleAddAppointment = async () => {
+    const newAppointment = {
+      patientId: appointmentForm.patientName,
+      doctorId:
+        doctors.find((doc) => doc.name === appointmentForm.doctorName)?.id ||
+        "",
+      unitId: appointmentForm.resourceId,
       start: appointmentForm.start,
       end: appointmentForm.end,
-      resourceId: appointmentForm.resourceId,
     };
 
-    setEvents([...events, newEvent]);
-    setShowModal(false);
-    setAppointmentForm({
-      patientName: "",
-      doctorName: "",
-      treatmentType: "",
-      resourceId: "",
-      start: new Date(),
-      end: new Date(),
-    });
+    try {
+      const createdAppointment = await createAppointment(newAppointment);
+      setEvents([
+        ...events,
+        {
+          title: `${createdAppointment.patientId} - ${createdAppointment.doctorId}`,
+          start: new Date(createdAppointment.start),
+          end: new Date(createdAppointment.end),
+          resourceId: createdAppointment.unitId,
+        },
+      ]);
+      setShowModal(false);
+      setAppointmentForm({
+        patientName: "",
+        doctorName: "",
+        treatmentType: "",
+        resourceId: "",
+        start: new Date(),
+        end: new Date(),
+      });
+    } catch (error) {
+      console.error("Error creating appointment:", error);
+      alert("Error creating appointment: " + error);
+    }
   };
 
   const handleCloseModal = () => {
