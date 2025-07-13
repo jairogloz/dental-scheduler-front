@@ -1,12 +1,5 @@
 import React, { useState } from "react";
-
-type Doctor = {
-  id: number;
-  name: string;
-  specialty: string;
-  defaultClinic: string;
-  defaultUnit: string;
-};
+import type { Doctor } from "../../../api/entities/Doctor";
 
 type DoctorSelectProps = {
   doctors: Doctor[];
@@ -21,7 +14,7 @@ const DoctorSelect: React.FC<DoctorSelectProps> = ({
   onChange,
   onUnitChange,
 }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(value ? value.name : "");
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>(doctors);
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);

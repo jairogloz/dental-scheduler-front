@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import DoctorSelect from "./DoctorSelect";
 import DatePicker from "react-datepicker";
+import type { Doctor } from "../../../api/entities/Doctor";
 import "react-datepicker/dist/react-datepicker.css"; // Import styles for react-datepicker
+import "./AppointmentModal.css"; // Import custom styles
 
 const AppointmentModal = ({
   showModal,
@@ -112,17 +114,18 @@ const AppointmentModal = ({
           <DoctorSelect
             doctors={doctors}
             value={
-              doctors.find((doc) => doc.name === appointmentForm.doctorName) ||
-              null
+              doctors.find(
+                (doc: Doctor) => doc.name === appointmentForm.doctorName
+              ) || null
             }
-            onChange={(selectedDoctor) =>
+            onChange={(selectedDoctor: Doctor | null) =>
               setAppointmentForm({
                 ...appointmentForm,
                 doctorName: selectedDoctor ? selectedDoctor.name : "",
                 resourceId: selectedDoctor ? selectedDoctor.defaultUnit : "", // Automatically set default unit
               })
             }
-            onUnitChange={(unit) =>
+            onUnitChange={(unit: string | null) =>
               setAppointmentForm({
                 ...appointmentForm,
                 resourceId: unit || "", // Update the unit when it changes
@@ -144,12 +147,7 @@ const AppointmentModal = ({
                 patientName: e.target.value,
               })
             }
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
+            className="custom-text-input"
           />
         </div>
 
@@ -166,12 +164,7 @@ const AppointmentModal = ({
                 treatmentType: e.target.value,
               })
             }
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
+            className="custom-text-input"
           />
         </div>
 
@@ -187,23 +180,20 @@ const AppointmentModal = ({
                 resourceId: e.target.value,
               })
             }
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
+            className="custom-selector"
           >
             <option value="">Seleccionar Unidad</option>
-            {resources.map((resource) => (
-              <option
-                key={resource.resourceId}
-                value={resource.resourceId}
-                selected={resource.resourceId === appointmentForm.resourceId} // Ensure proper selection
-              >
-                {resource.resourceTitle}
-              </option>
-            ))}
+            {resources.map(
+              (resource: { resourceId: string; resourceTitle: string }) => (
+                <option
+                  key={resource.resourceId}
+                  value={resource.resourceId}
+                  selected={resource.resourceId === appointmentForm.resourceId} // Ensure proper selection
+                >
+                  {resource.resourceTitle}
+                </option>
+              )
+            )}
           </select>
         </div>
 
@@ -224,12 +214,6 @@ const AppointmentModal = ({
             timeFormat="HH:mm"
             timeIntervals={15} // Time intervals in minutes
             className="form-control"
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
           />
         </div>
 
@@ -237,6 +221,7 @@ const AppointmentModal = ({
           <label style={{ display: "block", marginBottom: "5px" }}>
             Fecha y Hora de Fin:
           </label>
+
           <DatePicker
             selected={appointmentForm.end}
             onChange={(date) =>
@@ -250,12 +235,6 @@ const AppointmentModal = ({
             timeFormat="HH:mm"
             timeIntervals={15} // Time intervals in minutes
             className="form-control"
-            style={{
-              width: "100%",
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
           />
         </div>
 

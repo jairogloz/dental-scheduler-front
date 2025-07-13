@@ -6,13 +6,14 @@ export type Doctor = {
   id: string;
   name: string;
   specialty: string;
+  defaultClinic: string;
   defaultUnit: string;
 };
 
 // In-memory storage
 const doctors: Doctor[] = [
-  { id: "doctor-1", name: "Dr. Pérez", specialty: "Ortodoncia", defaultUnit: "unidad-1" },
-  { id: "doctor-2", name: "Dr. López", specialty: "Endodoncia", defaultUnit: "unidad-2" },
+  { id: "doctor-1", name: "Dr. Pérez", specialty: "Ortodoncia", defaultUnit: "unidad-1", defaultClinic: "clinic-1" },
+  { id: "doctor-2", name: "Dr. López", specialty: "Endodoncia", defaultUnit: "unidad-2", defaultClinic: "clinic-1" },
 ];
 
 export const getDoctors = async (): Promise<Doctor[]> => {
