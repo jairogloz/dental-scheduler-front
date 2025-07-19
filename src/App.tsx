@@ -39,6 +39,7 @@ type Event = {
 
 type AppointmentForm = {
   patientName: string;
+  doctorId: string;
   doctorName: string;
   treatmentType: string;
   resourceId: string;
@@ -75,6 +76,7 @@ function App() {
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
     patientName: "",
+    doctorId: "",
     doctorName: "",
     treatmentType: "",
     resourceId: "",
@@ -119,6 +121,7 @@ function App() {
     setSelectedSlot(slotInfo);
     setAppointmentForm({
       patientName: "",
+      doctorId: "",
       doctorName: "",
       treatmentType: "",
       resourceId: slotInfo.resourceId || "",
@@ -129,11 +132,20 @@ function App() {
   };
 
   const handleAddAppointment = async () => {
+    console.log("doctorId:", appointmentForm.doctorId);
+    console.log("doctors:", doctors);
+    const selectedDoctor = doctors.find(
+      (doc) => doc.id === appointmentForm.doctorId // Match by doctor ID
+    );
+
+    if (!selectedDoctor) {
+      alert("Please select a valid doctor.");
+      return;
+    }
+
     const newAppointment = {
       patientId: appointmentForm.patientName,
-      doctorId:
-        doctors.find((doc) => doc.name === appointmentForm.doctorName)?.id ||
-        "",
+      doctorId: selectedDoctor.id, // Use the doctor ID
       unitId: appointmentForm.resourceId,
       start: appointmentForm.start,
       end: appointmentForm.end,
@@ -144,7 +156,7 @@ function App() {
       setEvents([
         ...events,
         {
-          title: `${createdAppointment.patientId} - ${createdAppointment.doctorId}`,
+          title: `${createdAppointment.patientId} - ${selectedDoctor.name}`, // Show doctor name in the event title
           start: new Date(createdAppointment.start),
           end: new Date(createdAppointment.end),
           resourceId: createdAppointment.unitId,
@@ -153,6 +165,7 @@ function App() {
       setShowModal(false);
       setAppointmentForm({
         patientName: "",
+        doctorId: "",
         doctorName: "",
         treatmentType: "",
         resourceId: "",
@@ -160,8 +173,12 @@ function App() {
         end: new Date(),
       });
     } catch (error) {
-      console.error("Error creating appointment:", error);
-      alert("Error creating appointment: " + error);
+      if (error && typeof error === "object" && "message" in error) {
+        alert(error.message); // Show specific error message to the user
+      } else {
+        console.error("Unexpected error:", error);
+        alert("An unexpected error occurred. Please try again."); // Generic error message
+      }
     }
   };
 

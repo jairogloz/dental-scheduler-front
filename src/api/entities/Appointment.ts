@@ -12,6 +12,7 @@ export type Appointment = {
 
 // In-memory storage
 const appointments: Appointment[] = [];
+const blockedTimeRanges: { doctorId: string; start: Date; end: Date }[] = [];
 
 export const getAppointments = async (): Promise<Appointment[]> => {
   await delay(500);
@@ -19,26 +20,70 @@ export const getAppointments = async (): Promise<Appointment[]> => {
 };
 
 export const createAppointment = async (appointment: Omit<Appointment, "id">): Promise<Appointment> => {
-  await delay(500);
+  console.log("Creating appointment:", appointment);
+  try {
+    await delay(500);
 
-  const conflict = appointments.some(
-    (a) =>
-      a.doctorId === appointment.doctorId &&
-      ((appointment.start >= a.start && appointment.start < a.end) ||
-        (appointment.end > a.start && appointment.end <= a.end)) ||
-      a.unitId === appointment.unitId &&
-      ((appointment.start >= a.start && appointment.start < a.end) ||
-        (appointment.end > a.start && appointment.end <= a.end))
-  );
+    // Check if start time is in the future
+    if (appointment.start <= new Date()) {
+      throw { code: 400, message: "Start time must be in the future" };
+    }
 
-  if (conflict) {
-    throw { code: 409, message: "Time slot already taken" };
+    // Check if end time is after start time
+    if (appointment.end <= appointment.start) {
+      throw { code: 400, message: "End time must be after start time" };
+    }
+
+    // Check for overlapping appointments in the same unit
+    const unitConflict = appointments.some(
+      (a) =>
+        a.unitId === appointment.unitId &&
+        ((appointment.start >= a.start && appointment.start < a.end) ||
+          (appointment.end > a.start && appointment.end <= a.end))
+    );
+    if (unitConflict) {
+      throw { code: 409, message: "Selected unit is already booked at this time" };
+    }
+
+    // Check for overlapping appointments for the same doctor
+    const conflictingDoctors = appointments
+      .filter(
+        (a) =>
+          a.doctorId === appointment.doctorId &&
+          ((appointment.start >= a.start && appointment.start < a.end) ||
+            (appointment.end > a.start && appointment.end <= a.end))
+      )
+      .map((a) => a.doctorId);
+
+    if (conflictingDoctors.length > 0) {
+      console.log("Conflicting doctor IDs:", conflictingDoctors);
+      throw { code: 409, message: "Doctor already has an appointment at this time" };
+    }
+
+    // Check if the doctor has a blocked time range that overlaps
+    const blockedConflict = blockedTimeRanges.some(
+      (block) =>
+        block.doctorId === appointment.doctorId &&
+        ((appointment.start >= block.start && appointment.start < block.end) ||
+          (appointment.end > block.start && appointment.end <= block.end))
+    );
+    if (blockedConflict) {
+      throw { code: 409, message: "Doctor is unavailable at this time" };
+    }
+
+    // If all checks pass, add the appointment
+    const newAppointment = { id: uuidv4(), ...appointment };
+    appointments.push(newAppointment);
+    console.log("appointments", appointments);
+    return newAppointment;
+  } catch (error) {
+    if (error && typeof error === "object" && "code" in error && "message" in error) {
+      throw error; // Re-throw known errors for the caller to handle
+    } else {
+      console.error("Unexpected error:", error);
+      throw { code: 500, message: "An unexpected error occurred" }; // Generic error
+    }
   }
-
-  const newAppointment = { id: uuidv4(), ...appointment };
-  appointments.push(newAppointment);
-  console.log("appointments", appointments);
-  return newAppointment;
 };
 
 export const updateAppointment = async (id: string, newData: Partial<Appointment>): Promise<Appointment> => {
@@ -54,11 +99,8 @@ export const updateAppointment = async (id: string, newData: Partial<Appointment
 
 export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date; end: Date }): Promise<void> => {
   await delay(500);
-  appointments.push({
-    id: uuidv4(),
-    patientId: "BLOCKED",
+  blockedTimeRanges.push({
     doctorId,
-    unitId: "BLOCKED",
     start: dateRange.start,
     end: dateRange.end,
   });

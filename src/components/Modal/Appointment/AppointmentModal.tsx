@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from "react";
-import DoctorSelect from "./DoctorSelect";
+import React, { useState } from "react";
+import Select from "react-select"; // Import React-Select
 import DatePicker from "react-datepicker";
 import type { Doctor } from "../../../api/entities/Doctor";
-import "react-datepicker/dist/react-datepicker.css"; // Import styles for react-datepicker
-import "./AppointmentModal.css"; // Import custom styles
+import "react-datepicker/dist/react-datepicker.css";
+import "./AppointmentModal.css";
 
 const AppointmentModal = ({
   showModal,
@@ -14,75 +14,12 @@ const AppointmentModal = ({
   handleAddAppointment,
   setAppointmentForm,
 }: any) => {
-  const [filteredDoctors, setFilteredDoctors] = useState(doctors);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [highlightedIndex, setHighlightedIndex] = useState(-1);
-  const prevDoctorNameRef = useRef(appointmentForm.doctorName);
-
-  useEffect(() => {
-    // Validate the input when the dropdown is closed
-    if (
-      !isDropdownVisible &&
-      prevDoctorNameRef.current !== appointmentForm.doctorName
-    ) {
-      const isValidDoctor = doctors.some(
-        (doctor: any) => doctor.name === appointmentForm.doctorName
-      );
-      if (!isValidDoctor) {
-        setAppointmentForm((prevForm: any) => ({
-          ...prevForm,
-          doctorName: "",
-        }));
-      }
-      prevDoctorNameRef.current = appointmentForm.doctorName;
-    }
-  }, [isDropdownVisible, doctors, setAppointmentForm]);
-
   if (!showModal) return null;
 
-  const handleDoctorSearch = (searchTerm: string) => {
-    const filtered = doctors.filter((doctor: any) =>
-      doctor.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredDoctors(filtered);
-    setAppointmentForm({
-      ...appointmentForm,
-      doctorName: searchTerm,
-    });
-    setIsDropdownVisible(true);
-    setHighlightedIndex(-1); // Reset highlighted index
-  };
-
-  const handleDoctorSelect = (doctorName: string) => {
-    setAppointmentForm({
-      ...appointmentForm,
-      doctorName,
-    });
-    setFilteredDoctors(doctors); // Reset the filtered list
-    setIsDropdownVisible(false);
-    setHighlightedIndex(-1); // Reset highlighted index
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (!isDropdownVisible || filteredDoctors.length === 0) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlightedIndex((prevIndex) =>
-        prevIndex < filteredDoctors.length - 1 ? prevIndex + 1 : 0
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlightedIndex((prevIndex) =>
-        prevIndex > 0 ? prevIndex - 1 : filteredDoctors.length - 1
-      );
-    } else if (e.key === "Enter" && highlightedIndex >= 0) {
-      e.preventDefault();
-      handleDoctorSelect(filteredDoctors[highlightedIndex].name);
-    } else if (e.key === "Escape") {
-      setIsDropdownVisible(false);
-    }
-  };
+  const doctorOptions = doctors.map((doctor: Doctor) => ({
+    value: doctor.id,
+    label: `${doctor.name} - ${doctor.specialty}`,
+  }));
 
   return (
     <div
@@ -109,28 +46,29 @@ const AppointmentModal = ({
         }}
       >
         <h3>Nueva Cita Dental</h3>
-        {/* Replace Nombre del Doctor input with DoctorSelect */}
+
         <div style={{ marginBottom: "15px" }}>
-          <DoctorSelect
-            doctors={doctors}
-            value={
-              doctors.find(
-                (doc: Doctor) => doc.name === appointmentForm.doctorName
-              ) || null
-            }
-            onChange={(selectedDoctor: Doctor | null) =>
+          <label style={{ display: "block", marginBottom: "5px" }}>
+            Nombre del Doctor:
+          </label>
+          <Select
+            options={doctorOptions}
+            value={doctorOptions.find(
+              (option) => option.value === appointmentForm.doctorId
+            )}
+            onChange={(selectedOption: any) =>
               setAppointmentForm({
                 ...appointmentForm,
-                doctorName: selectedDoctor ? selectedDoctor.name : "",
-                resourceId: selectedDoctor ? selectedDoctor.defaultUnit : "", // Automatically set default unit
+                doctorId: selectedOption?.value || "",
+                doctorName: selectedOption?.label || "",
+                resourceId: selectedOption
+                  ? doctors.find((doc) => doc.id === selectedOption.value)
+                      ?.defaultUnit || ""
+                  : "",
               })
             }
-            onUnitChange={(unit: string | null) =>
-              setAppointmentForm({
-                ...appointmentForm,
-                resourceId: unit || "", // Update the unit when it changes
-              })
-            }
+            placeholder="Seleccionar doctor..."
+            isClearable
           />
         </div>
 
@@ -188,7 +126,7 @@ const AppointmentModal = ({
                 <option
                   key={resource.resourceId}
                   value={resource.resourceId}
-                  selected={resource.resourceId === appointmentForm.resourceId} // Ensure proper selection
+                  selected={resource.resourceId === appointmentForm.resourceId}
                 >
                   {resource.resourceTitle}
                 </option>
@@ -206,13 +144,13 @@ const AppointmentModal = ({
             onChange={(date) =>
               setAppointmentForm({
                 ...appointmentForm,
-                start: date || appointmentForm.start, // Ensure date is not null
+                start: date || appointmentForm.start,
               })
             }
             showTimeSelect
-            dateFormat="Pp" // Format for date and time
+            dateFormat="Pp"
             timeFormat="HH:mm"
-            timeIntervals={15} // Time intervals in minutes
+            timeIntervals={15}
             className="form-control"
           />
         </div>
@@ -221,19 +159,18 @@ const AppointmentModal = ({
           <label style={{ display: "block", marginBottom: "5px" }}>
             Fecha y Hora de Fin:
           </label>
-
           <DatePicker
             selected={appointmentForm.end}
             onChange={(date) =>
               setAppointmentForm({
                 ...appointmentForm,
-                end: date || appointmentForm.end, // Ensure date is not null
+                end: date || appointmentForm.end,
               })
             }
             showTimeSelect
-            dateFormat="Pp" // Format for date and time
+            dateFormat="Pp"
             timeFormat="HH:mm"
-            timeIntervals={15} // Time intervals in minutes
+            timeIntervals={15}
             className="form-control"
           />
         </div>
