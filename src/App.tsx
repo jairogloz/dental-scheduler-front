@@ -20,6 +20,7 @@ import {
   deleteAppointment,
   getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
+import { tr } from "date-fns/locale";
 
 const locales = {
   "en-US": enUS,
@@ -153,6 +154,7 @@ function App() {
       const selectedAppointment = appointments.find(
         (appointment) => appointment.id === event.appointmentId
       );
+      console.log("Selected appointment:", selectedAppointment);
 
       if (!selectedAppointment) {
         alert("Appointment not found.");
@@ -166,7 +168,7 @@ function App() {
         doctorName:
           doctors.find((doc) => doc.id === selectedAppointment.doctorId)
             ?.name || "",
-        treatmentType: "", // Add logic to fetch treatment type if available
+        treatmentType: selectedAppointment.treatment,
         resourceId: selectedAppointment.unitId,
         start: new Date(selectedAppointment.start),
         end: new Date(selectedAppointment.end),
@@ -195,7 +197,8 @@ function App() {
 
     const newAppointment = {
       patientId: appointmentForm.patientName,
-      doctorId: selectedDoctor.id, // Use the doctor ID
+      doctorId: selectedDoctor.id,
+      treatment: appointmentForm.treatmentType,
       unitId: appointmentForm.resourceId,
       start: appointmentForm.start,
       end: appointmentForm.end,

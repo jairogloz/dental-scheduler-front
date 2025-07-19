@@ -5,6 +5,7 @@ export type Appointment = {
   id: string;
   patientId: string;
   doctorId: string;
+  treatment: string;
   unitId: string;
   start: Date;
   end: Date;
