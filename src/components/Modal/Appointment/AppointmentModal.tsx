@@ -54,16 +54,20 @@ const AppointmentModal = ({
           <Select
             options={doctorOptions}
             value={doctorOptions.find(
-              (option) => option.value === appointmentForm.doctorId
+              (option: { value: string; label: string }) =>
+                option.value === appointmentForm.doctorId
             )}
-            onChange={(selectedOption: any) =>
+            onChange={(
+              selectedOption: { value: string; label: string } | null
+            ) =>
               setAppointmentForm({
                 ...appointmentForm,
                 doctorId: selectedOption?.value || "",
                 doctorName: selectedOption?.label || "",
                 resourceId: selectedOption
-                  ? doctors.find((doc) => doc.id === selectedOption.value)
-                      ?.defaultUnit || ""
+                  ? doctors.find(
+                      (doc: Doctor) => doc.id === selectedOption.value
+                    )?.defaultUnit || ""
                   : "",
               })
             }
@@ -123,11 +127,7 @@ const AppointmentModal = ({
             <option value="">Seleccionar Unidad</option>
             {resources.map(
               (resource: { resourceId: string; resourceTitle: string }) => (
-                <option
-                  key={resource.resourceId}
-                  value={resource.resourceId}
-                  selected={resource.resourceId === appointmentForm.resourceId}
-                >
+                <option key={resource.resourceId} value={resource.resourceId}>
                   {resource.resourceTitle}
                 </option>
               )
