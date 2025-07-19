@@ -25,7 +25,8 @@ const AppointmentModal = ({
     label: `${doctor.name} - ${doctor.specialty}`,
   }));
 
-  const isReadOnly = mode === "see-only";
+  console.log("mode:", mode);
+  const isReadOnly = mode === "see-only" || mode === "edit";
 
   const handleCancel = () => {
     setShowCancelConfirmation(true);
