@@ -141,12 +141,20 @@ const AppointmentModal = ({
           </label>
           <DatePicker
             selected={appointmentForm.start}
-            onChange={(date) =>
-              setAppointmentForm({
-                ...appointmentForm,
-                start: date || appointmentForm.start,
-              })
-            }
+            onChange={(date) => {
+              if (date) {
+                const newStart = date;
+                const newEnd = new Date(newStart.getTime() + 15 * 60 * 1000); // Add 15 minutes (one timeslot)
+                setAppointmentForm({
+                  ...appointmentForm,
+                  start: newStart,
+                  end:
+                    newStart >= appointmentForm.end
+                      ? newEnd
+                      : appointmentForm.end, // Adjust end time if needed
+                });
+              }
+            }}
             showTimeSelect
             dateFormat="Pp"
             timeFormat="HH:mm"
