@@ -18,7 +18,6 @@ const AppointmentModal = ({
 }: any) => {
   if (!showModal) return null;
 
-  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   const doctorOptions = doctors.map((doctor: Doctor) => ({
@@ -27,14 +26,6 @@ const AppointmentModal = ({
   }));
 
   const isReadOnly = mode === "see-only";
-
-  const handleClose = () => {
-    if (mode === "create" || mode === "edit") {
-      setShowCloseConfirmation(true);
-    } else {
-      handleCloseModal();
-    }
-  };
 
   const handleCancel = () => {
     setShowCancelConfirmation(true);
@@ -67,7 +58,7 @@ const AppointmentModal = ({
       >
         {/* Close Button */}
         <button
-          onClick={handleClose}
+          onClick={handleCloseModal} // Directly close the modal
           style={{
             position: "absolute",
             top: "10px",
@@ -288,67 +279,6 @@ const AppointmentModal = ({
           </button>
         </div>
       </div>
-
-      {/* Close Confirmation Dialog */}
-      {showCloseConfirmation && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1100, // Higher than the AppointmentModal
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              width: "300px",
-              textAlign: "center",
-            }}
-          >
-            <p>
-              ¿Seguro de que quieres cerrar? Se perderán los cambios que no
-              hayas guardado.
-            </p>
-            <button
-              onClick={handleCloseModal}
-              style={{
-                margin: "10px",
-                padding: "10px 20px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Seguro
-            </button>
-            <button
-              onClick={() => setShowCloseConfirmation(false)}
-              style={{
-                margin: "10px",
-                padding: "10px 20px",
-                backgroundColor: "#dc3545",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              Continuar creando/editando
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Cancel Confirmation Dialog */}
       {showCancelConfirmation && (

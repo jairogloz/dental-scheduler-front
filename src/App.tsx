@@ -16,7 +16,10 @@ import {
   createAppointment,
 } from "./api/useAPI";
 import type { Doctor } from "./api/entities/Doctor";
-import { deleteAppointment } from "./api/entities/Appointment";
+import {
+  deleteAppointment,
+  getAppointments as getAppointmentsEntity,
+} from "./api/entities/Appointment";
 
 const locales = {
   "en-US": enUS,
@@ -141,23 +144,41 @@ function App() {
     setShowModal(true);
   };
 
-  const handleSelectEvent = (event: Event) => {
+  const handleSelectEvent = async (event: Event) => {
     console.log("Selected event:", event);
     const isPastEvent = event.start < new Date();
-    setAppointmentForm({
-      appointmentId: event.appointmentId,
-      patientName: event.title.split(" - ")[0], // Assuming patient name is part of the title
-      doctorId: doctors.find((doc) => doc.id === event.resourceId)?.id || "",
-      doctorName:
-        doctors.find((doc) => doc.id === event.resourceId)?.name || "",
-      treatmentType: "", // Add logic to fetch treatment type if available
-      resourceId: event.resourceId,
-      start: event.start,
-      end: event.end,
-    });
-    setModalMode(isPastEvent ? "see-only" : "edit");
-    setShowModal(true);
-    setSelectedSlot(null);
+
+    try {
+      const appointments = await getAppointmentsEntity(); // Fetch appointments from memory
+      const selectedAppointment = appointments.find(
+        (appointment) => appointment.id === event.appointmentId
+      );
+
+      if (!selectedAppointment) {
+        alert("Appointment not found.");
+        return;
+      }
+
+      setAppointmentForm({
+        appointmentId: selectedAppointment.id,
+        patientName: selectedAppointment.patientId,
+        doctorId: selectedAppointment.doctorId,
+        doctorName:
+          doctors.find((doc) => doc.id === selectedAppointment.doctorId)
+            ?.name || "",
+        treatmentType: "", // Add logic to fetch treatment type if available
+        resourceId: selectedAppointment.unitId,
+        start: new Date(selectedAppointment.start),
+        end: new Date(selectedAppointment.end),
+      });
+
+      setModalMode(isPastEvent ? "see-only" : "edit");
+      setShowModal(true);
+      setSelectedSlot(null);
+    } catch (error) {
+      console.error("Error fetching appointment:", error);
+      alert("An error occurred while loading the appointment.");
+    }
   };
 
   const handleAddAppointment = async () => {
