@@ -290,7 +290,7 @@ const AppointmentModal = ({
               backgroundColor: "white",
               padding: "20px",
               borderRadius: "8px",
-              width: "300px",
+              width: "400px", // Adjusted width for buttons to fit
               textAlign: "center",
             }}
           >
@@ -298,34 +298,40 @@ const AppointmentModal = ({
               ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se
               puede deshacer.
             </p>
-            <button
-              onClick={handleCancelAppointment} // Call the cancel handler
+            <div
               style={{
-                margin: "10px",
-                padding: "10px 20px",
-                backgroundColor: "#28a745",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
+                display: "flex",
+                justifyContent: "space-between",
+                marginTop: "20px",
               }}
             >
-              Sí, cancelar cita
-            </button>
-            <button
-              onClick={() => setShowCancelConfirmation(false)}
-              style={{
-                margin: "10px",
-                padding: "10px 20px",
-                backgroundColor: "#dc3545",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              No, mantener
-            </button>
+              <button
+                onClick={() => setShowCancelConfirmation(false)}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#dc3545",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                No, mantener
+              </button>
+              <button
+                onClick={handleCancelAppointment} // Call the cancel handler
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Sí, cancelar cita
+              </button>
+            </div>
           </div>
         </div>
       )}
