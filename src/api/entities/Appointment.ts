@@ -97,6 +97,13 @@ export const updateAppointment = async (id: string, newData: Partial<Appointment
   return updatedAppointment;
 };
 
+export const deleteAppointment = async (id: string): Promise<void> => {
+  await delay(500);
+  const index = appointments.findIndex((a) => a.id === id);
+  if (index === -1) throw { code: 404, message: "Appointment not found" };
+  appointments.splice(index, 1);
+};
+
 export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date; end: Date }): Promise<void> => {
   await delay(500);
   blockedTimeRanges.push({

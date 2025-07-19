@@ -16,6 +16,7 @@ import {
   createAppointment,
 } from "./api/useAPI";
 import type { Doctor } from "./api/entities/Doctor";
+import { deleteAppointment } from "./api/entities/Appointment";
 
 const locales = {
   "en-US": enUS,
@@ -31,6 +32,7 @@ const localizer = dateFnsLocalizer({
 });
 
 type Event = {
+  appointmentId: string;
   title: string;
   start: Date;
   end: Date;
@@ -38,6 +40,7 @@ type Event = {
 };
 
 type AppointmentForm = {
+  appointmentId: string; // Add appointmentId
   patientName: string;
   doctorId: string;
   doctorName: string;
@@ -74,7 +77,11 @@ function App() {
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "see-only">(
+    "create"
+  );
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
+    appointmentId: "", // Initialize appointmentId
     patientName: "",
     doctorId: "",
     doctorName: "",
@@ -110,6 +117,7 @@ function App() {
           start: new Date(appointment.start),
           end: new Date(appointment.end),
           resourceId: appointment.unitId,
+          appointmentId: appointment.id,
         }))
       );
     };
@@ -120,6 +128,7 @@ function App() {
   const handleSelectSlot = (slotInfo: any) => {
     setSelectedSlot(slotInfo);
     setAppointmentForm({
+      appointmentId: "", // Reset appointmentId
       patientName: "",
       doctorId: "",
       doctorName: "",
@@ -128,7 +137,27 @@ function App() {
       start: slotInfo.start, // Use the exact start time from the calendar
       end: slotInfo.end, // Use the exact end time from the calendar
     });
+    setModalMode("create");
     setShowModal(true);
+  };
+
+  const handleSelectEvent = (event: Event) => {
+    console.log("Selected event:", event);
+    const isPastEvent = event.start < new Date();
+    setAppointmentForm({
+      appointmentId: event.appointmentId,
+      patientName: event.title.split(" - ")[0], // Assuming patient name is part of the title
+      doctorId: doctors.find((doc) => doc.id === event.resourceId)?.id || "",
+      doctorName:
+        doctors.find((doc) => doc.id === event.resourceId)?.name || "",
+      treatmentType: "", // Add logic to fetch treatment type if available
+      resourceId: event.resourceId,
+      start: event.start,
+      end: event.end,
+    });
+    setModalMode(isPastEvent ? "see-only" : "edit");
+    setShowModal(true);
+    setSelectedSlot(null);
   };
 
   const handleAddAppointment = async () => {
@@ -160,10 +189,12 @@ function App() {
           start: new Date(createdAppointment.start),
           end: new Date(createdAppointment.end),
           resourceId: createdAppointment.unitId,
+          appointmentId: createdAppointment.id,
         },
       ]);
       setShowModal(false);
       setAppointmentForm({
+        appointmentId: "", // Reset appointmentId
         patientName: "",
         doctorId: "",
         doctorName: "",
@@ -172,6 +203,29 @@ function App() {
         start: new Date(),
         end: new Date(),
       });
+    } catch (error) {
+      if (error && typeof error === "object" && "message" in error) {
+        alert(error.message); // Show specific error message to the user
+      } else {
+        console.error("Unexpected error:", error);
+        alert("An unexpected error occurred. Please try again."); // Generic error message
+      }
+    }
+  };
+
+  const handleCancelAppointment = async () => {
+    try {
+      console.log(
+        "appointmentForm.appointmentId:",
+        appointmentForm.appointmentId
+      );
+      await deleteAppointment(appointmentForm.appointmentId); // Use appointmentId for deletion
+      setEvents(
+        events.filter(
+          (event) => event.appointmentId !== appointmentForm.appointmentId
+        )
+      );
+      setShowModal(false);
     } catch (error) {
       if (error && typeof error === "object" && "message" in error) {
         alert(error.message); // Show specific error message to the user
@@ -231,9 +285,7 @@ function App() {
         style={{ height: "70vh" }}
         selectable
         onSelectSlot={handleSelectSlot}
-        onSelectEvent={(event) => {
-          alert(`Evento: ${event.title}`);
-        }}
+        onSelectEvent={handleSelectEvent}
         eventPropGetter={eventPropGetter}
         formats={{
           timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
@@ -246,11 +298,13 @@ function App() {
       {showModal && (
         <AppointmentModal
           showModal={showModal}
+          mode={modalMode} // Pass the mode to the modal
           appointmentForm={appointmentForm}
           resources={units}
           doctors={doctors}
           handleCloseModal={handleCloseModal}
           handleAddAppointment={handleAddAppointment}
+          handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
           setAppointmentForm={setAppointmentForm}
         />
       )}

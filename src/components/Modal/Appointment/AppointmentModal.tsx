@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Select from "react-select"; // Import React-Select
+import Select from "react-select";
 import DatePicker from "react-datepicker";
 import type { Doctor } from "../../../api/entities/Doctor";
 import "react-datepicker/dist/react-datepicker.css";
@@ -7,19 +7,38 @@ import "./AppointmentModal.css";
 
 const AppointmentModal = ({
   showModal,
-  appointmentForm,
+  mode = "create", // "create", "edit", or "see-only"
+  appointmentForm, // Includes appointmentId
   resources,
   doctors,
   handleCloseModal,
   handleAddAppointment,
+  handleCancelAppointment, // New handler for canceling appointments
   setAppointmentForm,
 }: any) => {
   if (!showModal) return null;
+
+  const [showCloseConfirmation, setShowCloseConfirmation] = useState(false);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   const doctorOptions = doctors.map((doctor: Doctor) => ({
     value: doctor.id,
     label: `${doctor.name} - ${doctor.specialty}`,
   }));
+
+  const isReadOnly = mode === "see-only";
+
+  const handleClose = () => {
+    if (mode === "create" || mode === "edit") {
+      setShowCloseConfirmation(true);
+    } else {
+      handleCloseModal();
+    }
+  };
+
+  const handleCancel = () => {
+    setShowCancelConfirmation(true);
+  };
 
   return (
     <div
@@ -43,9 +62,32 @@ const AppointmentModal = ({
           borderRadius: "8px",
           width: "400px",
           maxWidth: "90vw",
+          position: "relative",
         }}
       >
-        <h3>Nueva Cita Dental</h3>
+        {/* Close Button */}
+        <button
+          onClick={handleClose}
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            background: "none",
+            border: "none",
+            fontSize: "16px",
+            cursor: "pointer",
+          }}
+        >
+          X
+        </button>
+
+        <h3>
+          {mode === "create"
+            ? "Nueva Cita Dental"
+            : mode === "edit"
+            ? "Editar Cita Dental"
+            : "Detalles de la Cita"}
+        </h3>
 
         <div style={{ marginBottom: "15px" }}>
           <label style={{ display: "block", marginBottom: "5px" }}>
@@ -73,6 +115,7 @@ const AppointmentModal = ({
             }
             placeholder="Seleccionar doctor..."
             isClearable
+            isDisabled={isReadOnly}
           />
         </div>
 
@@ -90,6 +133,7 @@ const AppointmentModal = ({
               })
             }
             className="custom-text-input"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -107,6 +151,7 @@ const AppointmentModal = ({
               })
             }
             className="custom-text-input"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -123,6 +168,7 @@ const AppointmentModal = ({
               })
             }
             className="custom-selector"
+            disabled={isReadOnly}
           >
             <option value="">Seleccionar Unidad</option>
             {resources.map(
@@ -160,6 +206,7 @@ const AppointmentModal = ({
             timeFormat="HH:mm"
             timeIntervals={15}
             className="form-control"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -180,6 +227,7 @@ const AppointmentModal = ({
             timeFormat="HH:mm"
             timeIntervals={15}
             className="form-control"
+            disabled={isReadOnly}
           />
         </div>
 
@@ -191,19 +239,35 @@ const AppointmentModal = ({
           </p>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <button
-            onClick={handleCloseModal}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Cancelar
-          </button>
+          {mode === "edit" ? (
+            <button
+              onClick={handleCancel}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Cancelar cita
+            </button>
+          ) : (
+            <button
+              onClick={handleCloseModal}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Cancelar
+            </button>
+          )}
           <button
             onClick={handleAddAppointment}
             style={{
@@ -212,13 +276,140 @@ const AppointmentModal = ({
               color: "white",
               border: "none",
               borderRadius: "4px",
-              cursor: "pointer",
+              cursor:
+                mode === "edit" || mode === "see-only"
+                  ? "not-allowed"
+                  : "pointer",
+              opacity: mode === "edit" || mode === "see-only" ? 0.5 : 1,
             }}
+            disabled={mode === "edit" || mode === "see-only"}
           >
             Agregar Cita
           </button>
         </div>
       </div>
+
+      {/* Close Confirmation Dialog */}
+      {showCloseConfirmation && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1100, // Higher than the AppointmentModal
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "300px",
+              textAlign: "center",
+            }}
+          >
+            <p>
+              ¿Seguro de que quieres cerrar? Se perderán los cambios que no
+              hayas guardado.
+            </p>
+            <button
+              onClick={handleCloseModal}
+              style={{
+                margin: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Seguro
+            </button>
+            <button
+              onClick={() => setShowCloseConfirmation(false)}
+              style={{
+                margin: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Continuar creando/editando
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Cancel Confirmation Dialog */}
+      {showCancelConfirmation && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1100, // Higher than the AppointmentModal
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "white",
+              padding: "20px",
+              borderRadius: "8px",
+              width: "300px",
+              textAlign: "center",
+            }}
+          >
+            <p>
+              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se
+              puede deshacer.
+            </p>
+            <button
+              onClick={handleCancelAppointment} // Call the cancel handler
+              style={{
+                margin: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#28a745",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              Sí, cancelar cita
+            </button>
+            <button
+              onClick={() => setShowCancelConfirmation(false)}
+              style={{
+                margin: "10px",
+                padding: "10px 20px",
+                backgroundColor: "#dc3545",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+              }}
+            >
+              No, mantener
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
