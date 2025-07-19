@@ -11,8 +11,38 @@ export type Appointment = {
   end: Date;
 };
 
-// In-memory storage
-const appointments: Appointment[] = [];
+// Preloaded appointments
+const now = new Date();
+const appointments: Appointment[] = [
+  {
+    id: uuidv4(),
+    patientId: "Juan Pérez",
+    doctorId: "doctor-1",
+    treatment: "Ortodoncia",
+    unitId: "unidad-1",
+    start: new Date(now.getTime() + 1 * 60 * 60 * 1000), // Current time + 1 hour
+    end: new Date(now.getTime() + 1.5 * 60 * 60 * 1000), // Current time + 1.5 hours
+  },
+  {
+    id: uuidv4(),
+    patientId: "Ana López",
+    doctorId: "doctor-2",
+    treatment: "Endodoncia",
+    unitId: "unidad-2",
+    start: new Date(now.getTime() + 2 * 60 * 60 * 1000), // Current time + 2 hours
+    end: new Date(now.getTime() + 2.5 * 60 * 60 * 1000), // Current time + 2.5 hours
+  },
+  {
+    id: uuidv4(),
+    patientId: "Carlos García",
+    doctorId: "doctor-1",
+    treatment: "Ortodoncia",
+    unitId: "unidad-1",
+    start: new Date(now.getTime() - 22 * 60 * 60 * 1000), // Yesterday at the same time + 1 hour
+    end: new Date(now.getTime() - 21.5 * 60 * 60 * 1000), // Yesterday + 1.5 hours
+  },
+];
+
 const blockedTimeRanges: { doctorId: string; start: Date; end: Date }[] = [];
 
 export const getAppointments = async (): Promise<Appointment[]> => {

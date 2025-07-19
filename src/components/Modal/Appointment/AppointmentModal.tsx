@@ -230,8 +230,13 @@ const AppointmentModal = ({
             {appointmentForm.end.toLocaleString()}
           </p>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          {mode === "edit" ? (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: mode === "create" ? "flex-end" : "space-between",
+          }}
+        >
+          {mode === "edit" && (
             <button
               onClick={handleCancel}
               style={{
@@ -245,39 +250,22 @@ const AppointmentModal = ({
             >
               Cancelar cita
             </button>
-          ) : (
+          )}
+          {mode === "create" && (
             <button
-              onClick={handleCloseModal}
+              onClick={handleAddAppointment}
               style={{
                 padding: "10px 20px",
-                backgroundColor: "#6c757d",
+                backgroundColor: "#28a745",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",
                 cursor: "pointer",
               }}
             >
-              Cancelar
+              Agregar Cita
             </button>
           )}
-          <button
-            onClick={handleAddAppointment}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor:
-                mode === "edit" || mode === "see-only"
-                  ? "not-allowed"
-                  : "pointer",
-              opacity: mode === "edit" || mode === "see-only" ? 0.5 : 1,
-            }}
-            disabled={mode === "edit" || mode === "see-only"}
-          >
-            Agregar Cita
-          </button>
         </div>
       </div>
 
