@@ -20,7 +20,6 @@ import {
   deleteAppointment,
   getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
-import { tr } from "date-fns/locale";
 
 const locales = {
   "en-US": enUS,
@@ -80,7 +79,6 @@ function App() {
   const [view, setView] = useState<View>("week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<any>(null);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "see-only">(
     "create"
   );
@@ -130,7 +128,6 @@ function App() {
   }, []);
 
   const handleSelectSlot = (slotInfo: any) => {
-    setSelectedSlot(slotInfo);
     setAppointmentForm({
       appointmentId: "", // Reset appointmentId
       patientName: "",
@@ -176,7 +173,6 @@ function App() {
 
       setModalMode(isPastEvent ? "see-only" : "edit");
       setShowModal(true);
-      setSelectedSlot(null);
     } catch (error) {
       console.error("Error fetching appointment:", error);
       alert("An error occurred while loading the appointment.");
@@ -262,7 +258,6 @@ function App() {
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setSelectedSlot(null);
   };
 
   return (

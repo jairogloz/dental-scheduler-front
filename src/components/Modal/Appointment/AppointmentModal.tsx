@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import type { Doctor } from "../../../api/entities/Doctor";
