@@ -4,7 +4,9 @@ import DatePicker from "react-datepicker";
 import type { Doctor } from "../../../api/entities/Doctor";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
-import DoctorDayView from "./DoctorDayView.tsx"; // Import the new DoctorDayView component
+import DoctorDayView from "./DoctorDayView";
+import { useWindowSize } from "../../../hooks/useWindowSize";
+import "../../../styles/Modal.css";
 
 const AppointmentModal = ({
   showModal,
@@ -18,6 +20,8 @@ const AppointmentModal = ({
   setAppointmentForm,
   appointments, // Receive appointments prop
 }: any) => {
+  const { isMobile } = useWindowSize();
+
   if (!showModal) return null;
 
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
@@ -35,44 +39,22 @@ const AppointmentModal = ({
   };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
+    <div className="modal-overlay">
       <div
+        className="modal-content"
         style={{
-          backgroundColor: "white",
-          padding: "20px",
-          borderRadius: "8px",
-          width:
-            appointmentForm.doctorId && mode === "create" ? "90vw" : "90vw",
           maxWidth:
             appointmentForm.doctorId && mode === "create" ? "900px" : "400px",
-          maxHeight: "90vh",
-          position: "relative",
           display: "flex",
-          flexDirection: window.innerWidth <= 768 ? "column" : "row",
+          flexDirection: isMobile ? "column" : "row",
           gap: "20px",
+          padding: "20px",
           overflowY: "auto",
+          maxHeight: "90vh",
         }}
       >
         {/* Form Section */}
-        <div
-          style={{
-            flex: window.innerWidth <= 768 ? "none" : "1",
-            minWidth: window.innerWidth <= 768 ? "100%" : "350px",
-          }}
-        >
+        <div className="modal-form" style={{ flex: isMobile ? "none" : "1" }}>
           {/* Close Button */}
           <button
             onClick={handleCloseModal} // Directly close the modal
@@ -289,12 +271,12 @@ const AppointmentModal = ({
         {appointmentForm.doctorId && mode === "create" && (
           <div
             style={{
-              flex: window.innerWidth <= 768 ? "none" : "1",
-              borderLeft: window.innerWidth <= 768 ? "none" : "1px solid #eee",
-              borderTop: window.innerWidth <= 768 ? "1px solid #eee" : "none",
+              flex: isMobile ? "none" : "1",
+              borderLeft: isMobile ? "none" : "1px solid #eee",
+              borderTop: isMobile ? "1px solid #eee" : "none",
               paddingLeft: "20px",
-              paddingTop: window.innerWidth <= 768 ? "20px" : "0",
-              minHeight: window.innerWidth <= 768 ? "500px" : "auto",
+              paddingTop: isMobile ? "20px" : "0",
+              minHeight: isMobile ? "500px" : "auto",
             }}
           >
             <DoctorDayView
@@ -311,7 +293,7 @@ const AppointmentModal = ({
                   end,
                 });
               }}
-              existingAppointments={appointments} // Pass the appointments from the parent state
+              existingAppointments={appointments}
             />
           </div>
         )}
@@ -319,27 +301,13 @@ const AppointmentModal = ({
 
       {/* Cancel Confirmation Dialog */}
       {showCancelConfirmation && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.7)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1100, // Higher than the AppointmentModal
-          }}
-        >
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
           <div
+            className="modal-content"
             style={{
-              backgroundColor: "white",
-              padding: "20px",
-              borderRadius: "8px",
-              width: "400px", // Adjusted width for buttons to fit
+              width: isMobile ? "90vw" : "400px",
               textAlign: "center",
+              padding: "20px",
             }}
           >
             <p>
@@ -355,28 +323,11 @@ const AppointmentModal = ({
             >
               <button
                 onClick={() => setShowCancelConfirmation(false)}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
+                className="btn-danger"
               >
                 No, mantener
               </button>
-              <button
-                onClick={handleCancelAppointment} // Call the cancel handler
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={handleCancelAppointment} className="btn-success">
                 Sí, cancelar cita
               </button>
             </div>
