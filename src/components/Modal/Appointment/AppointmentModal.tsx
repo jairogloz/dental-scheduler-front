@@ -53,7 +53,8 @@ const AppointmentModal = ({
           backgroundColor: "white",
           padding: "30px",
           borderRadius: "8px",
-          width: appointmentForm.doctorId ? "900px" : "400px", // Wider when doctor selected
+          width:
+            appointmentForm.doctorId && mode === "create" ? "900px" : "400px", // Wider only in create mode with doctor selected
           maxWidth: "95vw",
           position: "relative",
           display: "flex",
@@ -275,7 +276,7 @@ const AppointmentModal = ({
         </div>
 
         {/* Calendar Section */}
-        {appointmentForm.doctorId && (
+        {appointmentForm.doctorId && mode === "create" && (
           <div
             style={{
               flex: "1",

@@ -50,6 +50,27 @@ const DoctorDayView = ({
     onSlotSelect(slotInfo.start, slotInfo.end);
   };
 
+  const eventPropGetter = (event: any) => {
+    if (event.title === "Seleccionado") {
+      return {
+        style: {
+          backgroundColor: "#28a745",
+          color: "white",
+          borderRadius: "4px",
+          border: "none",
+        },
+      };
+    }
+    return {
+      style: {
+        backgroundColor: "#dc3545",
+        color: "white",
+        borderRadius: "4px",
+        border: "none",
+      },
+    };
+  };
+
   return (
     <div style={{ height: "500px" }}>
       <h4>Horario del Doctor</h4>
@@ -78,6 +99,7 @@ const DoctorDayView = ({
         onSelectSlot={handleSelectSlot}
         date={selectedDate}
         toolbar={false}
+        eventPropGetter={eventPropGetter}
       />
     </div>
   );
