@@ -13,6 +13,7 @@ interface DoctorDayViewProps {
     end: Date;
   };
   onSlotSelect: (start: Date, end: Date) => void;
+  existingAppointments?: Appointment[]; // New prop
 }
 
 const locales = {
@@ -32,19 +33,37 @@ const DoctorDayView = ({
   selectedDate,
   selectedInterval,
   onSlotSelect,
+  existingAppointments = [], // Default to empty array
 }: DoctorDayViewProps) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointments, setAppointments] =
+    useState<Appointment[]>(existingAppointments);
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastFetchedDate, setLastFetchedDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      const doctorAppointments = await getDoctorAvailability(
-        doctorId,
-        selectedDate
-      );
-      setAppointments(doctorAppointments);
+      // Skip fetch if we already have appointments for this date
+      if (lastFetchedDate?.toDateString() === selectedDate.toDateString()) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const doctorAppointments = await getDoctorAvailability(
+          doctorId,
+          selectedDate
+        );
+        setAppointments(doctorAppointments);
+        setLastFetchedDate(selectedDate);
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
     fetchAppointments();
-  }, [doctorId, selectedDate]);
+  }, [doctorId, selectedDate, lastFetchedDate]);
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
     onSlotSelect(slotInfo.start, slotInfo.end);
@@ -71,9 +90,13 @@ const DoctorDayView = ({
     };
   };
 
+  // Calculate scroll time: 30 minutes before the selected time to give context
+  const scrollToTime = new Date(selectedInterval.start);
+  scrollToTime.setMinutes(scrollToTime.getMinutes() - 30);
+
   return (
     <div style={{ height: "500px" }}>
-      <h4>Horario del Doctor</h4>
+      <h4>Horario del Doctor {isLoading && "(Cargando...)"}</h4>
       <Calendar
         localizer={localizer}
         defaultView={Views.DAY}
@@ -100,6 +123,7 @@ const DoctorDayView = ({
         date={selectedDate}
         toolbar={false}
         eventPropGetter={eventPropGetter}
+        scrollToTime={scrollToTime}
       />
     </div>
   );

@@ -16,6 +16,7 @@ const AppointmentModal = ({
   handleAddAppointment,
   handleCancelAppointment, // New handler for canceling appointments
   setAppointmentForm,
+  appointments, // Receive appointments prop
 }: any) => {
   if (!showModal) return null;
 
@@ -298,6 +299,7 @@ const AppointmentModal = ({
                   end,
                 });
               }}
+              existingAppointments={appointments} // Pass the appointments from the parent state
             />
           </div>
         )}
