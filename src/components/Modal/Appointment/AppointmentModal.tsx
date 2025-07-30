@@ -52,18 +52,27 @@ const AppointmentModal = ({
       <div
         style={{
           backgroundColor: "white",
-          padding: "30px",
+          padding: "20px",
           borderRadius: "8px",
           width:
-            appointmentForm.doctorId && mode === "create" ? "900px" : "400px", // Wider only in create mode with doctor selected
-          maxWidth: "95vw",
+            appointmentForm.doctorId && mode === "create" ? "90vw" : "90vw",
+          maxWidth:
+            appointmentForm.doctorId && mode === "create" ? "900px" : "400px",
+          maxHeight: "90vh",
           position: "relative",
           display: "flex",
+          flexDirection: window.innerWidth <= 768 ? "column" : "row",
           gap: "20px",
+          overflowY: "auto",
         }}
       >
         {/* Form Section */}
-        <div style={{ flex: "1" }}>
+        <div
+          style={{
+            flex: window.innerWidth <= 768 ? "none" : "1",
+            minWidth: window.innerWidth <= 768 ? "100%" : "350px",
+          }}
+        >
           {/* Close Button */}
           <button
             onClick={handleCloseModal} // Directly close the modal
@@ -280,9 +289,12 @@ const AppointmentModal = ({
         {appointmentForm.doctorId && mode === "create" && (
           <div
             style={{
-              flex: "1",
-              borderLeft: "1px solid #eee",
+              flex: window.innerWidth <= 768 ? "none" : "1",
+              borderLeft: window.innerWidth <= 768 ? "none" : "1px solid #eee",
+              borderTop: window.innerWidth <= 768 ? "1px solid #eee" : "none",
               paddingLeft: "20px",
+              paddingTop: window.innerWidth <= 768 ? "20px" : "0",
+              minHeight: window.innerWidth <= 768 ? "500px" : "auto",
             }}
           >
             <DoctorDayView
