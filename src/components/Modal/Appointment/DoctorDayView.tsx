@@ -42,11 +42,6 @@ const DoctorDayView = ({
 
   useEffect(() => {
     const fetchAppointments = async () => {
-      // Skip fetch if we already have appointments for this date
-      if (lastFetchedDate?.toDateString() === selectedDate.toDateString()) {
-        return;
-      }
-
       setIsLoading(true);
       try {
         const doctorAppointments = await getDoctorAvailability(
@@ -63,31 +58,10 @@ const DoctorDayView = ({
     };
 
     fetchAppointments();
-  }, [doctorId, selectedDate, lastFetchedDate]);
+  }, [doctorId, selectedDate]); // Add doctorId to dependencies
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
     onSlotSelect(slotInfo.start, slotInfo.end);
-  };
-
-  const eventPropGetter = (event: any) => {
-    if (event.title === "Seleccionado") {
-      return {
-        style: {
-          backgroundColor: "#28a745",
-          color: "white",
-          borderRadius: "4px",
-          border: "none",
-        },
-      };
-    }
-    return {
-      style: {
-        backgroundColor: "#dc3545",
-        color: "white",
-        borderRadius: "4px",
-        border: "none",
-      },
-    };
   };
 
   // Calculate scroll time: 30 minutes before the selected time to give context
@@ -103,7 +77,7 @@ const DoctorDayView = ({
         views={[Views.DAY]}
         events={[
           ...appointments.map((apt) => ({
-            title: "Ocupado",
+            title: `${apt.patientId} - ${apt.treatment}`, // Show patient and treatment
             start: new Date(apt.start),
             end: new Date(apt.end),
           })),
@@ -122,7 +96,17 @@ const DoctorDayView = ({
         onSelectSlot={handleSelectSlot}
         date={selectedDate}
         toolbar={false}
-        eventPropGetter={eventPropGetter}
+        eventPropGetter={(event) => ({
+          style: {
+            backgroundColor:
+              event.title === "Seleccionado" ? "#28a745" : "#dc3545",
+            color: "white",
+            borderRadius: "4px",
+            border: "none",
+            fontSize: "12px", // Make text slightly smaller to fit
+            padding: "2px 4px",
+          },
+        })}
         scrollToTime={scrollToTime}
       />
     </div>
