@@ -188,6 +188,24 @@ function App() {
     }
   };
 
+  const handleNewAppointmentClick = () => {
+    const startTime = getNextHourDate();
+    const endTime = new Date(startTime.getTime() + 30 * 60000); // Add 30 minutes
+
+    setAppointmentForm({
+      appointmentId: "",
+      patientName: "",
+      doctorId: "",
+      doctorName: "",
+      treatmentType: "",
+      resourceId: "",
+      start: startTime,
+      end: endTime,
+    });
+    setModalMode("create");
+    setShowModal(true);
+  };
+
   const handleAddAppointment = async () => {
     console.log("doctorId:", appointmentForm.doctorId);
     console.log("doctors:", doctors);
@@ -222,6 +240,7 @@ function App() {
         },
       ]);
       setShowModal(false);
+      setDate(new Date(createdAppointment.start)); // Navigate to appointment date
       setAppointmentForm({
         appointmentId: "", // Reset appointmentId
         patientName: "",
@@ -269,28 +288,36 @@ function App() {
     setShowModal(false);
   };
 
+  const getNextHourDate = () => {
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setHours(now.getHours() + 1, 0, 0, 0);
+    return nextHour;
+  };
+
   return (
     <div style={{ height: "100vh", padding: "20px" }}>
       <h1>Hola Brackets</h1>
 
-      <div style={{ marginBottom: "20px" }}>
+      <div
+        style={{
+          marginBottom: "20px",
+          display: "flex",
+          justifyContent: "flex-end", // Changed to flex-end since we only have the add button
+        }}
+      >
         <button
-          onClick={() => setView("month")}
-          className={`view-button ${view === "month" ? "active" : ""}`}
+          onClick={handleNewAppointmentClick}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#28a745",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
         >
-          Month
-        </button>
-        <button
-          onClick={() => setView("week")}
-          className={`view-button ${view === "week" ? "active" : ""}`}
-        >
-          Week
-        </button>
-        <button
-          onClick={() => setView("day")}
-          className={`view-button ${view === "day" ? "active" : ""}`}
-        >
-          Day
+          Agregar cita
         </button>
       </div>
 
