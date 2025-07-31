@@ -20,6 +20,7 @@ import {
   deleteAppointment,
   getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
+import { useWindowSize } from "./hooks/useWindowSize";
 
 const locales = {
   "en-US": enUS,
@@ -75,8 +76,9 @@ const eventPropGetter = (event: Event) => {
 };
 
 function App() {
+  const { isMobile } = useWindowSize();
   const [events, setEvents] = useState<Event[]>([]);
-  const [view, setView] = useState<View>("week");
+  const [view, setView] = useState<View>(isMobile ? "day" : "week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "see-only">(
@@ -126,6 +128,13 @@ function App() {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Set view to "day" when switching to mobile
+    if (isMobile && view !== "day") {
+      setView("day");
+    }
+  }, [isMobile]);
 
   const handleSelectSlot = (slotInfo: any) => {
     setAppointmentForm({
