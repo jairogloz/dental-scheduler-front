@@ -48,29 +48,35 @@ const AppointmentModal = ({
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
           gap: "20px",
-          padding: "20px",
+          backgroundColor: "white",
+          padding: "30px",
+          borderRadius: "8px",
+          position: "relative", // Important for absolute positioning of close button
           overflowY: "auto",
           maxHeight: "90vh",
         }}
       >
+        {/* Close button */}
+        <button
+          onClick={handleCloseModal}
+          style={{
+            position: "absolute",
+            top: "10px",
+            right: "10px",
+            background: "none",
+            border: "none",
+            fontSize: "20px",
+            cursor: "pointer",
+            color: "#666",
+            padding: "5px",
+            lineHeight: "1",
+          }}
+        >
+          ×
+        </button>
+
         {/* Form Section */}
         <div className="modal-form" style={{ flex: isMobile ? "none" : "1" }}>
-          {/* Close Button */}
-          <button
-            onClick={handleCloseModal} // Directly close the modal
-            style={{
-              position: "absolute",
-              top: "10px",
-              right: "10px",
-              background: "none",
-              border: "none",
-              fontSize: "16px",
-              cursor: "pointer",
-            }}
-          >
-            X
-          </button>
-
           <h3>
             {mode === "create"
               ? "Nueva Cita Dental"
