@@ -26,10 +26,21 @@ const AppointmentModal = ({
 
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
-  const doctorOptions = doctors.map((doctor: Doctor) => ({
-    value: doctor.id,
-    label: `${doctor.name} - ${doctor.specialty}`,
-  }));
+  // Debug: Log the doctors prop to see what's being passed
+  console.log(
+    "AppointmentModal doctors prop:",
+    doctors,
+    "Array?",
+    Array.isArray(doctors)
+  );
+
+  // Type guard to ensure doctors is an array before mapping
+  const doctorOptions = Array.isArray(doctors)
+    ? doctors.map((doctor: Doctor) => ({
+        value: doctor.id,
+        label: `${doctor.name} - ${doctor.specialty}`,
+      }))
+    : [];
 
   console.log("mode:", mode);
   const isReadOnly = mode === "see-only" || mode === "edit";
@@ -103,9 +114,11 @@ const AppointmentModal = ({
                   doctorId: selectedOption?.value || "",
                   doctorName: selectedOption?.label || "",
                   resourceId: selectedOption
-                    ? doctors.find(
-                        (doc: Doctor) => doc.id === selectedOption.value
-                      )?.defaultUnit || ""
+                    ? Array.isArray(doctors)
+                      ? doctors.find(
+                          (doc: Doctor) => doc.id === selectedOption.value
+                        )?.default_unit_id || ""
+                      : ""
                     : "",
                 })
               }

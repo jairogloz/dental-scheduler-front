@@ -102,29 +102,37 @@ function App() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const [fetchedDoctors, fetchedUnits, fetchedAppointments] =
-        await Promise.all([
-          getDoctors(),
-          getUnits("clinic-1"), // Assuming clinicId is "clinic-1"
-          getAppointments(),
-        ]);
+      try {
+        const [fetchedDoctors, fetchedUnits, fetchedAppointments] =
+          await Promise.all([
+            getDoctors(),
+            getUnits("clinic-1"), // Assuming clinicId is "clinic-1"
+            getAppointments(),
+          ]);
 
-      setDoctors(fetchedDoctors);
-      setUnits(
-        fetchedUnits.map((unit) => ({
-          resourceId: unit.id,
-          resourceTitle: unit.name,
-        }))
-      );
-      setEvents(
-        fetchedAppointments.map((appointment) => ({
-          title: `${appointment.patientId} - ${appointment.doctorId}`,
-          start: new Date(appointment.start),
-          end: new Date(appointment.end),
-          resourceId: appointment.unitId,
-          appointmentId: appointment.id,
-        }))
-      );
+        setDoctors(fetchedDoctors);
+        setUnits(
+          fetchedUnits.map((unit) => ({
+            resourceId: unit.id,
+            resourceTitle: unit.name,
+          }))
+        );
+        setEvents(
+          fetchedAppointments.map((appointment) => ({
+            title: `${appointment.patientId} - ${appointment.doctorId}`,
+            start: new Date(appointment.start),
+            end: new Date(appointment.end),
+            resourceId: appointment.unitId,
+            appointmentId: appointment.id,
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        // Set empty arrays as fallback to prevent UI errors
+        setDoctors([]);
+        setUnits([]);
+        setEvents([]);
+      }
     };
 
     fetchData();

@@ -14,6 +14,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 // User profile type for authentication context
 export type UserProfile = {
   id: string
+  organization_id: string
   email: string
   full_name: string | null
   roles: ('admin' | 'doctor' | 'receptionist')[]
