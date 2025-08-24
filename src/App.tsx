@@ -21,6 +21,7 @@ import {
   getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
 import { useWindowSize } from "./hooks/useWindowSize";
+import Header from "./components/Header";
 
 const locales = {
   "en-US": enUS,
@@ -296,74 +297,75 @@ function App() {
   };
 
   return (
-    <div style={{ height: "100vh", padding: "20px" }}>
-      <h1>Hola Brackets</h1>
-
-      <div
-        style={{
-          marginBottom: "20px",
-          display: "flex",
-          justifyContent: "flex-end", // Changed to flex-end since we only have the add button
-        }}
-      >
-        <button
-          onClick={handleNewAppointmentClick}
+    <>
+      <Header />
+      <div style={{ padding: "20px" }}>
+        <div
           style={{
-            padding: "10px 20px",
-            backgroundColor: "#28a745",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
+            marginBottom: "20px",
+            display: "flex",
+            justifyContent: "flex-end", // Changed to flex-end since we only have the add button
           }}
         >
-          Agregar cita
-        </button>
-      </div>
+          <button
+            onClick={handleNewAppointmentClick}
+            style={{
+              padding: "10px 20px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+            }}
+          >
+            Agregar cita
+          </button>
+        </div>
 
-      <Calendar
-        localizer={localizer}
-        events={events}
-        culture="es-MX" // Set culture to Spanish (Mexico)
-        resources={view === "day" ? units : undefined}
-        resourceIdAccessor={view === "day" ? "resourceId" : undefined}
-        resourceTitleAccessor="resourceTitle"
-        startAccessor="start"
-        endAccessor="end"
-        date={date}
-        onNavigate={(newDate) => setDate(newDate)}
-        view={view}
-        onView={setView}
-        views={["month", "week", "day"]}
-        step={15}
-        timeslots={1}
-        style={{ height: "70vh" }}
-        selectable
-        onSelectSlot={handleSelectSlot}
-        onSelectEvent={handleSelectEvent}
-        eventPropGetter={eventPropGetter}
-        formats={{
-          timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
-          agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
-        }}
-        min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
-        max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
-      />
-
-      {showModal && (
-        <AppointmentModal
-          showModal={showModal}
-          mode={modalMode} // Pass the mode to the modal
-          appointmentForm={appointmentForm}
-          resources={units}
-          doctors={doctors}
-          handleCloseModal={handleCloseModal}
-          handleAddAppointment={handleAddAppointment}
-          handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
-          setAppointmentForm={setAppointmentForm}
+        <Calendar
+          localizer={localizer}
+          events={events}
+          culture="es-MX" // Set culture to Spanish (Mexico)
+          resources={view === "day" ? units : undefined}
+          resourceIdAccessor={view === "day" ? "resourceId" : undefined}
+          resourceTitleAccessor="resourceTitle"
+          startAccessor="start"
+          endAccessor="end"
+          date={date}
+          onNavigate={(newDate) => setDate(newDate)}
+          view={view}
+          onView={setView}
+          views={["month", "week", "day"]}
+          step={15}
+          timeslots={1}
+          style={{ height: "70vh" }}
+          selectable
+          onSelectSlot={handleSelectSlot}
+          onSelectEvent={handleSelectEvent}
+          eventPropGetter={eventPropGetter}
+          formats={{
+            timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
+            agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
+          }}
+          min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
+          max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
         />
-      )}
-    </div>
+
+        {showModal && (
+          <AppointmentModal
+            showModal={showModal}
+            mode={modalMode} // Pass the mode to the modal
+            appointmentForm={appointmentForm}
+            resources={units}
+            doctors={doctors}
+            handleCloseModal={handleCloseModal}
+            handleAddAppointment={handleAddAppointment}
+            handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
+            setAppointmentForm={setAppointmentForm}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
