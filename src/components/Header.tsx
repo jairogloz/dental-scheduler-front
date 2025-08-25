@@ -1,12 +1,40 @@
 import { useAuth } from "../contexts/AuthContext";
 import { getRoleDisplayText } from "../utils/roleUtils";
+import { useState, useRef, useEffect } from "react";
 
 const Header = () => {
   const { user, userProfile, signOut, loadingProfile } = useAuth();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleSignOut = async () => {
     await signOut();
+    setShowDropdown(false);
   };
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDropdown]);
 
   return (
     <header
@@ -47,62 +75,194 @@ const Header = () => {
             gap: "15px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-              fontSize: "14px",
-            }}
-          >
-            <span style={{ fontWeight: "500", color: "#374151" }}>
-              {loadingProfile ? "..." : userProfile?.full_name || user?.email}
-            </span>
-            {userProfile?.roles && userProfile.roles.length > 0 ? (
-              <span
+          <div ref={dropdownRef} style={{ position: "relative" }}>
+            <div
+              onClick={toggleDropdown}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "background-color 0.2s",
+                backgroundColor: showDropdown ? "#f3f4f6" : "transparent",
+              }}
+              onMouseEnter={(e) => {
+                if (!showDropdown) {
+                  e.currentTarget.style.backgroundColor = "#f9fafb";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!showDropdown) {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }
+              }}
+            >
+              <div
                 style={{
-                  color: "#64748b",
-                  fontSize: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  fontSize: "14px",
                 }}
               >
-                {getRoleDisplayText(userProfile)}
-              </span>
-            ) : (
-              !loadingProfile && (
-                <span
-                  style={{
-                    color: "#f59e0b",
-                    fontSize: "12px",
-                  }}
-                >
-                  Setup required
+                <span style={{ fontWeight: "500", color: "#374151" }}>
+                  {loadingProfile
+                    ? "..."
+                    : userProfile?.full_name || user?.email}
                 </span>
-              )
+                {userProfile?.roles && userProfile.roles.length > 0 ? (
+                  <span
+                    style={{
+                      color: "#64748b",
+                      fontSize: "12px",
+                    }}
+                  >
+                    {getRoleDisplayText(userProfile)}
+                  </span>
+                ) : (
+                  !loadingProfile && (
+                    <span
+                      style={{
+                        color: "#f59e0b",
+                        fontSize: "12px",
+                      }}
+                    >
+                      Setup required
+                    </span>
+                  )
+                )}
+              </div>
+
+              {/* Dropdown arrow icon */}
+              <svg
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  color: "#6b7280",
+                  transform: showDropdown ? "rotate(180deg)" : "rotate(0deg)",
+                  transition: "transform 0.2s",
+                }}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+
+            {/* Dropdown menu */}
+            {showDropdown && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "100%",
+                  right: "0",
+                  marginTop: "4px",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  boxShadow:
+                    "0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)",
+                  border: "1px solid #e5e7eb",
+                  minWidth: "180px",
+                  zIndex: 1000,
+                }}
+              >
+                <div style={{ padding: "4px 0" }}>
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      // TODO: Implement account functionality
+                      alert("Account functionality coming soon!");
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 16px",
+                      textAlign: "left",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      fontSize: "14px",
+                      color: "#374151",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    Cuenta
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      // TODO: Implement settings functionality
+                      alert("Settings functionality coming soon!");
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "8px 16px",
+                      textAlign: "left",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      fontSize: "14px",
+                      color: "#374151",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#f9fafb";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    Configuración
+                  </button>
+
+                  <hr
+                    style={{
+                      margin: "4px 0",
+                      border: "none",
+                      borderTop: "1px solid #e5e7eb",
+                    }}
+                  />
+
+                  <button
+                    onClick={handleSignOut}
+                    style={{
+                      width: "100%",
+                      padding: "8px 16px",
+                      textAlign: "left",
+                      border: "none",
+                      backgroundColor: "transparent",
+                      fontSize: "14px",
+                      color: "#dc2626",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "#fef2f2";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    Cerrar sesión
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-
-          <button
-            onClick={handleSignOut}
-            style={{
-              padding: "8px 16px",
-              backgroundColor: "#ef4444",
-              color: "white",
-              border: "none",
-              borderRadius: "6px",
-              fontSize: "14px",
-              fontWeight: "500",
-              cursor: "pointer",
-              transition: "background-color 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#dc2626";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "#ef4444";
-            }}
-          >
-            Cerrar sesión
-          </button>
         </div>
       </div>
     </header>
