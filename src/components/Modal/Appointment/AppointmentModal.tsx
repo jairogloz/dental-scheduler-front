@@ -26,14 +26,6 @@ const AppointmentModal = ({
 
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
-  // Debug: Log the doctors prop to see what's being passed
-  console.log(
-    "AppointmentModal doctors prop:",
-    doctors,
-    "Array?",
-    Array.isArray(doctors)
-  );
-
   // Type guard to ensure doctors is an array before mapping
   const doctorOptions = Array.isArray(doctors)
     ? doctors.map((doctor: Doctor) => ({
@@ -42,7 +34,6 @@ const AppointmentModal = ({
       }))
     : [];
 
-  console.log("mode:", mode);
   const isReadOnly = mode === "see-only" || mode === "edit";
 
   const handleCancel = () => {

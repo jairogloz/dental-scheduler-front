@@ -43,15 +43,12 @@ export const getDoctors = async (): Promise<Doctor[]> => {
     throw error;
   }
 
-  console.log('getDoctors apiClient response:', { data, error });
-  
   // Extract the actual doctors array from the nested data property
   const result = data?.data ?? [];
   if (result.length === 0) {
     console.info('No doctors found for this organization. Please add some first.');
   }
 
-  console.log('getDoctors returning:', result);
   return result;
 };
 

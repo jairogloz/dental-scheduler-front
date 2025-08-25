@@ -107,7 +107,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           setUserProfile(null);
         } else if (error.code === "PGRST116") {
           // Profile not found - user hasn't been created yet
-          console.log("Profile not found for user, will create one");
           setUserProfile(null);
         } else {
           console.error("Error fetching profile:", error);

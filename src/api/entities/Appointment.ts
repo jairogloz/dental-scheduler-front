@@ -76,7 +76,7 @@ export const createAppointment = async (
 ): Promise<Appointment> => {
   // Ensure forceCreate is actually a boolean (in case an event gets passed)
   const shouldForceCreate = typeof forceCreate === 'boolean' ? forceCreate : false;
-  console.log("Creating appointment:", appointment, "Force:", shouldForceCreate);
+  
   try {
     await delay(500);
 
@@ -92,20 +92,6 @@ export const createAppointment = async (
 
     const conflicts: string[] = [];
 
-    console.log("Checking conflicts for:", {
-      appointmentDoctorId: appointment.doctorId,
-      appointmentUnitId: appointment.unitId,
-      appointmentStart: appointment.start,
-      appointmentEnd: appointment.end
-    });
-    console.log("Existing appointments:", appointments.map(a => ({
-      id: a.id,
-      doctorId: a.doctorId,
-      unitId: a.unitId,
-      start: a.start,
-      end: a.end
-    })));
-
     // Check for overlapping appointments in the same unit
     const unitConflict = appointments.some(
       (a) =>
@@ -113,7 +99,6 @@ export const createAppointment = async (
         ((appointment.start >= a.start && appointment.start < a.end) ||
           (appointment.end > a.start && appointment.end <= a.end))
     );
-    console.log("Unit conflict found:", unitConflict);
     if (unitConflict) {
       conflicts.push("Selected unit is already booked at this time");
     }
@@ -128,9 +113,7 @@ export const createAppointment = async (
       )
       .map((a) => a.doctorId);
 
-    console.log("Doctor conflicts found:", conflictingDoctors);
     if (conflictingDoctors.length > 0) {
-      console.log("Conflicting doctor IDs:", conflictingDoctors);
       conflicts.push("Doctor already has an appointment at this time");
     }
 
@@ -147,11 +130,6 @@ export const createAppointment = async (
 
     // If there are conflicts and user hasn't confirmed, throw a special error
     if (conflicts.length > 0 && !shouldForceCreate) {
-      console.log("Throwing conflict error with:", { 
-        conflicts, 
-        forceCreate: shouldForceCreate, 
-        requiresConfirmation: true 
-      });
       throw { 
         code: 409, 
         message: conflicts.join(". "), 
@@ -160,11 +138,9 @@ export const createAppointment = async (
       };
     }
 
-    console.log("No conflicts or force create - proceeding with appointment creation");
     // If all checks pass or user confirmed, add the appointment
     const newAppointment = { id: uuidv4(), ...appointment };
     appointments.push(newAppointment);
-    console.log("appointments", appointments);
     return newAppointment;
   } catch (error) {
     if (error && typeof error === "object" && "code" in error && "message" in error) {

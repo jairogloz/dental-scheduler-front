@@ -161,7 +161,6 @@ function App() {
   };
 
   const handleSelectEvent = async (event: Event) => {
-    console.log("Selected event:", event);
     const isPastEvent = event.start < new Date();
 
     try {
@@ -169,7 +168,6 @@ function App() {
       const selectedAppointment = appointments.find(
         (appointment) => appointment.id === event.appointmentId
       );
-      console.log("Selected appointment:", selectedAppointment);
 
       if (!selectedAppointment) {
         alert("Appointment not found.");
@@ -216,8 +214,6 @@ function App() {
   };
 
   const handleAddAppointment = async (forceCreate: boolean = false) => {
-    console.log("doctorId:", appointmentForm.doctorId);
-    console.log("doctors:", doctors);
     const selectedDoctor = doctors.find(
       (doc) => doc.id === appointmentForm.doctorId // Match by doctor ID
     );
@@ -264,22 +260,16 @@ function App() {
         end: new Date(),
       });
     } catch (error) {
-      console.log("Caught error in handleAddAppointment:", error);
       if (error && typeof error === "object" && "message" in error) {
         // Check if this is a conflict that requires confirmation
         if ("requiresConfirmation" in error && error.requiresConfirmation) {
-          console.log("Showing confirmation dialog for conflicts");
           const confirmMessage = `${error.message}\n\nDo you want to create the appointment anyway?`;
           if (window.confirm(confirmMessage)) {
-            console.log("User confirmed, retrying with forceCreate=true");
             // User confirmed, try again with forceCreate = true
             // Don't pass the event, pass true explicitly
             handleAddAppointment(true);
-          } else {
-            console.log("User cancelled appointment creation");
           }
         } else {
-          console.log("Showing error alert:", error.message);
           alert(error.message); // Show specific error message to the user
         }
       } else {
@@ -291,10 +281,6 @@ function App() {
 
   const handleCancelAppointment = async () => {
     try {
-      console.log(
-        "appointmentForm.appointmentId:",
-        appointmentForm.appointmentId
-      );
       await deleteAppointment(appointmentForm.appointmentId); // Use appointmentId for deletion
       setEvents(
         events.filter(
