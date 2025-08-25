@@ -55,25 +55,22 @@ type AppointmentForm = {
   end: Date;
 };
 
-const resourceColors: { [key: string]: string } = {
-  "unidad-1": "#3B82F6", // Modern Blue - professional and calming
-  "unidad-2": "#10B981", // Emerald Green - fresh and medical
-  "unidad-3": "#8B5CF6", // Purple - sophisticated and distinctive
-  "unidad-4": "#F59E0B", // Amber Orange - warm and energetic
-  "unidad-5": "#EF4444", // Modern Red - attention-grabbing but not harsh
-};
+// Doctor colors - will be dynamically assigned based on available doctors
+const doctorColors: string[] = [
+  "#3B82F6", // Modern Blue - professional and calming
+  "#10B981", // Emerald Green - fresh and medical
+  "#8B5CF6", // Purple - sophisticated and distinctive
+  "#F59E0B", // Amber Orange - warm and energetic
+  "#EF4444", // Modern Red - attention-grabbing but not harsh
+  "#06B6D4", // Cyan - medical and clean
+  "#8B5A2B", // Brown - warm and reliable
+  "#EC4899", // Pink - caring and approachable
+];
 
-const eventPropGetter = (event: Event) => {
-  const backgroundColor = resourceColors[event.resourceId] || "#ccc";
-  return {
-    style: {
-      backgroundColor,
-      color: "white",
-      borderRadius: "4px",
-      border: "none",
-      padding: "2px 5px",
-    },
-  };
+const getDoctorColor = (doctorId: string, doctors: Doctor[]): string => {
+  const doctorIndex = doctors.findIndex((doctor) => doctor.id === doctorId);
+  if (doctorIndex === -1) return "#ccc"; // Default color for unknown doctors
+  return doctorColors[doctorIndex % doctorColors.length];
 };
 
 function App() {
@@ -100,6 +97,24 @@ function App() {
     { resourceId: string; resourceTitle: string }[]
   >([]);
 
+  // Event styling function - now based on doctor
+  const eventPropGetter = (event: Event) => {
+    const backgroundColor = getDoctorColor(event.resourceId, doctors);
+    return {
+      style: {
+        backgroundColor,
+        color: "white",
+        borderRadius: "4px",
+        border: "none",
+        padding: "2px 5px",
+        opacity: "0.95", // Slight transparency to show overlaps
+        fontSize: "13.5px", // Slightly smaller font for better fit
+        fontWeight: "500", // Medium font weight for better readability
+        outline: "1px solid rgba(255, 255, 255, 0.8)", // Additional outer outline for extra separation
+      },
+    };
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -118,13 +133,20 @@ function App() {
           }))
         );
         setEvents(
-          fetchedAppointments.map((appointment) => ({
-            title: `${appointment.patientId} - ${appointment.doctorId}`,
-            start: new Date(appointment.start),
-            end: new Date(appointment.end),
-            resourceId: appointment.unitId,
-            appointmentId: appointment.id,
-          }))
+          fetchedAppointments.map((appointment) => {
+            const doctor = fetchedDoctors.find(
+              (d) => d.id === appointment.doctorId
+            );
+            return {
+              title: `${appointment.patientId} - ${
+                doctor?.name || appointment.doctorId
+              }`,
+              start: new Date(appointment.start),
+              end: new Date(appointment.end),
+              resourceId: appointment.doctorId, // Changed from unitId to doctorId for color assignment
+              appointmentId: appointment.id,
+            };
+          })
         );
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -243,7 +265,7 @@ function App() {
           title: `${createdAppointment.patientId} - ${selectedDoctor.name}`, // Show doctor name in the event title
           start: new Date(createdAppointment.start),
           end: new Date(createdAppointment.end),
-          resourceId: createdAppointment.unitId,
+          resourceId: createdAppointment.doctorId, // Changed from unitId to doctorId for color assignment
           appointmentId: createdAppointment.id,
         },
       ]);
