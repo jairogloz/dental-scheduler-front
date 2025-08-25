@@ -22,6 +22,7 @@ import {
 } from "./api/entities/Appointment";
 import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
 
 const locales = {
   "en-US": enUS,
@@ -82,6 +83,8 @@ function App() {
   const [modalMode, setModalMode] = useState<"create" | "edit" | "see-only">(
     "create"
   );
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeSection, setActiveSection] = useState("appointments");
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
     appointmentId: "", // Initialize appointmentId
     patientName: "",
@@ -165,7 +168,11 @@ function App() {
     if (isMobile && view !== "day") {
       setView("day");
     }
-  }, [isMobile]);
+    // Auto-collapse sidebar on mobile
+    if (isMobile && !sidebarCollapsed) {
+      setSidebarCollapsed(true);
+    }
+  }, [isMobile, view, sidebarCollapsed]);
 
   const handleSelectSlot = (slotInfo: any) => {
     setAppointmentForm({
@@ -333,72 +340,150 @@ function App() {
 
   return (
     <>
-      <Header />
-      <div style={{ padding: "20px" }}>
-        <div
-          style={{
-            marginBottom: "20px",
-            display: "flex",
-            justifyContent: "flex-end", // Changed to flex-end since we only have the add button
-          }}
-        >
-          <button
-            onClick={handleNewAppointmentClick}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            Agregar cita
-          </button>
+      <Sidebar
+        isCollapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(!sidebarCollapsed)}
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        isMobile={isMobile}
+      />
+      <div
+        style={{
+          marginLeft: isMobile ? "0" : sidebarCollapsed ? "60px" : "240px",
+          transition: "margin-left 0.3s ease",
+          minHeight: "100vh",
+          backgroundColor: "#f8fafc",
+        }}
+      >
+        <Header />
+        <div style={{ padding: "20px" }}>
+          {activeSection === "appointments" ? (
+            <>
+              <div
+                style={{
+                  marginBottom: "20px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <h1
+                  style={{
+                    margin: 0,
+                    fontSize: "24px",
+                    fontWeight: "600",
+                    color: "#1f2937",
+                  }}
+                >
+                  Gestión de Citas
+                </h1>
+                <button
+                  onClick={handleNewAppointmentClick}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    transition: "background-color 0.2s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "#218838";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "#28a745";
+                  }}
+                >
+                  Agregar cita
+                </button>
+              </div>
+
+              <Calendar
+                localizer={localizer}
+                events={events}
+                culture="es-MX" // Set culture to Spanish (Mexico)
+                resources={view === "day" ? units : undefined}
+                resourceIdAccessor={view === "day" ? "resourceId" : undefined}
+                resourceTitleAccessor="resourceTitle"
+                startAccessor="start"
+                endAccessor="end"
+                date={date}
+                onNavigate={(newDate) => setDate(newDate)}
+                view={view}
+                onView={setView}
+                views={["month", "week", "day"]}
+                step={15}
+                timeslots={1}
+                style={{
+                  height: "70vh",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                }}
+                selectable
+                onSelectSlot={handleSelectSlot}
+                onSelectEvent={handleSelectEvent}
+                eventPropGetter={eventPropGetter}
+                formats={{
+                  timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
+                  agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
+                }}
+                min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
+                max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
+              />
+            </>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "60px 20px",
+                backgroundColor: "white",
+                borderRadius: "8px",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <h2
+                style={{
+                  margin: 0,
+                  fontSize: "20px",
+                  color: "#6b7280",
+                  fontWeight: "500",
+                }}
+              >
+                {activeSection === "patients" && "Gestión de Pacientes"}
+                {activeSection === "doctors" && "Gestión de Doctores"}
+                {activeSection === "expenses" && "Gestión de Gastos"}
+                {activeSection === "reports" && "Reportes"}
+                {activeSection === "settings" && "Configuración"}
+              </h2>
+              <p
+                style={{
+                  margin: "16px 0 0 0",
+                  color: "#9ca3af",
+                  fontSize: "16px",
+                }}
+              >
+                Esta sección estará disponible próximamente.
+              </p>
+            </div>
+          )}
+
+          {showModal && (
+            <AppointmentModal
+              showModal={showModal}
+              mode={modalMode} // Pass the mode to the modal
+              appointmentForm={appointmentForm}
+              resources={units}
+              doctors={doctors}
+              handleCloseModal={handleCloseModal}
+              handleAddAppointment={handleAddAppointment}
+              handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
+              setAppointmentForm={setAppointmentForm}
+            />
+          )}
         </div>
-
-        <Calendar
-          localizer={localizer}
-          events={events}
-          culture="es-MX" // Set culture to Spanish (Mexico)
-          resources={view === "day" ? units : undefined}
-          resourceIdAccessor={view === "day" ? "resourceId" : undefined}
-          resourceTitleAccessor="resourceTitle"
-          startAccessor="start"
-          endAccessor="end"
-          date={date}
-          onNavigate={(newDate) => setDate(newDate)}
-          view={view}
-          onView={setView}
-          views={["month", "week", "day"]}
-          step={15}
-          timeslots={1}
-          style={{ height: "70vh" }}
-          selectable
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={handleSelectEvent}
-          eventPropGetter={eventPropGetter}
-          formats={{
-            timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
-            agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
-          }}
-          min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
-          max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
-        />
-
-        {showModal && (
-          <AppointmentModal
-            showModal={showModal}
-            mode={modalMode} // Pass the mode to the modal
-            appointmentForm={appointmentForm}
-            resources={units}
-            doctors={doctors}
-            handleCloseModal={handleCloseModal}
-            handleAddAppointment={handleAddAppointment}
-            handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
-            setAppointmentForm={setAppointmentForm}
-          />
-        )}
       </div>
     </>
   );
