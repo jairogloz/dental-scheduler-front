@@ -215,7 +215,7 @@ function App() {
     setShowModal(true);
   };
 
-  const handleAddAppointment = async () => {
+  const handleAddAppointment = async (forceCreate: boolean = false) => {
     console.log("doctorId:", appointmentForm.doctorId);
     console.log("doctors:", doctors);
     const selectedDoctor = doctors.find(
@@ -237,7 +237,10 @@ function App() {
     };
 
     try {
-      const createdAppointment = await createAppointment(newAppointment);
+      const createdAppointment = await createAppointment(
+        newAppointment,
+        forceCreate
+      );
       setEvents([
         ...events,
         {
@@ -261,8 +264,24 @@ function App() {
         end: new Date(),
       });
     } catch (error) {
+      console.log("Caught error in handleAddAppointment:", error);
       if (error && typeof error === "object" && "message" in error) {
-        alert(error.message); // Show specific error message to the user
+        // Check if this is a conflict that requires confirmation
+        if ("requiresConfirmation" in error && error.requiresConfirmation) {
+          console.log("Showing confirmation dialog for conflicts");
+          const confirmMessage = `${error.message}\n\nDo you want to create the appointment anyway?`;
+          if (window.confirm(confirmMessage)) {
+            console.log("User confirmed, retrying with forceCreate=true");
+            // User confirmed, try again with forceCreate = true
+            // Don't pass the event, pass true explicitly
+            handleAddAppointment(true);
+          } else {
+            console.log("User cancelled appointment creation");
+          }
+        } else {
+          console.log("Showing error alert:", error.message);
+          alert(error.message); // Show specific error message to the user
+        }
       } else {
         console.error("Unexpected error:", error);
         alert("An unexpected error occurred. Please try again."); // Generic error message

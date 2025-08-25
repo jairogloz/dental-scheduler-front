@@ -41,6 +41,26 @@ const appointments: Appointment[] = [
     start: new Date(now.getTime() - 22 * 60 * 60 * 1000), // Yesterday at the same time + 1 hour
     end: new Date(now.getTime() - 21.5 * 60 * 60 * 1000), // Yesterday + 1.5 hours
   },
+  // Add a test appointment with real backend IDs to test conflicts
+  {
+    id: uuidv4(),
+    patientId: "Test Patient",
+    doctorId: "89209989-077e-4daf-b382-579fd8774605", // Anahí Perales ID
+    treatment: "Test Treatment",
+    unitId: "b1eb2c47-5e82-4db4-ae10-8abab99a1638", // Her default unit
+    start: new Date(now.getTime() + 3 * 60 * 60 * 1000), // Current time + 3 hours
+    end: new Date(now.getTime() + 4 * 60 * 60 * 1000), // Current time + 4 hours
+  },
+  // Add another test appointment for easier conflict testing
+  {
+    id: uuidv4(),
+    patientId: "Easy Conflict Test",
+    doctorId: "89209989-077e-4daf-b382-579fd8774605", // Same doctor
+    treatment: "Conflict Test",
+    unitId: "b1eb2c47-5e82-4db4-ae10-8abab99a1638", // Same unit
+    start: new Date(now.getTime() + 30 * 60 * 1000), // Current time + 30 minutes
+    end: new Date(now.getTime() + 60 * 60 * 1000), // Current time + 1 hour
+  },
 ];
 
 const blockedTimeRanges: { doctorId: string; start: Date; end: Date }[] = [];
@@ -50,8 +70,13 @@ export const getAppointments = async (): Promise<Appointment[]> => {
   return appointments;
 };
 
-export const createAppointment = async (appointment: Omit<Appointment, "id">): Promise<Appointment> => {
-  console.log("Creating appointment:", appointment);
+export const createAppointment = async (
+  appointment: Omit<Appointment, "id">, 
+  forceCreate: boolean = false
+): Promise<Appointment> => {
+  // Ensure forceCreate is actually a boolean (in case an event gets passed)
+  const shouldForceCreate = typeof forceCreate === 'boolean' ? forceCreate : false;
+  console.log("Creating appointment:", appointment, "Force:", shouldForceCreate);
   try {
     await delay(500);
 
@@ -65,6 +90,22 @@ export const createAppointment = async (appointment: Omit<Appointment, "id">): P
       throw { code: 400, message: "End time must be after start time" };
     }
 
+    const conflicts: string[] = [];
+
+    console.log("Checking conflicts for:", {
+      appointmentDoctorId: appointment.doctorId,
+      appointmentUnitId: appointment.unitId,
+      appointmentStart: appointment.start,
+      appointmentEnd: appointment.end
+    });
+    console.log("Existing appointments:", appointments.map(a => ({
+      id: a.id,
+      doctorId: a.doctorId,
+      unitId: a.unitId,
+      start: a.start,
+      end: a.end
+    })));
+
     // Check for overlapping appointments in the same unit
     const unitConflict = appointments.some(
       (a) =>
@@ -72,8 +113,9 @@ export const createAppointment = async (appointment: Omit<Appointment, "id">): P
         ((appointment.start >= a.start && appointment.start < a.end) ||
           (appointment.end > a.start && appointment.end <= a.end))
     );
+    console.log("Unit conflict found:", unitConflict);
     if (unitConflict) {
-      throw { code: 409, message: "Selected unit is already booked at this time" };
+      conflicts.push("Selected unit is already booked at this time");
     }
 
     // Check for overlapping appointments for the same doctor
@@ -86,9 +128,10 @@ export const createAppointment = async (appointment: Omit<Appointment, "id">): P
       )
       .map((a) => a.doctorId);
 
+    console.log("Doctor conflicts found:", conflictingDoctors);
     if (conflictingDoctors.length > 0) {
       console.log("Conflicting doctor IDs:", conflictingDoctors);
-      throw { code: 409, message: "Doctor already has an appointment at this time" };
+      conflicts.push("Doctor already has an appointment at this time");
     }
 
     // Check if the doctor has a blocked time range that overlaps
@@ -102,7 +145,23 @@ export const createAppointment = async (appointment: Omit<Appointment, "id">): P
       throw { code: 409, message: "Doctor is unavailable at this time" };
     }
 
-    // If all checks pass, add the appointment
+    // If there are conflicts and user hasn't confirmed, throw a special error
+    if (conflicts.length > 0 && !shouldForceCreate) {
+      console.log("Throwing conflict error with:", { 
+        conflicts, 
+        forceCreate: shouldForceCreate, 
+        requiresConfirmation: true 
+      });
+      throw { 
+        code: 409, 
+        message: conflicts.join(". "), 
+        conflicts: conflicts,
+        requiresConfirmation: true 
+      };
+    }
+
+    console.log("No conflicts or force create - proceeding with appointment creation");
+    // If all checks pass or user confirmed, add the appointment
     const newAppointment = { id: uuidv4(), ...appointment };
     appointments.push(newAppointment);
     console.log("appointments", appointments);
