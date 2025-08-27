@@ -1,7 +1,7 @@
 import { delay } from "../utils"
 import type { Appointment } from "./Appointment";
 import { getAppointments } from "./Appointment";
-import { apiClient } from "../../lib/apiClient";
+import { legacyApiClient as apiClient } from "../../lib/apiClient";
 import { supabase } from "../../lib/supabase";
 
 export type Doctor = {
@@ -37,7 +37,7 @@ export const getDoctors = async (): Promise<Doctor[]> => {
     throw new Error('User has no organization assigned');
   }
 
-  // Call backend API with organization_id as query parameter
+  // Call backend API - axios interceptor automatically handles JWT token
   const { data, error } = await apiClient.get<{ data: Doctor[] }>(`/doctors?orgId=${profile.organization_id}`);
   if (error) {
     throw error;

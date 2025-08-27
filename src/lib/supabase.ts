@@ -7,9 +7,29 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-// Supabase client - ONLY used for authentication
-// All data operations should go through your backend API
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Enhanced Supabase client with proper auth configuration
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+})
+
+// Helper function to get current auth token
+export const getAuthToken = async (): Promise<string | null> => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Error getting session:', error);
+      return null;
+    }
+    return session?.access_token || null;
+  } catch (error) {
+    console.error('Error getting auth token:', error);
+    return null;
+  }
+};
 
 // User profile type for authentication context
 export type UserProfile = {
