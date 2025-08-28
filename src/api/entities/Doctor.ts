@@ -2,7 +2,6 @@ import { delay } from "../utils"
 import type { Appointment } from "./Appointment";
 import { getAppointments } from "./Appointment";
 import { legacyApiClient as apiClient } from "../../lib/apiClient";
-import { supabase } from "../../lib/supabase";
 
 export type Doctor = {
   id: string;
@@ -16,29 +15,11 @@ export type Doctor = {
 };
 
 export const getDoctors = async (): Promise<Doctor[]> => {
-  // Get user profile to extract organization_id
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('User not authenticated');
-  }
-
-  // Get user profile from profiles table
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .single();
-
-  if (profileError) {
-    throw new Error(`Failed to get user profile: ${profileError.message}`);
-  }
-
-  if (!profile?.organization_id) {
-    throw new Error('User has no organization assigned');
-  }
-
-  // Call backend API - axios interceptor automatically handles JWT token
-  const { data, error } = await apiClient.get<{ data: Doctor[] }>(`/doctors?orgId=${profile.organization_id}`);
+  // No need to get organization_id from profiles table anymore!
+  // The JWT token now contains organization_id as a custom claim
+  
+  // Call backend API - organization_id will be extracted from JWT token by backend
+  const { data, error } = await apiClient.get<{ data: Doctor[] }>('/doctors');
   if (error) {
     throw error;
   }
