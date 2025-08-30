@@ -38,7 +38,6 @@ const DoctorDayView = ({
   const [appointments, setAppointments] =
     useState<Appointment[]>(existingAppointments);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastFetchedDate, setLastFetchedDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -49,7 +48,6 @@ const DoctorDayView = ({
           selectedDate
         );
         setAppointments(doctorAppointments);
-        setLastFetchedDate(selectedDate);
       } catch (error) {
         console.error("Error fetching appointments:", error);
       } finally {

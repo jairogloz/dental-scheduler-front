@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
 import DatePicker from "react-datepicker";
 import type { Doctor } from "../../../api/entities/Doctor";
+import type { Patient } from "../../../api/entities/Patient";
+import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
+import AddPatientModal from "../../PatientSearch/AddPatientModal";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
@@ -22,9 +25,11 @@ const AppointmentModal = ({
 }: any) => {
   const { isMobile } = useWindowSize();
 
-  if (!showModal) return null;
-
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+
+  if (!showModal) return null;
 
   // Type guard to ensure doctors is an array before mapping
   const doctorOptions = Array.isArray(doctors)
@@ -35,6 +40,54 @@ const AppointmentModal = ({
     : [];
 
   const isReadOnly = mode === "see-only" || mode === "edit";
+
+  // Patient search handlers
+  const handlePatientSelect = (patient: Patient | null) => {
+    setSelectedPatient(patient);
+    setAppointmentForm({
+      ...appointmentForm,
+      patientName: patient?.name || "",
+      patientId: patient?.id || "",
+    });
+  };
+
+  const handleAddNewPatient = () => {
+    setShowAddPatientModal(true);
+  };
+
+  const handlePatientCreated = (newPatient: Patient) => {
+    setSelectedPatient(newPatient);
+    setAppointmentForm({
+      ...appointmentForm,
+      patientName: newPatient.name,
+      patientId: newPatient.id,
+    });
+    setShowAddPatientModal(false);
+  };
+
+  const handleCloseAddPatientModal = () => {
+    setShowAddPatientModal(false);
+  };
+
+  // Sync selectedPatient with appointmentForm when modal opens or form changes
+  useEffect(() => {
+    if (showModal) {
+      // Reset patient selection state when modal opens
+      if (appointmentForm.patientName && appointmentForm.patientId) {
+        // If we have both name and ID, create a patient object
+        setSelectedPatient({
+          id: appointmentForm.patientId,
+          name: appointmentForm.patientName,
+        });
+      } else if (appointmentForm.patientName && !appointmentForm.patientId) {
+        // If we only have a name (legacy data), clear selection to allow search
+        setSelectedPatient(null);
+      } else {
+        // Clear selection if no patient data
+        setSelectedPatient(null);
+      }
+    }
+  }, [showModal, appointmentForm.patientName, appointmentForm.patientId]);
 
   const handleCancel = () => {
     setShowCancelConfirmation(true);
@@ -123,17 +176,12 @@ const AppointmentModal = ({
             <label style={{ display: "block", marginBottom: "5px" }}>
               Nombre del Paciente:
             </label>
-            <input
-              type="text"
-              value={appointmentForm.patientName}
-              onChange={(e) =>
-                setAppointmentForm({
-                  ...appointmentForm,
-                  patientName: e.target.value,
-                })
-              }
-              className="custom-text-input"
+            <PatientSearchAutocomplete
+              selectedPatient={selectedPatient}
+              onPatientSelect={handlePatientSelect}
+              onAddNewPatient={handleAddNewPatient}
               disabled={isReadOnly}
+              placeholder="Buscar paciente por nombre..."
             />
           </div>
 
@@ -308,6 +356,13 @@ const AppointmentModal = ({
           </div>
         )}
       </div>
+
+      {/* Add Patient Modal */}
+      <AddPatientModal
+        isOpen={showAddPatientModal}
+        onClose={handleCloseAddPatientModal}
+        onPatientCreated={handlePatientCreated}
+      />
 
       {/* Cancel Confirmation Dialog */}
       {showCancelConfirmation && (

@@ -1,0 +1,231 @@
+/* Patient Search Autocomplete Styles */
+.patient-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.patient-search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.patient-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  padding-right: 40px; /* Space for clear button and loading spinner */
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  transition: border-color 0.2s ease;
+}
+
+.patient-search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.patient-search-input:disabled {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
+}
+
+.patient-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  transition: background-color 0.2s ease;
+}
+
+.patient-search-clear:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.patient-search-loading {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.patient-search-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.patient-search-error {
+  padding: 12px;
+  color: #dc3545;
+  background-color: #f8d7da;
+  border-bottom: 1px solid #f5c6cb;
+  font-size: 14px;
+}
+
+
+.patient-search-result {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background-color 0.15s ease;
+}
+
+.patient-search-result:last-child {
+  border-bottom: none;
+}
+
+.patient-search-result:hover,
+.patient-search-result.focused {
+  background-color: #f8f9fa;
+}
+
+.patient-name {
+  font-weight: 500;
+  color: #212529;
+  margin-bottom: 2px;
+  font-size: 14px;
+}
+
+.patient-phone {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.search-highlight {
+  background-color: #fff3cd;
+  font-weight: 600;
+  padding: 1px 2px;
+  border-radius: 2px;
+}
+
+.patient-search-no-results {
+  padding: 16px;
+  text-align: center;
+}
+
+.no-results-message {
+  color: #6c757d;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.add-new-patient-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.add-new-patient-btn:hover,
+.add-new-patient-btn.focused {
+  background-color: #0056b3;
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+  .patient-search-dropdown {
+    max-height: 250px;
+  }
+  
+  .patient-search-result {
+    padding: 14px 12px;
+  }
+  
+  .patient-name {
+    font-size: 15px;
+  }
+  
+  .patient-phone {
+    font-size: 13px;
+  }
+}
+
+/* Accessibility improvements */
+.patient-search-input:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+.add-new-patient-btn:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .patient-search-input {
+    border-color: #000;
+  }
+  
+  .patient-search-result:hover,
+  .patient-search-result.focused {
+    background-color: #000;
+    color: #fff;
+  }
+  
+  .search-highlight {
+    background-color: #ffff00;
+    color: #000;
+  }
+}
