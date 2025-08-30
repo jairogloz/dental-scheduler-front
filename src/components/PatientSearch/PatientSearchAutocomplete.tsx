@@ -45,33 +45,45 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
 
     // Create new abort controller for this search
     abortControllerRef.current = new AbortController();
+    const currentController = abortControllerRef.current;
 
     setIsLoading(true);
     setError(null);
 
     try {
+      console.log("🔍 Starting patient search for:", searchQuery);
       const patients = await searchPatients(searchQuery);
 
       // Check if this search was aborted
-      if (abortControllerRef.current?.signal.aborted) {
+      if (currentController.signal.aborted) {
+        console.log("🚫 Patient search aborted for:", searchQuery);
         return;
       }
 
+      console.log(
+        "✅ Patient search completed for:",
+        searchQuery,
+        "Found:",
+        patients.length
+      );
       setResults(patients);
       setShowDropdown(true);
       setFocusedIndex(-1);
     } catch (err) {
       // Don't update state if the request was aborted
-      if (abortControllerRef.current?.signal.aborted) {
+      if (currentController.signal.aborted) {
+        console.log("🚫 Patient search aborted (in catch) for:", searchQuery);
         return;
       }
 
-      console.error("Patient search error:", err);
+      console.error("❌ Patient search error for:", searchQuery, err);
       setError("Error searching patients. Please try again.");
       setResults([]);
+      setShowDropdown(true); // Still show dropdown to display error
     } finally {
       // Only update loading state if not aborted
-      if (!abortControllerRef.current?.signal.aborted) {
+      if (!currentController.signal.aborted) {
+        console.log("🏁 Patient search finished for:", searchQuery);
         setIsLoading(false);
       }
     }
@@ -186,6 +198,26 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
       }
     };
   }, []);
+
+  // Safety mechanism: Reset loading state if it's been loading for too long
+  useEffect(() => {
+    let safetyTimer: NodeJS.Timeout;
+
+    if (isLoading) {
+      console.log("⏰ Setting safety timer for patient search loading state");
+      safetyTimer = setTimeout(() => {
+        console.warn("⚠️ Patient search loading timeout - forcing reset");
+        setIsLoading(false);
+        setError("Search timeout. Please try again.");
+      }, 10000); // 10 second timeout
+    }
+
+    return () => {
+      if (safetyTimer) {
+        clearTimeout(safetyTimer);
+      }
+    };
+  }, [isLoading]);
 
   // Highlight search term in text
   const highlightMatch = (text: string, searchTerm: string) => {

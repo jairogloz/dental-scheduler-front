@@ -83,7 +83,11 @@ apiClient.interceptors.response.use(
         // Update original request with new token
         originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
         
+        // Add a small delay to ensure token is properly propagated
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         // Retry the original request
+        console.log('🔄 Retrying original request after token refresh');
         return apiClient.request(originalRequest);
         
       } catch (refreshError) {

@@ -131,7 +131,27 @@
 
 .patient-search-result:hover,
 .patient-search-result.focused {
-  background-color: #f8f9fa;
+  background-color: #e3f2fd;
+  border-left: 3px solid #007bff;
+  padding-left: 13px; /* Adjust for border */
+}
+
+.patient-search-result.focused {
+  background-color: #1976d2;
+  color: white;
+}
+
+.patient-search-result.focused .patient-name {
+  color: white;
+}
+
+.patient-search-result.focused .patient-phone {
+  color: #e3f2fd;
+}
+
+.patient-search-result.focused .search-highlight {
+  background-color: #ffeb3b;
+  color: #1976d2;
 }
 
 .patient-name {
@@ -182,6 +202,11 @@
   background-color: #0056b3;
 }
 
+.add-new-patient-btn.focused {
+  background-color: #1976d2;
+  box-shadow: 0 0 0 2px #e3f2fd;
+}
+
 /* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .patient-search-dropdown {
@@ -218,13 +243,31 @@
     border-color: #000;
   }
   
-  .patient-search-result:hover,
+  .patient-search-result:hover {
+    background-color: #ddd;
+    color: #000;
+  }
+  
   .patient-search-result.focused {
     background-color: #000;
     color: #fff;
+    border-left-color: #fff;
+  }
+  
+  .patient-search-result.focused .patient-name {
+    color: #fff;
+  }
+  
+  .patient-search-result.focused .patient-phone {
+    color: #ccc;
   }
   
   .search-highlight {
+    background-color: #ffff00;
+    color: #000;
+  }
+  
+  .patient-search-result.focused .search-highlight {
     background-color: #ffff00;
     color: #000;
   }

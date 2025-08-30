@@ -33,15 +33,26 @@ export const searchPatients = async (query: string, limit: number = 100): Promis
     return [];
   }
 
-  const { data, error } = await apiClient.get<PatientSearchResponse>(
-    `/patients/search?q=${encodeURIComponent(query)}&limit=${limit}`
-  );
+  try {
+    const { data, error } = await apiClient.get<PatientSearchResponse>(
+      `/patients/search?q=${encodeURIComponent(query)}&limit=${limit}`
+    );
 
-  if (error) {
+    if (error) {
+      console.error('Patient search API error:', error);
+      throw error;
+    }
+
+    if (!data) {
+      console.warn('Patient search returned no data');
+      return [];
+    }
+
+    return data.data?.patients || [];
+  } catch (error) {
+    console.error('Patient search failed:', error);
     throw error;
   }
-
-  return data?.data?.patients || [];
 };
 
 // Create a new patient
