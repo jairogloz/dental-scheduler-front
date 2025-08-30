@@ -9,14 +9,10 @@ import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
 import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import type { View } from "react-big-calendar";
-import {
-  getDoctors,
-  getUnits,
-  getAppointments,
-  createAppointment,
-} from "./api/useAPI";
+import { getDoctors, getUnits, getAppointments } from "./api/useAPI";
 import type { Doctor } from "./api/entities/Doctor";
 import {
+  createAppointment,
   deleteAppointment,
   getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
@@ -48,6 +44,7 @@ type Event = {
 type AppointmentForm = {
   appointmentId: string; // Add appointmentId
   patientName: string;
+  patientId: string; // Add patientId
   doctorId: string;
   doctorName: string;
   treatmentType: string;
@@ -88,6 +85,7 @@ function App() {
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
     appointmentId: "", // Initialize appointmentId
     patientName: "",
+    patientId: "", // Initialize patientId
     doctorId: "",
     doctorName: "",
     treatmentType: "",
@@ -178,6 +176,7 @@ function App() {
     setAppointmentForm({
       appointmentId: "", // Reset appointmentId
       patientName: "",
+      patientId: "", // Reset patientId
       doctorId: "",
       doctorName: "",
       treatmentType: "",
@@ -205,7 +204,8 @@ function App() {
 
       setAppointmentForm({
         appointmentId: selectedAppointment.id,
-        patientName: selectedAppointment.patientId,
+        patientName: selectedAppointment.patientId, // This needs to be fixed to get actual patient name
+        patientId: selectedAppointment.patientId,
         doctorId: selectedAppointment.doctorId,
         doctorName:
           doctors.find((doc) => doc.id === selectedAppointment.doctorId)
@@ -231,6 +231,7 @@ function App() {
     setAppointmentForm({
       appointmentId: "",
       patientName: "",
+      patientId: "", // Add patientId
       doctorId: "",
       doctorName: "",
       treatmentType: "",
@@ -248,12 +249,18 @@ function App() {
     );
 
     if (!selectedDoctor) {
-      alert("Please select a valid doctor.");
+      alert("Por favor selecciona un doctor válido.");
+      return;
+    }
+
+    // Validate that we have a patient ID
+    if (!appointmentForm.patientId) {
+      alert("Por favor selecciona un paciente antes de crear la cita.");
       return;
     }
 
     const newAppointment = {
-      patientId: appointmentForm.patientName,
+      patientId: appointmentForm.patientId, // Use patientId instead of patientName
       doctorId: selectedDoctor.id,
       treatment: appointmentForm.treatmentType,
       unitId: appointmentForm.resourceId,
@@ -269,7 +276,7 @@ function App() {
       setEvents([
         ...events,
         {
-          title: `${createdAppointment.patientId} - ${selectedDoctor.name}`, // Show doctor name in the event title
+          title: `${appointmentForm.patientName} - ${selectedDoctor.name}`, // Use patientName for display
           start: new Date(createdAppointment.start),
           end: new Date(createdAppointment.end),
           resourceId: createdAppointment.doctorId, // Changed from unitId to doctorId for color assignment
@@ -281,6 +288,7 @@ function App() {
       setAppointmentForm({
         appointmentId: "", // Reset appointmentId
         patientName: "",
+        patientId: "", // Reset patientId
         doctorId: "",
         doctorName: "",
         treatmentType: "",
@@ -292,18 +300,18 @@ function App() {
       if (error && typeof error === "object" && "message" in error) {
         // Check if this is a conflict that requires confirmation
         if ("requiresConfirmation" in error && error.requiresConfirmation) {
-          const confirmMessage = `${error.message}\n\nDo you want to create the appointment anyway?`;
+          const confirmMessage = `${error.message}\n\n¿Quieres crear la cita de todas formas?`;
           if (window.confirm(confirmMessage)) {
             // User confirmed, try again with forceCreate = true
             // Don't pass the event, pass true explicitly
             handleAddAppointment(true);
           }
         } else {
-          alert(error.message); // Show specific error message to the user
+          alert(error.message); // Show specific error message to the user (now in Spanish)
         }
       } else {
-        console.error("Unexpected error:", error);
-        alert("An unexpected error occurred. Please try again."); // Generic error message
+        console.error("Error inesperado:", error);
+        alert("Ocurrió un error inesperado. Por favor intenta de nuevo."); // Generic error message in Spanish
       }
     }
   };
