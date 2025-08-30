@@ -4,6 +4,7 @@ import {
   type Patient,
   type CreatePatientRequest,
 } from "../../api/entities/Patient";
+import { useAuth } from "../../contexts/AuthContext";
 import "../../styles/Modal.css";
 import "./AddPatientModal.css";
 
@@ -18,6 +19,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   onClose,
   onPatientCreated,
 }) => {
+  const { userProfile } = useAuth();
   const [formData, setFormData] = useState<CreatePatientRequest>({
     name: "",
     phone: "",
@@ -61,14 +63,23 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
       return;
     }
 
+    // Validate organization_id
+    if (!userProfile?.organization_id) {
+      setError("Error: No se pudo obtener la información de la organización");
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const newPatient = await createPatient({
-        name: formData.name.trim(),
-        phone: formData.phone?.trim() || undefined,
-      });
+      const newPatient = await createPatient(
+        {
+          name: formData.name.trim(),
+          phone: formData.phone?.trim() || undefined,
+        },
+        userProfile.organization_id
+      );
 
       // Success - notify parent and close modal
       onPatientCreated(newPatient);

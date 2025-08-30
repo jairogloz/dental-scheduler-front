@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { searchPatients, type Patient } from "../../api/entities/Patient";
+import { useAuth } from "../../contexts/AuthContext";
 import "./PatientSearchAutocomplete.css";
 
 export interface PatientSearchAutocompleteProps {
@@ -17,6 +18,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
   disabled = false,
   placeholder = "Buscar paciente...",
 }) => {
+  const { userProfile } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,64 +32,78 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
   const abortControllerRef = useRef<AbortController | null>(null);
 
   // Debounced search function
-  const debouncedSearch = useCallback(async (searchQuery: string) => {
-    if (searchQuery.length < 2) {
-      setResults([]);
-      setShowDropdown(false);
-      setIsLoading(false);
-      return;
-    }
-
-    // Cancel any previous search
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new abort controller for this search
-    abortControllerRef.current = new AbortController();
-    const currentController = abortControllerRef.current;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log("🔍 Starting patient search for:", searchQuery);
-      const patients = await searchPatients(searchQuery);
-
-      // Check if this search was aborted
-      if (currentController.signal.aborted) {
-        console.log("🚫 Patient search aborted for:", searchQuery);
-        return;
-      }
-
-      console.log(
-        "✅ Patient search completed for:",
-        searchQuery,
-        "Found:",
-        patients.length
-      );
-      setResults(patients);
-      setShowDropdown(true);
-      setFocusedIndex(-1);
-    } catch (err) {
-      // Don't update state if the request was aborted
-      if (currentController.signal.aborted) {
-        console.log("🚫 Patient search aborted (in catch) for:", searchQuery);
-        return;
-      }
-
-      console.error("❌ Patient search error for:", searchQuery, err);
-      setError("Error searching patients. Please try again.");
-      setResults([]);
-      setShowDropdown(true); // Still show dropdown to display error
-    } finally {
-      // Only update loading state if not aborted
-      if (!currentController.signal.aborted) {
-        console.log("🏁 Patient search finished for:", searchQuery);
+  const debouncedSearch = useCallback(
+    async (searchQuery: string) => {
+      if (searchQuery.length < 2) {
+        setResults([]);
+        setShowDropdown(false);
         setIsLoading(false);
+        return;
       }
-    }
-  }, []);
+
+      // Validate organization_id
+      if (!userProfile?.organization_id) {
+        console.error("No organization_id available for patient search");
+        setError("Error: No se pudo obtener la información de la organización");
+        setIsLoading(false);
+        return;
+      }
+
+      // Cancel any previous search
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      // Create new abort controller for this search
+      abortControllerRef.current = new AbortController();
+      const currentController = abortControllerRef.current;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        console.log("🔍 Starting patient search for:", searchQuery);
+        const patients = await searchPatients(
+          searchQuery,
+          userProfile.organization_id
+        );
+
+        // Check if this search was aborted
+        if (currentController.signal.aborted) {
+          console.log("🚫 Patient search aborted for:", searchQuery);
+          return;
+        }
+
+        console.log(
+          "✅ Patient search completed for:",
+          searchQuery,
+          "Found:",
+          patients.length
+        );
+        setResults(patients);
+        setShowDropdown(true);
+        setFocusedIndex(-1);
+      } catch (err) {
+        // Don't update state if the request was aborted
+        if (currentController.signal.aborted) {
+          console.log("🚫 Patient search aborted (in catch) for:", searchQuery);
+          return;
+        }
+
+        console.error("❌ Patient search error for:", searchQuery, err);
+        setError("Error searching patients. Please try again.");
+        setResults([]);
+        setShowDropdown(true); // Still show dropdown to display error
+      } finally {
+        // Only update loading state if not aborted
+        if (!currentController.signal.aborted) {
+          console.log("🏁 Patient search finished for:", searchQuery);
+          setIsLoading(false);
+        }
+      }
+    },
+    [userProfile?.organization_id]
+  );
 
   // Handle input change with debouncing
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

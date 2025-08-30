@@ -26,14 +26,18 @@ export type CreatePatientResponse = {
 };
 
 // Search patients with debouncing-friendly API call
-export const searchPatients = async (query: string, limit: number = 100): Promise<Patient[]> => {
+export const searchPatients = async (
+  query: string, 
+  organizationId: string,
+  limit: number = 100
+): Promise<Patient[]> => {
   if (query.length < 2) {
     return [];
   }
 
   try {
     const { data, error } = await apiClient.get<PatientSearchResponse>(
-      `/patients/search?q=${encodeURIComponent(query)}&limit=${limit}`
+      `/patients/search?q=${encodeURIComponent(query)}&organization_id=${encodeURIComponent(organizationId)}&limit=${limit}`
     );
 
     if (error) {
@@ -54,9 +58,15 @@ export const searchPatients = async (query: string, limit: number = 100): Promis
 };
 
 // Create a new patient
-export const createPatient = async (patientData: CreatePatientRequest): Promise<Patient> => {
+export const createPatient = async (
+  patientData: CreatePatientRequest, 
+  organizationId: string
+): Promise<Patient> => {
   try {
-    const { data, error } = await apiClient.post<CreatePatientResponse>('/patients', patientData);
+    const { data, error } = await apiClient.post<CreatePatientResponse>(
+      `/patients?organization_id=${encodeURIComponent(organizationId)}`, 
+      patientData
+    );
 
     if (error) {
       console.error('Patient creation API error:', error);
