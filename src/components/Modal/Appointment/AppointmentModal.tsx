@@ -58,8 +58,6 @@ const AppointmentModal = ({
   };
 
   const handlePatientCreated = (newPatient: Patient) => {
-    console.log("📝 Patient created successfully:", newPatient);
-
     // Update selected patient state
     setSelectedPatient(newPatient);
 
@@ -70,13 +68,10 @@ const AppointmentModal = ({
       patientId: newPatient.id,
     };
 
-    console.log("📋 Updating appointment form:", updatedForm);
     setAppointmentForm(updatedForm);
 
     // Close the add patient modal
     setShowAddPatientModal(false);
-
-    console.log("✅ Patient selection and form update completed");
   };
 
   const handleCloseAddPatientModal = () => {
@@ -86,12 +81,6 @@ const AppointmentModal = ({
   // Sync selectedPatient with appointmentForm when modal opens or form changes
   useEffect(() => {
     if (showModal) {
-      console.log("🔄 Modal opened, initializing patient selection...");
-      console.log("📋 Current appointmentForm:", {
-        patientName: appointmentForm.patientName,
-        patientId: appointmentForm.patientId,
-      });
-
       // Reset patient selection state when modal opens
       if (appointmentForm.patientName && appointmentForm.patientId) {
         // If we have both name and ID, create a patient object
@@ -99,15 +88,12 @@ const AppointmentModal = ({
           id: appointmentForm.patientId,
           name: appointmentForm.patientName,
         };
-        console.log("👤 Setting selected patient:", patient);
         setSelectedPatient(patient);
       } else if (appointmentForm.patientName && !appointmentForm.patientId) {
         // If we only have a name (legacy data), clear selection to allow search
-        console.log("⚠️ Only name found, clearing selection for search");
         setSelectedPatient(null);
       } else {
         // Clear selection if no patient data
-        console.log("🆕 No patient data, clearing selection");
         setSelectedPatient(null);
       }
     }
