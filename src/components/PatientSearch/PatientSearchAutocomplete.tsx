@@ -6,7 +6,7 @@ import "./PatientSearchAutocomplete.css";
 export interface PatientSearchAutocompleteProps {
   selectedPatient: Patient | null;
   onPatientSelect: (patient: Patient | null) => void;
-  onAddNewPatient: () => void;
+  onAddNewPatient: (searchQuery?: string) => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -161,7 +161,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
             handlePatientSelect(results[focusedIndex]);
           } else {
             // "Add New Patient" option selected
-            onAddNewPatient();
+            onAddNewPatient(query);
             setShowDropdown(false);
           }
         }
@@ -358,7 +358,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
                     focusedIndex === 0 ? "focused" : ""
                   }`}
                   onClick={() => {
-                    onAddNewPatient();
+                    onAddNewPatient(query);
                     setShowDropdown(false);
                   }}
                   onMouseEnter={() => setFocusedIndex(0)}

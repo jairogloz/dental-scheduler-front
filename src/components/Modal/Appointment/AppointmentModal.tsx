@@ -28,6 +28,7 @@ const AppointmentModal = ({
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+  const [initialPatientName, setInitialPatientName] = useState<string>("");
 
   if (!showModal) return null;
 
@@ -51,7 +52,8 @@ const AppointmentModal = ({
     });
   };
 
-  const handleAddNewPatient = () => {
+  const handleAddNewPatient = (searchQuery?: string) => {
+    setInitialPatientName(searchQuery || "");
     setShowAddPatientModal(true);
   };
 
@@ -362,6 +364,7 @@ const AppointmentModal = ({
         isOpen={showAddPatientModal}
         onClose={handleCloseAddPatientModal}
         onPatientCreated={handlePatientCreated}
+        initialName={initialPatientName}
       />
 
       {/* Cancel Confirmation Dialog */}

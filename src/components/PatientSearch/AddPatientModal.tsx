@@ -12,12 +12,14 @@ export interface AddPatientModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPatientCreated: (patient: Patient) => void;
+  initialName?: string;
 }
 
 const AddPatientModal: React.FC<AddPatientModalProps> = ({
   isOpen,
   onClose,
   onPatientCreated,
+  initialName = "",
 }) => {
   const { userProfile } = useAuth();
   const [formData, setFormData] = useState<CreatePatientRequest>({
@@ -32,14 +34,17 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
-      setFormData({ name: "", phone: "" });
+      setFormData({
+        name: initialName || "",
+        phone: "",
+      });
       setError(null);
       // Focus the name input when modal opens
       setTimeout(() => {
         nameInputRef.current?.focus();
       }, 100);
     }
-  }, [isOpen]);
+  }, [isOpen, initialName]);
 
   // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
