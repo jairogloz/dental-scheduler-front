@@ -21,9 +21,7 @@ export type CreatePatientRequest = {
 };
 
 export type CreatePatientResponse = {
-  data: {
-    patient: Patient;
-  };
+  data: Patient;  // Direct patient object, not nested
   success: boolean;
 };
 
@@ -57,15 +55,23 @@ export const searchPatients = async (query: string, limit: number = 100): Promis
 
 // Create a new patient
 export const createPatient = async (patientData: CreatePatientRequest): Promise<Patient> => {
-  const { data, error } = await apiClient.post<CreatePatientResponse>('/patients', patientData);
+  try {
+    const { data, error } = await apiClient.post<CreatePatientResponse>('/patients', patientData);
 
-  if (error) {
+    if (error) {
+      console.error('Patient creation API error:', error);
+      throw error;
+    }
+
+    if (!data || !data.data) {
+      console.error('Patient creation returned no data:', data);
+      throw new Error('Invalid response format: missing data');
+    }
+
+    // Backend returns the patient object directly in data.data
+    return data.data;
+  } catch (error) {
+    console.error('Patient creation failed:', error);
     throw error;
   }
-
-  if (!data?.data?.patient) {
-    throw new Error('Invalid response format');
-  }
-
-  return data.data.patient;
 };
