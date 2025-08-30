@@ -255,6 +255,11 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
 
   // Initialize query when selectedPatient changes
   useEffect(() => {
+    console.log(
+      "🔄 PatientSearchAutocomplete: selectedPatient changed:",
+      selectedPatient
+    );
+
     // Cancel any pending searches first
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -266,6 +271,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
     }
 
     if (selectedPatient) {
+      console.log("👤 Setting query to patient name:", selectedPatient.name);
       setQuery(selectedPatient.name);
       // Clear all search-related state when a patient is selected
       setIsLoading(false);
@@ -274,6 +280,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
       setError(null);
       setFocusedIndex(-1);
     } else {
+      console.log("🆕 Clearing patient selection");
       setQuery("");
       // Clear loading state when selection is cleared
       setIsLoading(false);
