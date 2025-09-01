@@ -16,6 +16,7 @@ React + TypeScript + Vite dental scheduler with Supabase Auth and Go backend.
 
 - **Don't create** test files, shell scripts, SQL scripts, Dockerfiles, or markdown files without asking for confirmation first
 - **Don't hardcode** sensitive information like passwords, API keys, or secrets in committed code
+- **Don't suggest database schema changes** from the frontend - database modifications should be handled by the backend team
 - Use environment variables for configuration
 
 ## Architecture

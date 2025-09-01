@@ -249,6 +249,85 @@ Check **Developer Tools > Application > Local Storage** for:
 - Implement proper TypeScript types for all API responses
 - Use debouncing for search functionality (300ms recommended)
 
+## 🏢 Organization Management
+
+### Current Setup
+
+The application uses **user metadata** to store `organization_id` for optimal performance and consistency:
+
+#### Why User Metadata?
+
+- ✅ **Immediate availability** - No additional database queries
+- ✅ **Always synchronized** - Part of JWT token
+- ✅ **Better performance** - Reduces database load
+- ✅ **Consistent data** - Cannot get out of sync with auth session
+
+#### Implementation Details
+
+**User Metadata Structure:**
+
+```javascript
+user.user_metadata = {
+  full_name: "User Name",
+  organization_id: "org_123456", // Available immediately on login
+};
+```
+
+**Usage in Components:**
+
+```typescript
+import { useAuth } from "../contexts/AuthContext";
+
+const MyComponent = () => {
+  const { user, organizationId, loading } = useAuth();
+
+  useEffect(() => {
+    if (organizationId) {
+      // Use organization_id for API calls
+      console.log("User belongs to organization:", organizationId);
+    }
+  }, [organizationId]);
+};
+```
+
+#### Migration Helper
+
+For existing users without `organization_id` in metadata:
+
+```typescript
+import {
+  getUserOrganizationId,
+  updateUserOrganization,
+} from "../lib/organizationUtils";
+
+// Get organization_id with fallback to profiles table
+const orgId = await getUserOrganizationId();
+
+// Update user metadata for existing users
+const success = await updateUserOrganization("org_123456");
+```
+
+#### Backend Considerations
+
+**Note**: Database schema changes should be handled by the backend team.
+
+**API Client Configuration:**
+The `apiClient` should use `organizationId` from context for organization-scoped requests:
+
+```typescript
+// Example API call with organization context
+const { organizationId } = useAuth();
+const appointments = await apiClient.get(
+  `/appointments?org_id=${organizationId}`
+);
+```
+
+**Backend Requirements:**
+
+- Profiles table with `org_id` column in the backend database
+- RLS policies configured for profiles table access
+- JWT tokens should include organization context when possible
+
 ## 📄 License
 
 This project is proprietary software for dental practice management.

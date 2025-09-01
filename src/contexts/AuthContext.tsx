@@ -1,11 +1,16 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { User, AuthError, Session } from "@supabase/supabase-js";
 import { supabase, type UserProfile } from "../lib/supabase";
+import {
+  getUserOrganizationId,
+  debugProfilesTable,
+} from "../lib/organizationUtils";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  organizationId: string | null; // Add organization_id to context
   signIn: (
     email: string,
     password: string,
@@ -14,7 +19,8 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    fullName?: string
+    fullName?: string,
+    organizationId?: string // Add organization_id parameter
   ) => Promise<{ data: any; error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (
@@ -28,6 +34,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  organizationId: null, // Add organizationId default value
   signIn: async () => ({ data: null, error: null }),
   signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
@@ -52,6 +59,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(false); // Changed to false by default
 
@@ -93,6 +101,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         setSession(session);
         setUser(session?.user ?? null);
+
+        // Extract organization_id using helper function (with fallback to profiles table)
+        if (session?.user) {
+          // Debug profiles table access on first login
+          await debugProfilesTable();
+
+          const orgId = await getUserOrganizationId();
+          setOrganizationId(orgId);
+          console.log("🏢 Organization ID configurado:", orgId);
+        } else {
+          setOrganizationId(null);
+        }
+
         initialCheckComplete = true;
         setLoading(false);
 
@@ -133,16 +154,30 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       });
 
       if (isMounted) {
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
 
-        // Only set loading to false if we haven't completed initial check
-        if (!initialCheckComplete) {
-          setLoading(false);
-          initialCheckComplete = true;
+          // Extract organization_id using helper function (with fallback to profiles table)
+          if (session?.user) {
+            const orgId = await getUserOrganizationId();
+            setOrganizationId(orgId);
+            console.log(
+              "🏢 Organization ID configurado en auth change:",
+              orgId
+            );
+          } else {
+            setOrganizationId(null);
+          }
+
+          // Only set loading to false if we haven't completed initial check
+          if (!initialCheckComplete) {
+            setLoading(false);
+            initialCheckComplete = true;
+          }
+
+          clearTimeout(safetyTimeout);
         }
-
-        clearTimeout(safetyTimeout);
       }
     });
 
@@ -186,13 +221,19 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return result;
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    organizationId?: string
+  ) => {
     const result = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          organization_id: organizationId, // Add organization_id to user metadata
         },
       },
     });
@@ -204,6 +245,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           id: result.data.user.id,
           email: result.data.user.email!,
           full_name: fullName || null,
+          org_id: organizationId || null, // Store in profiles table too for queries
           roles: ["receptionist"], // Default role as array
         });
 
@@ -226,6 +268,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const signOut = async () => {
     setUserProfile(null);
+    setOrganizationId(null); // Clear organization_id on logout
     return await supabase.auth.signOut();
   };
 
@@ -239,6 +282,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     loading,
+    organizationId, // Add organizationId to context value
     signIn,
     signUp,
     signOut,
