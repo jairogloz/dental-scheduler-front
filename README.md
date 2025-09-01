@@ -161,6 +161,71 @@ import { AddPatientModal } from "./components/PatientSearch";
 3. Axios interceptors handle token refresh automatically
 4. API calls include valid Bearer tokens
 
+## 🔒 Authentication Configuration & Session Persistence
+
+### Current Setup
+
+The application has been configured to maintain user sessions across page reloads and browser restarts. Here's what was implemented:
+
+#### Supabase Client Configuration (`src/lib/supabase.ts`)
+
+```typescript
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true, // Automatically refresh expired tokens
+    persistSession: true, // Store session in localStorage
+    detectSessionInUrl: true, // Handle OAuth redirects
+    flowType: "pkce", // Use PKCE for enhanced security
+    storage: window.localStorage, // Explicitly use localStorage
+    storageKey: "dental-scheduler-auth-token", // Custom storage key
+  },
+});
+```
+
+#### AuthContext Implementation (`src/contexts/AuthContext.tsx`)
+
+**Key Features:**
+
+- **Session Recovery**: On app startup, checks localStorage for existing session
+- **Robust Initialization**: 200ms delay + 8-second timeout to handle slow networks
+- **React.StrictMode Compatible**: Prevents double-execution issues in development
+- **Detailed Logging**: Console logs for debugging authentication flow
+
+**Session Persistence Logic:**
+
+1. **App Load**: `getSession()` checks localStorage for existing session
+2. **Session Found**: User remains logged in, no re-authentication needed
+3. **Session Expired**: Supabase automatically attempts token refresh
+4. **No Session**: User redirected to login page
+
+#### Troubleshooting Steps Taken
+
+1. **Removed React.StrictMode**: Prevented double-execution of useEffect in development
+2. **Added Safety Timeouts**: Prevents infinite loading states
+3. **Improved Error Handling**: Graceful fallback when session recovery fails
+4. **Enhanced Logging**: Detailed console output for debugging
+
+### Usage
+
+Sessions persist automatically - no additional configuration needed. Users will:
+
+- ✅ Stay logged in after page refresh
+- ✅ Stay logged in after browser restart (until token expires)
+- ✅ Get automatic token refresh when possible
+- ✅ See loading states during session recovery
+
+### Debugging
+
+Check browser console for authentication flow logs:
+
+- `🚀 Iniciando AuthContext...` - Context initialization
+- `📊 Resultado getSession:` - Session recovery result
+- `✅ Sesión inicial configurada` - Successful session setup
+
+Check **Developer Tools > Application > Local Storage** for:
+
+- `dental-scheduler-auth-token` - Contains Supabase session data
+
 ## 📱 Mobile Support
 
 - Responsive design for all screen sizes

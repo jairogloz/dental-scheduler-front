@@ -53,92 +53,134 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(false); // Changed to false by default
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    let isMounted = true;
+    let initialCheckComplete = false;
+    console.log("🚀 Iniciando AuthContext...");
+
+    // Get initial session immediately
+    const initializeAuth = async () => {
+      try {
+        console.log("🔍 Obteniendo sesión inicial...");
+
+        // Small delay to ensure Supabase client is fully initialized
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        // Give Supabase time to initialize and check localStorage
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        console.log("📊 Resultado getSession:", {
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          userId: session?.user?.id,
+          accessToken: session?.access_token ? "presente" : "ausente",
+          error: error?.message,
+        });
+
+        if (!isMounted) {
+          console.log("🚫 Componente desmontado, ignorando resultado");
+          return;
+        }
+
+        if (error) {
+          console.error("❌ Error getting session:", error);
+        }
+
+        setSession(session);
+        setUser(session?.user ?? null);
+        initialCheckComplete = true;
+        setLoading(false);
+
+        console.log(
+          "✅ Sesión inicial configurada",
+          session ? "con usuario" : "sin usuario"
+        );
+      } catch (error) {
+        console.error("💥 Error obteniendo sesión inicial:", error);
+        if (isMounted) {
+          setSession(null);
+          setUser(null);
+          initialCheckComplete = true;
+          setLoading(false);
+        }
+      }
     };
 
-    getInitialSession();
+    // Longer safety timeout to account for slow networks/devices
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted && !initialCheckComplete) {
+        console.warn("⏰ Timeout de seguridad activado - finalizando carga");
+        setLoading(false);
+        initialCheckComplete = true;
+      }
+    }, 8000); // 8 seconds timeout
 
-    // Listen for auth changes
+    initializeAuth();
+
+    // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Auth state change:", event, {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        userId: session?.user?.id,
+      });
 
-      if (session?.user) {
-        // Only fetch user profile if profiles table exists
-        // Comment out this line to skip profile fetching temporarily
-        await fetchUserProfile(session.user.id);
-      } else {
-        setUserProfile(null);
-        setLoadingProfile(false);
+      if (isMounted) {
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        // Only set loading to false if we haven't completed initial check
+        if (!initialCheckComplete) {
+          setLoading(false);
+          initialCheckComplete = true;
+        }
+
+        clearTimeout(safetyTimeout);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log("🧹 Limpiando AuthContext...");
+      isMounted = false;
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
-
-  const fetchUserProfile = async (userId: string) => {
-    setLoadingProfile(true);
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST205") {
-          // Table doesn't exist yet - this is expected during setup
-          console.warn(
-            "Profiles table not found. Please run the auth_setup.sql script in your Supabase dashboard."
-          );
-          setUserProfile(null);
-        } else if (error.code === "PGRST116") {
-          // Profile not found - user hasn't been created yet
-          setUserProfile(null);
-        } else {
-          console.error("Error fetching profile:", error);
-          setUserProfile(null);
-        }
-      } else {
-        setUserProfile(data);
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setUserProfile(null);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
 
   const signIn = async (
     email: string,
     password: string,
     rememberMe: boolean = false
   ) => {
+    console.log("🔐 Ejecutando signIn en AuthContext...");
+
     const result = await supabase.auth.signInWithPassword({
       email,
       password,
+    });
+
+    console.log("📊 Resultado de Supabase signIn:", {
+      hasData: !!result.data,
+      hasSession: !!result.data?.session,
+      hasUser: !!result.data?.user,
+      error: result.error,
     });
 
     // Set session persistence if rememberMe is true
     if (result.data.session && rememberMe) {
       // The session will be persisted by default, we can manage this on the client side
       localStorage.setItem("rememberMe", "true");
+      console.log("💾 Guardando rememberMe en localStorage");
     } else {
       localStorage.removeItem("rememberMe");
+      console.log("🗑️ Eliminando rememberMe de localStorage");
     }
 
     return result;

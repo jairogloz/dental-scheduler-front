@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage = () => {
@@ -10,6 +10,7 @@ const LoginPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,6 +21,8 @@ const LoginPage = () => {
 
     if (error) {
       setError(error.message);
+    } else {
+      navigate("/dashboard");
     }
 
     setLoading(false);
