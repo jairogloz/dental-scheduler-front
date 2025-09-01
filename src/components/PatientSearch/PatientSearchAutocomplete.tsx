@@ -18,7 +18,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
   disabled = false,
   placeholder = "Buscar paciente...",
 }) => {
-  const { userProfile } = useAuth();
+  const { organizationId } = useAuth(); // Use organizationId directly from context
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Patient[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,7 +42,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
       }
 
       // Validate organization_id
-      if (!userProfile?.organization_id) {
+      if (!organizationId) {
         console.error("No organization_id available for patient search");
         setError("Error: No se pudo obtener la información de la organización");
         setIsLoading(false);
@@ -63,10 +63,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
 
       try {
         console.log("🔍 Starting patient search for:", searchQuery);
-        const patients = await searchPatients(
-          searchQuery,
-          userProfile.organization_id
-        );
+        const patients = await searchPatients(searchQuery, organizationId);
 
         // Check if this search was aborted
         if (currentController.signal.aborted) {
@@ -102,7 +99,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
         }
       }
     },
-    [userProfile?.organization_id]
+    [organizationId]
   );
 
   // Handle input change with debouncing

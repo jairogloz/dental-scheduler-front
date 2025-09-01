@@ -21,7 +21,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   onPatientCreated,
   initialName = "",
 }) => {
-  const { userProfile } = useAuth();
+  const { organizationId } = useAuth(); // Use organizationId directly from context
   const [formData, setFormData] = useState<CreatePatientRequest>({
     name: "",
     phone: "",
@@ -69,7 +69,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
     }
 
     // Validate organization_id
-    if (!userProfile?.organization_id) {
+    if (!organizationId) {
       setError("Error: No se pudo obtener la información de la organización");
       return;
     }
@@ -83,7 +83,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
           name: formData.name.trim(),
           phone: formData.phone?.trim() || undefined,
         },
-        userProfile.organization_id
+        organizationId
       );
 
       // Success - notify parent and close modal
