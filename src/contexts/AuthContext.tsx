@@ -5,12 +5,18 @@ import {
   getUserOrganizationId,
   debugProfilesTable,
 } from "../lib/organizationUtils";
+import {
+  getOrganizationData,
+  type OrganizationData,
+} from "../api/entities/Organization";
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  organizationId: string | null; // Add organization_id to context
+  organizationId: string | null;
+  organizationData: OrganizationData | null; // Add organization data
+  organizationLoading: boolean; // Add loading state for organization data
   signIn: (
     email: string,
     password: string,
@@ -20,7 +26,7 @@ interface AuthContextType {
     email: string,
     password: string,
     fullName?: string,
-    organizationId?: string // Add organization_id parameter
+    organizationId?: string
   ) => Promise<{ data: any; error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
   resetPassword: (
@@ -34,7 +40,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
-  organizationId: null, // Add organizationId default value
+  organizationId: null,
+  organizationData: null, // Add organization data default
+  organizationLoading: false, // Add organization loading default
   signIn: async () => ({ data: null, error: null }),
   signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
@@ -61,7 +69,54 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loadingProfile, setLoadingProfile] = useState(false); // Changed to false by default
+  const [loadingProfile, setLoadingProfile] = useState(false);
+
+  // Add organization data state
+  const [organizationData, setOrganizationData] =
+    useState<OrganizationData | null>(null);
+  const [organizationLoading, setOrganizationLoading] = useState(false);
+
+  // Function to load organization data
+  const loadOrganizationData = async () => {
+    if (!organizationId) {
+      console.log(
+        "📋 No organization ID available, skipping organization data load"
+      );
+      return;
+    }
+
+    try {
+      setOrganizationLoading(true);
+      console.log("📋 Loading organization data...");
+
+      // Load organization data for current week by default
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - startDate.getDay()); // Start of week
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + (6 - endDate.getDay())); // End of week
+
+      const data = await getOrganizationData({
+        start_date: startDate.toISOString().split("T")[0],
+        end_date: endDate.toISOString().split("T")[0],
+        limit: 100, // Load more appointments for better coverage
+      });
+      console.log(data);
+
+      setOrganizationData(data);
+      console.log("✅ Organization data loaded successfully:", {
+        organization: data.organization.name,
+        clinics: data.clinics.length,
+        units: data.units.length,
+        doctors: data.doctors.length,
+        appointments: data.appointments ? data.appointments.length : 0,
+      });
+    } catch (error) {
+      console.error("❌ Failed to load organization data:", error);
+      setOrganizationData(null);
+    } finally {
+      setOrganizationLoading(false);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -189,6 +244,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     };
   }, []);
 
+  // Load organization data when organizationId changes
+  useEffect(() => {
+    if (organizationId && !loading) {
+      console.log("🔄 Organization ID changed, loading organization data...");
+      loadOrganizationData();
+    } else if (!organizationId) {
+      // Clear organization data when no organization ID
+      setOrganizationData(null);
+      setOrganizationLoading(false);
+    }
+  }, [organizationId, loading]);
+
   const signIn = async (
     email: string,
     password: string,
@@ -269,6 +336,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const signOut = async () => {
     setUserProfile(null);
     setOrganizationId(null); // Clear organization_id on logout
+    setOrganizationData(null); // Clear organization data on logout
+    setOrganizationLoading(false); // Reset loading state
     return await supabase.auth.signOut();
   };
 
@@ -282,7 +351,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     loading,
-    organizationId, // Add organizationId to context value
+    organizationId,
+    organizationData, // Add organization data to context value
+    organizationLoading, // Add organization loading to context value
     signIn,
     signUp,
     signOut,
