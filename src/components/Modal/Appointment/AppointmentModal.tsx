@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
-import DatePicker from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { es } from "date-fns/locale";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
@@ -11,6 +12,9 @@ import DoctorDayView from "./DoctorDayView";
 import { useWindowSize } from "../../../hooks/useWindowSize";
 import { useClinics, useUnits } from "../../../hooks/useOrganizationHelpers";
 import "../../../styles/Modal.css";
+
+// Registrar el idioma español
+registerLocale("es", es);
 
 const AppointmentModal = ({
   showModal,
@@ -388,7 +392,8 @@ const AppointmentModal = ({
                   );
                 }
               }}
-              dateFormat="dd/MM/yyyy"
+              dateFormat="dd/MMM/yyyy"
+              locale="es"
               className="form-control"
               disabled={isReadOnly}
             />
