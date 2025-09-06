@@ -262,7 +262,10 @@ const AppointmentModal = ({
         </button>
 
         {/* Form Section */}
-        <div className="modal-form" style={{ flex: isMobile ? "none" : "1" }}>
+        <div
+          className="modal-form appointment-form-compact"
+          style={{ flex: isMobile ? "none" : "1" }}
+        >
           <h3>
             {mode === "create"
               ? "Nueva Cita Dental"
@@ -271,10 +274,8 @@ const AppointmentModal = ({
               : "Detalles de la Cita"}
           </h3>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Nombre del Doctor:
-            </label>
+          <div className="form-field">
+            <label>Nombre del Doctor:</label>
             <Select
               options={doctorOptions}
               value={doctorOptions.find(
@@ -303,10 +304,8 @@ const AppointmentModal = ({
             />
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Nombre del Paciente:
-            </label>
+          <div className="form-field">
+            <label>Nombre del Paciente:</label>
             <PatientSearchAutocomplete
               selectedPatient={selectedPatient}
               onPatientSelect={handlePatientSelect}
@@ -316,10 +315,8 @@ const AppointmentModal = ({
             />
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Tipo de Tratamiento:
-            </label>
+          <div className="form-field">
+            <label>Tipo de Tratamiento:</label>
             <input
               type="text"
               value={appointmentForm.treatmentType}
@@ -334,10 +331,8 @@ const AppointmentModal = ({
             />
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Clínica:
-            </label>
+          <div className="form-field">
+            <label>Clínica:</label>
             <select
               value={selectedClinicId}
               onChange={(e) => handleClinicChange(e.target.value)}
@@ -353,10 +348,8 @@ const AppointmentModal = ({
             </select>
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Unidad:
-            </label>
+          <div className="form-field">
+            <label>Unidad:</label>
             <select
               value={appointmentForm.resourceId}
               onChange={(e) =>
@@ -381,10 +374,8 @@ const AppointmentModal = ({
             </select>
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Fecha:
-            </label>
+          <div className="form-field">
+            <label>Fecha:</label>
             <DatePicker
               selected={selectedDate}
               onChange={(date) => {
@@ -403,10 +394,8 @@ const AppointmentModal = ({
             />
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Hora:
-            </label>
+          <div className="form-field">
+            <label>Hora:</label>
             <select
               value={selectedTime}
               onChange={(e) => {
@@ -428,10 +417,8 @@ const AppointmentModal = ({
             </select>
           </div>
 
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ display: "block", marginBottom: "5px" }}>
-              Duración:
-            </label>
+          <div className="form-field">
+            <label>Duración:</label>
             <select
               value={selectedDuration}
               onChange={(e) => {

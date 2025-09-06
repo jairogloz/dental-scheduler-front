@@ -12,6 +12,45 @@
   border-radius: 4px;
 }
 
+/* Compact form styling */
+.appointment-form-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px; /* Even more compact spacing between form fields */
+}
+
+.appointment-form-compact .form-field {
+  margin-bottom: 0; /* Remove individual margins */
+}
+
+.appointment-form-compact .form-field label {
+  display: block;
+  margin-bottom: 2px; /* Very tight label spacing */
+  font-weight: 500;
+}
+
+/* Override any existing margin-bottom on form containers */
+.appointment-form-compact > div {
+  margin-bottom: 0 !important;
+}
+
+/* Optional: Even tighter variant */
+.appointment-form-ultra-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.appointment-form-ultra-compact .form-field {
+  margin-bottom: 0;
+}
+
+.appointment-form-ultra-compact .form-field label {
+  display: block;
+  margin-bottom: 1px;
+  font-weight: 500;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
