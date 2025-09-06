@@ -35,6 +35,9 @@ const AppointmentModal = ({
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [initialPatientName, setInitialPatientName] = useState<string>("");
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedTime, setSelectedTime] = useState<string>("09:00");
+  const [selectedDuration, setSelectedDuration] = useState<number>(60); // Duration in minutes
 
   if (!showModal) return null;
 
@@ -62,6 +65,64 @@ const AppointmentModal = ({
   };
 
   const isReadOnly = mode === "see-only" || mode === "edit";
+
+  // Generate time options with 15-minute intervals
+  const generateTimeOptions = () => {
+    const options = [];
+    for (let hour = 0; hour < 24; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const timeString = `${hour.toString().padStart(2, "0")}:${minute
+          .toString()
+          .padStart(2, "0")}`;
+        const time12 = new Date(`2000-01-01T${timeString}`).toLocaleTimeString(
+          "en-US",
+          {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }
+        );
+        options.push({ value: timeString, label: time12 });
+      }
+    }
+    return options;
+  };
+
+  // Generate duration options - specific durations only
+  const generateDurationOptions = () => {
+    const durations = [
+      { value: 15, label: "15 min" },
+      { value: 30, label: "30 min" },
+      { value: 45, label: "45 min" },
+      { value: 60, label: "1 hr" },
+      { value: 90, label: "1.5 hr" },
+      { value: 120, label: "2 hr" },
+      { value: 180, label: "3 hr" },
+      { value: 240, label: "4 hr" },
+    ];
+    return durations;
+  };
+
+  // Update appointment form when date, time, or duration changes
+  const updateAppointmentDateTime = (
+    date: Date,
+    time: string,
+    duration: number
+  ) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    const startDateTime = new Date(date);
+    startDateTime.setHours(hours, minutes, 0, 0);
+
+    const endDateTime = new Date(
+      startDateTime.getTime() + duration * 60 * 1000
+    );
+
+    setAppointmentForm({
+      ...appointmentForm,
+      start: startDateTime,
+      end: endDateTime,
+    });
+  };
 
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
@@ -131,6 +192,33 @@ const AppointmentModal = ({
       }
     }
   }, [showModal, appointmentForm.resourceId, units, selectedClinicId]);
+
+  // Initialize date, time, and duration from appointmentForm
+  useEffect(() => {
+    if (showModal && appointmentForm.start) {
+      const startDate = new Date(appointmentForm.start);
+      const endDate = new Date(appointmentForm.end);
+
+      // Set date
+      setSelectedDate(startDate);
+
+      // Set time (HH:MM format)
+      const timeString = `${startDate
+        .getHours()
+        .toString()
+        .padStart(2, "0")}:${startDate
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`;
+      setSelectedTime(timeString);
+
+      // Calculate duration in minutes
+      const durationMinutes = Math.round(
+        (endDate.getTime() - startDate.getTime()) / (1000 * 60)
+      );
+      setSelectedDuration(durationMinutes);
+    }
+  }, [showModal, appointmentForm.start, appointmentForm.end]);
 
   const handleCancel = () => {
     setShowCancelConfirmation(true);
@@ -295,28 +383,21 @@ const AppointmentModal = ({
 
           <div style={{ marginBottom: "15px" }}>
             <label style={{ display: "block", marginBottom: "5px" }}>
-              Fecha y Hora de Inicio:
+              Fecha:
             </label>
             <DatePicker
-              selected={appointmentForm.start}
+              selected={selectedDate}
               onChange={(date) => {
                 if (date) {
-                  const newStart = date;
-                  const newEnd = new Date(newStart.getTime() + 15 * 60 * 1000); // Add 15 minutes (one timeslot)
-                  setAppointmentForm({
-                    ...appointmentForm,
-                    start: newStart,
-                    end:
-                      newStart >= appointmentForm.end
-                        ? newEnd
-                        : appointmentForm.end, // Adjust end time if needed
-                  });
+                  setSelectedDate(date);
+                  updateAppointmentDateTime(
+                    date,
+                    selectedTime,
+                    selectedDuration
+                  );
                 }
               }}
-              showTimeSelect
-              dateFormat="Pp"
-              timeFormat="HH:mm"
-              timeIntervals={15}
+              dateFormat="dd/MM/yyyy"
               className="form-control"
               disabled={isReadOnly}
             />
@@ -324,30 +405,64 @@ const AppointmentModal = ({
 
           <div style={{ marginBottom: "15px" }}>
             <label style={{ display: "block", marginBottom: "5px" }}>
-              Fecha y Hora de Fin:
+              Hora:
             </label>
-            <DatePicker
-              selected={appointmentForm.end}
-              onChange={(date) =>
-                setAppointmentForm({
-                  ...appointmentForm,
-                  end: date || appointmentForm.end,
-                })
-              }
-              showTimeSelect
-              dateFormat="Pp"
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              className="form-control"
+            <select
+              value={selectedTime}
+              onChange={(e) => {
+                setSelectedTime(e.target.value);
+                updateAppointmentDateTime(
+                  selectedDate,
+                  e.target.value,
+                  selectedDuration
+                );
+              }}
+              className="custom-selector"
               disabled={isReadOnly}
-            />
+            >
+              {generateTimeOptions().map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: "15px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
+              Duración:
+            </label>
+            <select
+              value={selectedDuration}
+              onChange={(e) => {
+                const duration = parseInt(e.target.value);
+                setSelectedDuration(duration);
+                updateAppointmentDateTime(selectedDate, selectedTime, duration);
+              }}
+              className="custom-selector"
+              disabled={isReadOnly}
+            >
+              {generateDurationOptions().map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div style={{ marginBottom: "20px" }}>
             <p>
-              <strong>Fecha y Hora:</strong>{" "}
-              {appointmentForm.start.toLocaleString()} -{" "}
-              {appointmentForm.end.toLocaleString()}
+              <strong>Resumen:</strong>{" "}
+              {appointmentForm.start.toLocaleDateString("es-ES")} a las{" "}
+              {appointmentForm.start.toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}{" "}
+              -{" "}
+              {appointmentForm.end.toLocaleTimeString("es-ES", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </p>
           </div>
           <div
