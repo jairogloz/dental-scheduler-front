@@ -281,14 +281,14 @@ const AppointmentModal = ({
     }
   }, [showModal, appointmentForm.start, appointmentForm.end]);
 
-  // Initialize appointment dates when creating a new appointment
+  // Initialize appointment dates when creating a new appointment (only if no time was set from calendar)
   useEffect(() => {
-    if (showModal && mode === "create") {
-      // Only initialize once when modal opens for creation
-      // Don't check appointmentForm.start/end to avoid dependency loops
+    if (showModal && mode === "create" && !appointmentForm.start) {
+      // Only initialize when modal opens for creation AND no start time is set
+      // This prevents overriding calendar slot selections
       updateAppointmentDateTime(selectedDate, selectedTime, selectedDuration);
     }
-  }, [showModal, mode]); // Only depend on modal state and mode
+  }, [showModal, mode, appointmentForm.start]); // Include appointmentForm.start to check if calendar selection exists
 
   // Validate and handle appointment creation
   const handleValidatedAddAppointment = () => {
@@ -660,11 +660,29 @@ const AppointmentModal = ({
                 end: appointmentForm.end,
               }}
               onSlotSelect={(start, end) => {
+                // Update appointmentForm
                 setAppointmentForm({
                   ...appointmentForm,
                   start,
                   end,
                 });
+
+                // Update local state to sync form fields
+                setSelectedDate(start);
+                const timeString = `${start
+                  .getHours()
+                  .toString()
+                  .padStart(2, "0")}:${start
+                  .getMinutes()
+                  .toString()
+                  .padStart(2, "0")}`;
+                setSelectedTime(timeString);
+
+                // Calculate duration in minutes
+                const durationMinutes = Math.round(
+                  (end.getTime() - start.getTime()) / (1000 * 60)
+                );
+                setSelectedDuration(durationMinutes);
               }}
               existingAppointments={appointments}
             />
