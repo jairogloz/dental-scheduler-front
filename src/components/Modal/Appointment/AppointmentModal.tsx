@@ -9,6 +9,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
 import { useWindowSize } from "../../../hooks/useWindowSize";
+import { useClinics, useUnits } from "../../../hooks/useOrganizationHelpers";
 import "../../../styles/Modal.css";
 
 const AppointmentModal = ({
@@ -25,10 +26,15 @@ const AppointmentModal = ({
 }: any) => {
   const { isMobile } = useWindowSize();
 
+  // Get organization data
+  const { clinics } = useClinics();
+  const { units } = useUnits();
+
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [initialPatientName, setInitialPatientName] = useState<string>("");
+  const [selectedClinicId, setSelectedClinicId] = useState<string>("");
 
   if (!showModal) return null;
 
@@ -39,6 +45,21 @@ const AppointmentModal = ({
         label: `${doctor.name} - ${doctor.specialty}`,
       }))
     : [];
+
+  // Filter units by selected clinic
+  const filteredUnits = selectedClinicId
+    ? units.filter((unit) => unit.clinic_id === selectedClinicId)
+    : units;
+
+  // Handle clinic change
+  const handleClinicChange = (clinicId: string) => {
+    setSelectedClinicId(clinicId);
+    // Clear unit selection when clinic changes
+    setAppointmentForm({
+      ...appointmentForm,
+      resourceId: "",
+    });
+  };
 
   const isReadOnly = mode === "see-only" || mode === "edit";
 
@@ -98,6 +119,18 @@ const AppointmentModal = ({
       }
     }
   }, [showModal, appointmentForm.patientName, appointmentForm.patientId]);
+
+  // Initialize clinic when editing appointment based on selected unit
+  useEffect(() => {
+    if (showModal && appointmentForm.resourceId && units.length > 0) {
+      const selectedUnit = units.find(
+        (unit) => unit.id === appointmentForm.resourceId
+      );
+      if (selectedUnit && selectedUnit.clinic_id !== selectedClinicId) {
+        setSelectedClinicId(selectedUnit.clinic_id);
+      }
+    }
+  }, [showModal, appointmentForm.resourceId, units, selectedClinicId]);
 
   const handleCancel = () => {
     setShowCancelConfirmation(true);
@@ -215,6 +248,25 @@ const AppointmentModal = ({
 
           <div style={{ marginBottom: "15px" }}>
             <label style={{ display: "block", marginBottom: "5px" }}>
+              Clínica:
+            </label>
+            <select
+              value={selectedClinicId}
+              onChange={(e) => handleClinicChange(e.target.value)}
+              className="custom-selector"
+              disabled={isReadOnly}
+            >
+              <option value="">Seleccionar Clínica</option>
+              {clinics.map((clinic) => (
+                <option key={clinic.id} value={clinic.id}>
+                  {clinic.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ marginBottom: "15px" }}>
+            <label style={{ display: "block", marginBottom: "5px" }}>
               Unidad:
             </label>
             <select
@@ -226,16 +278,18 @@ const AppointmentModal = ({
                 })
               }
               className="custom-selector"
-              disabled={isReadOnly}
+              disabled={isReadOnly || !selectedClinicId}
             >
-              <option value="">Seleccionar Unidad</option>
-              {resources.map(
-                (resource: { resourceId: string; resourceTitle: string }) => (
-                  <option key={resource.resourceId} value={resource.resourceId}>
-                    {resource.resourceTitle}
-                  </option>
-                )
-              )}
+              <option value="">
+                {selectedClinicId
+                  ? "Seleccionar Unidad"
+                  : "Primero selecciona una clínica"}
+              </option>
+              {filteredUnits.map((unit) => (
+                <option key={unit.id} value={unit.id}>
+                  {unit.name}
+                </option>
+              ))}
             </select>
           </div>
 
