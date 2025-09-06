@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import Select from "react-select";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale";
+import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
@@ -105,6 +106,18 @@ const AppointmentModal = ({
       { value: 240, label: "4 hr" },
     ];
     return durations;
+  };
+
+  // Formatear resumen de la cita en español
+  const formatAppointmentSummary = (startDate: Date) => {
+    // Formatear con date-fns para obtener el formato deseado
+    const dayName = format(startDate, "EEEE", { locale: es }); // día de la semana
+    const dayNumber = format(startDate, "d", { locale: es }); // día del mes
+    const monthName = format(startDate, "MMMM", { locale: es }); // mes completo
+    const year = format(startDate, "yyyy", { locale: es }); // año
+    const time = format(startDate, "h:mm a", { locale: es }); // hora en formato AM/PM
+
+    return `Cita para el día ${dayName} ${dayNumber} de ${monthName} de ${year} a las ${time}`;
   };
 
   // Update appointment form when date, time, or duration changes
@@ -445,16 +458,7 @@ const AppointmentModal = ({
           <div style={{ marginBottom: "20px" }}>
             <p>
               <strong>Resumen:</strong>{" "}
-              {appointmentForm.start.toLocaleDateString("es-ES")} a las{" "}
-              {appointmentForm.start.toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}{" "}
-              -{" "}
-              {appointmentForm.end.toLocaleTimeString("es-ES", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
+              {formatAppointmentSummary(appointmentForm.start)}
             </p>
           </div>
           <div
