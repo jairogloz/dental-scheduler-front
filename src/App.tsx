@@ -19,6 +19,7 @@ import {
 import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
+import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
 
 const locales = {
   "en-US": enUS,
@@ -97,6 +98,7 @@ function App() {
   const [units, setUnits] = useState<
     { resourceId: string; resourceTitle: string }[]
   >([]);
+  const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
 
   // Event styling function - now based on doctor
   const eventPropGetter = (event: Event) => {
@@ -408,6 +410,11 @@ function App() {
                   Agregar cita
                 </button>
               </div>
+
+              <ClinicFilterBar
+                selectedClinics={selectedClinics}
+                onClinicsChange={setSelectedClinics}
+              />
 
               <Calendar
                 localizer={localizer}
