@@ -27,9 +27,16 @@ export type AppointmentResponse = {
   unit_id: string;
   start_time: string;
   end_time: string;
-  treatment_type: string; // Changed from treatment to treatment_type
+  treatment_type: string;
+  status: string;
   created_at: string;
   updated_at: string;
+};
+
+// Backend API wrapper response
+export type AppointmentApiResponse = {
+  data: AppointmentResponse;
+  success: boolean;
 };
 
 // Remove mock data and unused imports since we're using real API
@@ -78,17 +85,38 @@ export const createAppointment = async (
 
     console.log("🌐 URL de la petición:", url);
 
-    const response = await apiClient.post<AppointmentResponse>(url, requestData);
+    const response = await apiClient.post<AppointmentApiResponse>(url, requestData);
+
+    // Debug: Log the backend response to see the exact format
+    console.log("📥 Respuesta del backend:", response.data);
+    console.log("📅 start_time del backend:", response.data.data.start_time, typeof response.data.data.start_time);
+    console.log("📅 end_time del backend:", response.data.data.end_time, typeof response.data.data.end_time);
+
+    // Access the nested appointment data
+    const appointmentData = response.data.data;
+
+    // Validate date strings before creating Date objects
+    const startDate = new Date(appointmentData.start_time);
+    const endDate = new Date(appointmentData.end_time);
+    
+    if (isNaN(startDate.getTime())) {
+      throw new Error(`Invalid start_time from backend: ${appointmentData.start_time}`);
+    }
+    if (isNaN(endDate.getTime())) {
+      throw new Error(`Invalid end_time from backend: ${appointmentData.end_time}`);
+    }
+
+    console.log("✅ Fechas parseadas correctamente:", { startDate, endDate });
 
     // Transform backend response to frontend format
     return {
-      id: response.data.id,
-      patientId: response.data.patient_id,
-      doctorId: response.data.doctor_id,
-      unitId: response.data.unit_id,
-      start: new Date(response.data.start_time),
-      end: new Date(response.data.end_time),
-      treatment: response.data.treatment_type, // Map treatment_type back to treatment
+      id: appointmentData.id,
+      patientId: appointmentData.patient_id,
+      doctorId: appointmentData.doctor_id,
+      unitId: appointmentData.unit_id,
+      start: startDate,
+      end: endDate,
+      treatment: appointmentData.treatment_type, // Map treatment_type back to treatment
     };
   } catch (error: any) {
     // Log detailed error information for debugging

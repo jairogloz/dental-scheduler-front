@@ -21,7 +21,6 @@ const AppointmentModal = ({
   showModal,
   mode = "create", // "create", "edit", or "see-only"
   appointmentForm, // Includes appointmentId
-  resources,
   doctors,
   handleCloseModal,
   handleAddAppointment,
@@ -63,10 +62,10 @@ const AppointmentModal = ({
   const handleClinicChange = (clinicId: string) => {
     setSelectedClinicId(clinicId);
     // Clear unit selection when clinic changes
-    setAppointmentForm({
-      ...appointmentForm,
+    setAppointmentForm((prevForm: any) => ({
+      ...prevForm,
       resourceId: "",
-    });
+    }));
   };
 
   const isReadOnly = mode === "see-only" || mode === "edit";
@@ -110,14 +109,24 @@ const AppointmentModal = ({
 
   // Formatear resumen de la cita en español
   const formatAppointmentSummary = (startDate: Date) => {
-    // Formatear con date-fns para obtener el formato deseado
-    const dayName = format(startDate, "EEEE", { locale: es }); // día de la semana
-    const dayNumber = format(startDate, "d", { locale: es }); // día del mes
-    const monthName = format(startDate, "MMMM", { locale: es }); // mes completo
-    const year = format(startDate, "yyyy", { locale: es }); // año
-    const time = format(startDate, "h:mm a", { locale: es }); // hora en formato AM/PM
+    // Verificar que la fecha sea válida
+    if (!startDate || isNaN(startDate.getTime())) {
+      return "Selecciona fecha, hora y duración para ver el resumen";
+    }
 
-    return `Cita para el día ${dayName} ${dayNumber} de ${monthName} de ${year} a las ${time}`;
+    try {
+      // Formatear con date-fns para obtener el formato deseado
+      const dayName = format(startDate, "EEEE", { locale: es }); // día de la semana
+      const dayNumber = format(startDate, "d", { locale: es }); // día del mes
+      const monthName = format(startDate, "MMMM", { locale: es }); // mes completo
+      const year = format(startDate, "yyyy", { locale: es }); // año
+      const time = format(startDate, "h:mm a", { locale: es }); // hora en formato AM/PM
+
+      return `Cita para el día ${dayName} ${dayNumber} de ${monthName} de ${year} a las ${time}`;
+    } catch (error) {
+      console.warn("Error formatting appointment summary:", error);
+      return "Error al formatear la fecha";
+    }
   };
 
   // Update appointment form when date, time, or duration changes
@@ -126,29 +135,64 @@ const AppointmentModal = ({
     time: string,
     duration: number
   ) => {
-    const [hours, minutes] = time.split(":").map(Number);
+    // Validate inputs
+    if (!date || !time || !duration || isNaN(date.getTime()) || duration <= 0) {
+      console.warn("Invalid parameters for updateAppointmentDateTime:", {
+        date,
+        time,
+        duration,
+      });
+      return;
+    }
+
+    const timeMatch = time.match(/^(\d{1,2}):(\d{2})$/);
+    if (!timeMatch) {
+      console.warn("Invalid time format:", time);
+      return;
+    }
+
+    const [hours, minutes] = timeMatch.slice(1).map(Number);
+
+    // Validate hours and minutes
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+      console.warn("Invalid time values:", { hours, minutes });
+      return;
+    }
+
     const startDateTime = new Date(date);
     startDateTime.setHours(hours, minutes, 0, 0);
+
+    // Verify the date is valid after setting time
+    if (isNaN(startDateTime.getTime())) {
+      console.warn("Invalid start date created:", startDateTime);
+      return;
+    }
 
     const endDateTime = new Date(
       startDateTime.getTime() + duration * 60 * 1000
     );
 
-    setAppointmentForm({
-      ...appointmentForm,
+    // Verify end date is valid
+    if (isNaN(endDateTime.getTime())) {
+      console.warn("Invalid end date created:", endDateTime);
+      return;
+    }
+
+    setAppointmentForm((prevForm: any) => ({
+      ...prevForm,
       start: startDateTime,
       end: endDateTime,
-    });
+    }));
   };
 
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
     setSelectedPatient(patient);
-    setAppointmentForm({
-      ...appointmentForm,
+    setAppointmentForm((prevForm: any) => ({
+      ...prevForm,
       patientName: patient?.name || "",
       patientId: patient?.id || "",
-    });
+    }));
   };
 
   const handleAddNewPatient = (searchQuery?: string) => {
@@ -237,6 +281,102 @@ const AppointmentModal = ({
     }
   }, [showModal, appointmentForm.start, appointmentForm.end]);
 
+  // Initialize appointment dates when creating a new appointment
+  useEffect(() => {
+    if (showModal && mode === "create") {
+      // Only initialize once when modal opens for creation
+      // Don't check appointmentForm.start/end to avoid dependency loops
+      updateAppointmentDateTime(selectedDate, selectedTime, selectedDuration);
+    }
+  }, [showModal, mode]); // Only depend on modal state and mode
+
+  // Validate and handle appointment creation
+  const handleValidatedAddAppointment = () => {
+    // Debug logging
+    console.log("🐛 DEBUG - appointmentForm:", appointmentForm);
+    console.log(
+      "🐛 DEBUG - appointmentForm.start:",
+      appointmentForm.start,
+      typeof appointmentForm.start
+    );
+    console.log(
+      "🐛 DEBUG - appointmentForm.end:",
+      appointmentForm.end,
+      typeof appointmentForm.end
+    );
+    console.log("🐛 DEBUG - selectedDate:", selectedDate);
+    console.log("🐛 DEBUG - selectedTime:", selectedTime);
+    console.log("🐛 DEBUG - selectedDuration:", selectedDuration);
+
+    // Validate required fields
+    if (!appointmentForm.doctorId) {
+      alert("Por favor selecciona un doctor");
+      return;
+    }
+    if (!appointmentForm.patientId) {
+      alert("Por favor selecciona un paciente");
+      return;
+    }
+    if (!appointmentForm.resourceId) {
+      alert("Por favor selecciona una unidad");
+      return;
+    }
+    if (!appointmentForm.treatmentType) {
+      alert("Por favor ingresa el tipo de tratamiento");
+      return;
+    }
+
+    // Enhanced date validation with debugging
+    if (!appointmentForm.start || !appointmentForm.end) {
+      console.error("❌ Missing start or end dates:", {
+        start: appointmentForm.start,
+        end: appointmentForm.end,
+      });
+      alert(
+        "Por favor selecciona fecha, hora y duración válidas - fechas faltantes"
+      );
+      return;
+    }
+
+    // Check if start/end are valid Date objects
+    const startDate = new Date(appointmentForm.start);
+    const endDate = new Date(appointmentForm.end);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      console.error("❌ Invalid dates:", {
+        start: appointmentForm.start,
+        end: appointmentForm.end,
+        startValid: !isNaN(startDate.getTime()),
+        endValid: !isNaN(endDate.getTime()),
+      });
+      alert(
+        "Por favor selecciona fecha, hora y duración válidas - fechas inválidas"
+      );
+      return;
+    }
+
+    // Convert dates to ISO strings for the backend
+    try {
+      const appointmentData = {
+        ...appointmentForm,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+        patient_id: appointmentForm.patientId,
+        doctor_id: appointmentForm.doctorId,
+        unit_id: appointmentForm.resourceId,
+        // Remove the Date objects since we're sending ISO strings
+        start: undefined,
+        end: undefined,
+      };
+
+      console.log("✅ Sending appointment data:", appointmentData);
+      handleAddAppointment(appointmentData);
+    } catch (error) {
+      console.error("❌ Error converting dates to ISO:", error);
+      alert("Error al procesar las fechas. Por favor intenta de nuevo.");
+    }
+  };
+
   const handleCancel = () => {
     setShowCancelConfirmation(true);
   };
@@ -302,8 +442,8 @@ const AppointmentModal = ({
               onChange={(
                 selectedOption: { value: string; label: string } | null
               ) =>
-                setAppointmentForm({
-                  ...appointmentForm,
+                setAppointmentForm((prevForm: any) => ({
+                  ...prevForm,
                   doctorId: selectedOption?.value || "",
                   doctorName: selectedOption?.label || "",
                   resourceId: selectedOption
@@ -313,7 +453,7 @@ const AppointmentModal = ({
                         )?.default_unit_id || ""
                       : ""
                     : "",
-                })
+                }))
               }
               placeholder="Seleccionar doctor..."
               isClearable
@@ -338,10 +478,10 @@ const AppointmentModal = ({
               type="text"
               value={appointmentForm.treatmentType}
               onChange={(e) =>
-                setAppointmentForm({
-                  ...appointmentForm,
+                setAppointmentForm((prevForm: any) => ({
+                  ...prevForm,
                   treatmentType: e.target.value,
-                })
+                }))
               }
               className="custom-text-input"
               disabled={isReadOnly}
@@ -370,10 +510,10 @@ const AppointmentModal = ({
             <select
               value={appointmentForm.resourceId}
               onChange={(e) =>
-                setAppointmentForm({
-                  ...appointmentForm,
+                setAppointmentForm((prevForm: any) => ({
+                  ...prevForm,
                   resourceId: e.target.value,
-                })
+                }))
               }
               className="custom-selector"
               disabled={isReadOnly || !selectedClinicId}
@@ -484,7 +624,7 @@ const AppointmentModal = ({
             )}
             {mode === "create" && (
               <button
-                onClick={handleAddAppointment}
+                onClick={handleValidatedAddAppointment}
                 style={{
                   padding: "10px 20px",
                   backgroundColor: "#28a745",
