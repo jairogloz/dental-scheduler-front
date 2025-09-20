@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import type { User, AuthError, Session } from "@supabase/supabase-js";
 import { supabase, type UserProfile } from "../lib/supabase";
+import { clearTokenCache } from "../lib/apiClient";
 import {
   getUserOrganizationId,
   debugProfilesTable,
@@ -576,13 +577,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      // Auth state change
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔐 Auth state change:", event);
 
       if (isMounted) {
         if (isMounted) {
           setSession(session);
           setUser(session?.user ?? null);
+
+          // Clear token cache on sign out
+          if (event === "SIGNED_OUT") {
+            clearTokenCache();
+            setOrganizationId(null);
+            setOrganizationData(null);
+            setAppointmentCache({
+              appointments: new Map(),
+              loadedRanges: [],
+              lastUpdated: new Date(),
+            });
+            return;
+          }
 
           // Extract organization_id using helper function (with fallback to profiles table)
           if (session?.user) {
@@ -784,10 +798,22 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signOut = async () => {
+    // Clear all local state
     setUserProfile(null);
     setOrganizationId(null); // Clear organization_id on logout
     setOrganizationData(null); // Clear organization data on logout
     setOrganizationLoading(false); // Reset loading state
+
+    // Clear appointment cache
+    setAppointmentCache({
+      appointments: new Map(),
+      loadedRanges: [],
+      lastUpdated: new Date(),
+    });
+
+    // Clear API client token cache
+    clearTokenCache();
+
     return await supabase.auth.signOut();
   };
 

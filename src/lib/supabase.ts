@@ -15,7 +15,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce',
     storage: window.localStorage,
-    storageKey: 'dental-scheduler-auth-token'
+    storageKey: 'dental-scheduler-auth-token',
+    // Enable debug mode for development
+    debug: import.meta.env.DEV
   }
 })
 

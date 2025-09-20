@@ -3,6 +3,62 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
+// Token cache to avoid repeated session calls
+let tokenCache: {
+  token: string | null;
+  expiresAt: number;
+} = {
+  token: null,
+  expiresAt: 0
+};
+
+// Refresh promise to prevent concurrent refresh attempts
+let refreshPromise: Promise<string | null> | null = null;
+
+// Helper to get cached or fresh token
+const getValidToken = async (): Promise<string | null> => {
+  const now = Date.now();
+  
+  // Return cached token if still valid (with 5-minute buffer before expiry)
+  if (tokenCache.token && tokenCache.expiresAt > now + 5 * 60 * 1000) {
+    return tokenCache.token;
+  }
+  
+  // Prevent concurrent refresh attempts
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+  
+  refreshPromise = (async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error || !session?.access_token) {
+        console.warn('No valid session found:', error?.message);
+        tokenCache = { token: null, expiresAt: 0 };
+        return null;
+      }
+      
+      // Cache the token with expiration info
+      const expiresAt = session.expires_at ? session.expires_at * 1000 : now + 60 * 60 * 1000;
+      tokenCache = {
+        token: session.access_token,
+        expiresAt
+      };
+      
+      return session.access_token;
+    } catch (error) {
+      console.error('Error getting token:', error);
+      tokenCache = { token: null, expiresAt: 0 };
+      return null;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+  
+  return refreshPromise;
+};
+
 // Create axios instance
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -16,27 +72,19 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
-      // Get fresh session on every request
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const token = await getValidToken();
       
-      if (error) {
-        console.warn('Auth session error:', error.message);
-        return config;
-      }
-      
-      // Attach JWT token to Authorization header
-      if (session?.access_token) {
+      if (token) {
         if (!config.headers) {
           config.headers = {} as any;
         }
-        config.headers.Authorization = `Bearer ${session.access_token}`;
-  // ApiClient attaching access token to request
+        config.headers.Authorization = `Bearer ${token}`;
       } else {
         // Remove auth header if no token
         if (config.headers) {
           delete config.headers.Authorization;
         }
-        console.warn('⚠️ No access token found in session');
+        console.warn('⚠️ No access token available');
       }
       
       return config;
@@ -59,7 +107,10 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-  // Token expired, attempting refresh
+        console.log('🔄 Token expired, attempting refresh...');
+        
+        // Clear cached token first
+        tokenCache = { token: null, expiresAt: 0 };
         
         // Attempt to refresh the session
         const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
@@ -67,6 +118,10 @@ apiClient.interceptors.response.use(
         if (refreshError || !session?.access_token) {
           // Refresh failed - sign out and redirect to login
           console.error('❌ Session refresh failed:', refreshError?.message);
+          
+          // Clear any stored auth data
+          tokenCache = { token: null, expiresAt: 0 };
+          
           await supabase.auth.signOut();
           
           // Only redirect if we're not already on login page
@@ -76,20 +131,28 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
         
-  // Session refreshed successfully
+        console.log('✅ Session refreshed successfully');
+        
+        // Update token cache with new token
+        const now = Date.now();
+        const expiresAt = session.expires_at ? session.expires_at * 1000 : now + 60 * 60 * 1000;
+        tokenCache = {
+          token: session.access_token,
+          expiresAt
+        };
         
         // Update original request with new token
         originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
         
-        // Add a small delay to ensure token is properly propagated
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
         // Retry the original request
-  // Retrying original request after token refresh
+        console.log('🔄 Retrying original request with new token');
         return apiClient.request(originalRequest);
         
       } catch (refreshError) {
         console.error('❌ Token refresh error:', refreshError);
+        
+        // Clear token cache and sign out
+        tokenCache = { token: null, expiresAt: 0 };
         await supabase.auth.signOut();
         
         if (!window.location.pathname.includes('/login')) {
@@ -151,6 +214,12 @@ export const legacyApiClient = {
       return { data: null, error: error as Error };
     }
   }
+};
+
+// Function to clear token cache (call this on sign out)
+export const clearTokenCache = () => {
+  tokenCache = { token: null, expiresAt: 0 };
+  refreshPromise = null;
 };
 
 export default apiClient;
