@@ -44,6 +44,7 @@ interface AuthContextType {
   getAppointmentsInRange: (startDate: Date, endDate: Date) => Appointment[];
   addAppointmentToCache: (appointment: Appointment) => void;
   removeAppointmentFromCache: (appointmentId: string) => void;
+  cancelAppointmentInCache: (appointment: Appointment) => void;
   signIn: (
     email: string,
     password: string,
@@ -81,6 +82,7 @@ const AuthContext = createContext<AuthContextType>({
   getAppointmentsInRange: () => [],
   addAppointmentToCache: () => {},
   removeAppointmentFromCache: () => {},
+  cancelAppointmentInCache: () => {},
   signIn: async () => ({ data: null, error: null }),
   signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
@@ -404,6 +406,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
   };
 
+  const cancelAppointmentInCache = (appointment: Appointment) => {
+    setAppointmentCache((prev) => {
+      const newAppointments = new Map(prev.appointments);
+
+      // Update the appointment with cancelled status
+      newAppointments.set(appointment.id, appointment);
+
+      console.log(
+        `🚫 Appointment ${appointment.id} marked as cancelled in cache`
+      );
+
+      return {
+        ...prev,
+        appointments: newAppointments,
+        lastUpdated: new Date(),
+      };
+    });
+  };
+
   // Cleanup old cache data periodically
   useEffect(() => {
     const interval = setInterval(() => {
@@ -662,6 +683,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     getAppointmentsInRange,
     addAppointmentToCache,
     removeAppointmentFromCache,
+    cancelAppointmentInCache,
     signIn,
     signUp,
     signOut,

@@ -15,6 +15,7 @@ import type { View } from "react-big-calendar";
 import {
   createAppointment,
   deleteAppointment,
+  cancelAppointment,
 } from "./api/entities/Appointment";
 import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
@@ -91,6 +92,7 @@ function App() {
     getAppointmentsInRange,
     addAppointmentToCache,
     removeAppointmentFromCache,
+    cancelAppointmentInCache,
   } = useAuth();
 
   const [events, setEvents] = useState<Event[]>([]);
@@ -246,8 +248,13 @@ function App() {
     const { start, end } = getCalendarDateRange(date, view);
     const appointments = getAppointmentsInRange(start, end);
 
-    // Filter by selected clinics
+    // Filter by selected clinics and exclude cancelled appointments
     const filteredAppointments = appointments.filter((appointment) => {
+      // Exclude cancelled appointments from calendar display
+      if (appointment.status === "cancelled") {
+        return false;
+      }
+
       const unit = organizationData.units.find(
         (u) => u.id === appointment.unitId
       );
@@ -476,18 +483,26 @@ function App() {
 
   const handleCancelAppointment = async () => {
     try {
-      await deleteAppointment(appointmentForm.appointmentId); // Use appointmentId for deletion
+      console.log(`🚫 Cancelling appointment ${appointmentForm.appointmentId}`);
 
-      // Remove from appointment cache instead of events directly
-      removeAppointmentFromCache(appointmentForm.appointmentId);
+      // Cancel appointment (PATCH with status="cancelled")
+      const cancelledAppointment = await cancelAppointment(
+        appointmentForm.appointmentId
+      );
 
+      // Update appointment cache with cancelled appointment
+      cancelAppointmentInCache(cancelledAppointment);
+
+      console.log("✅ Appointment cancelled successfully");
       setShowModal(false);
+      alert("Cita cancelada exitosamente");
     } catch (error) {
+      console.error("❌ Failed to cancel appointment:", error);
       if (error && typeof error === "object" && "message" in error) {
         alert(error.message); // Show specific error message to the user
       } else {
         console.error("Unexpected error:", error);
-        alert("An unexpected error occurred. Please try again."); // Generic error message
+        alert("Error al cancelar la cita. Por favor intenta de nuevo."); // Generic error message
       }
     }
   };

@@ -280,6 +280,92 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
   }
 };
 
+export const cancelAppointment = async (id: string): Promise<Appointment> => {
+  try {
+    console.log(`🚫 Cancelling appointment ${id}`);
+
+    // Send PATCH request with status="cancelled"
+    const requestData = {
+      status: "cancelled"
+    };
+
+    console.log('📤 Sending PATCH request to cancel appointment:', requestData);
+
+    let response;
+    const startTime = Date.now();
+    try {
+      console.log('⏳ Making cancel API call...');
+      response = await apiClient.patch<AppointmentApiResponse>(
+        `/appointments/${id}`,
+        requestData
+      );
+      const endTime = Date.now();
+      console.log(`✅ Cancel response received in ${endTime - startTime}ms:`, response.data);
+    } catch (apiError: any) {
+      const endTime = Date.now();
+      console.error(`❌ Cancel API call failed after ${endTime - startTime}ms:`, apiError);
+      console.error('❌ Cancel API Error details:', {
+        status: apiError.response?.status,
+        statusText: apiError.response?.statusText,
+        data: apiError.response?.data,
+        message: apiError.message,
+        isTimeout: apiError.code === 'ECONNABORTED'
+      });
+      throw apiError;
+    }
+
+    // Access the nested appointment data
+    const cancelledAppointment = response.data.data;
+
+    // Validate date strings before creating Date objects
+    const startDate = new Date(cancelledAppointment.start_time);
+    const endDate = new Date(cancelledAppointment.end_time);
+    
+    if (isNaN(startDate.getTime())) {
+      throw new Error(`Invalid start_time from backend: ${cancelledAppointment.start_time}`);
+    }
+    if (isNaN(endDate.getTime())) {
+      throw new Error(`Invalid end_time from backend: ${cancelledAppointment.end_time}`);
+    }
+
+    // Transform backend response to frontend format
+    return {
+      id: cancelledAppointment.id,
+      patientId: cancelledAppointment.patient_id,
+      doctorId: cancelledAppointment.doctor_id,
+      unitId: cancelledAppointment.unit_id,
+      start: startDate,
+      end: endDate,
+      treatment: cancelledAppointment.treatment_type,
+      // Preserve patient_name from backend response for display
+      patient_name: cancelledAppointment.patient_name,
+      status: cancelledAppointment.status, // Should be "cancelled"
+    };
+  } catch (error: any) {
+    console.error("❌ Error cancelling appointment:", error);
+    console.error("📋 Cancel error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data
+      }
+    });
+
+    // Handle specific error cases
+    if (error.response?.status === 404) {
+      throw new Error("Appointment not found");
+    } else if (error.response?.status === 400) {
+      const errorData = error.response.data;
+      throw new Error(errorData.message || "Invalid appointment data");
+    }
+
+    throw error;
+  }
+};
+
 export const deleteAppointment = async (id: string): Promise<void> => {
   try {
     await apiClient.delete(`/appointments/${id}`);
