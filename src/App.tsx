@@ -4,13 +4,14 @@ import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
 import { getDay } from "date-fns/getDay";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
 import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import type { View } from "react-big-calendar";
 
-import type { Doctor } from "./api/entities/Doctor";
+// Note: organization-provided doctor objects may have a slightly different shape than the strict `Doctor` type.
+// We'll accept any objects that contain an `id` string to avoid brittle type mismatches.
 import {
   createAppointment,
   deleteAppointment,
@@ -67,7 +68,15 @@ const doctorColors: string[] = [
   "#EC4899", // Pink - caring and approachable
 ];
 
-const getDoctorColor = (doctorId: string, doctors: Doctor[]): string => {
+const getDoctorColor = (
+  doctorId?: string | null,
+  doctors?: { id: string }[] | null
+): string => {
+  // Defensive: if we don't have a valid doctorId or doctors list, return a neutral color
+  if (!doctorId || !Array.isArray(doctors) || doctors.length === 0) {
+    return "#ccc";
+  }
+
   const doctorIndex = doctors.findIndex((doctor) => doctor.id === doctorId);
   if (doctorIndex === -1) return "#ccc"; // Default color for unknown doctors
   return doctorColors[doctorIndex % doctorColors.length];
@@ -77,7 +86,6 @@ function App() {
   const { isMobile } = useWindowSize();
   const {
     organizationData,
-    organizationLoading,
     loadOrganizationData,
     appointmentCache,
     loadAppointmentsForRange,
@@ -109,13 +117,21 @@ function App() {
   const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
 
   // Get doctors and units from organization data
-  const doctors = organizationData?.doctors || [];
-  const units =
-    organizationData?.units.map((unit) => ({
-      resourceId: unit.id,
-      resourceTitle: unit.name,
-    })) || [];
-  const clinics = organizationData?.clinics || [];
+  // Accept any doctor-like objects from organizationData, but ensure they at least have an `id` field.
+  // Memoize doctors to prevent infinite re-renders in useEffect dependencies
+  const doctors: { id: string }[] = useMemo(
+    () => (organizationData?.doctors as any) || [],
+    [organizationData?.doctors]
+  );
+  const units = useMemo(
+    () =>
+      organizationData?.units.map((unit) => ({
+        resourceId: unit.id,
+        resourceTitle: unit.name,
+      })) || [],
+    [organizationData?.units]
+  );
+  // clinics are managed by selectedClinics state
 
   // Event styling function - now based on doctor
   const eventPropGetter = (event: Event) => {
@@ -156,41 +172,42 @@ function App() {
   }, [organizationData?.clinics, selectedClinics.length]);
 
   // Calculate date range for current calendar view
-  const getCalendarDateRange = (
-    currentDate: Date,
-    currentView: View
-  ): { start: Date; end: Date } => {
-    let startDate: Date, endDate: Date;
+  // Memoize this function to prevent infinite re-renders
+  const getCalendarDateRange = useMemo(
+    () => (currentDate: Date, currentView: View): { start: Date; end: Date } => {
+      let startDate: Date, endDate: Date;
 
-    if (currentView === "day") {
-      startDate = new Date(currentDate);
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(currentDate);
-      endDate.setHours(23, 59, 59, 999);
-    } else if (currentView === "month") {
-      startDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
-      );
-      endDate = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth() + 1,
-        0
-      );
-      endDate.setHours(23, 59, 59, 999);
-    } else {
-      // week view
-      startDate = new Date(currentDate);
-      startDate.setDate(startDate.getDate() - startDate.getDay());
-      startDate.setHours(0, 0, 0, 0);
-      endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + 6);
-      endDate.setHours(23, 59, 59, 999);
-    }
+      if (currentView === "day") {
+        startDate = new Date(currentDate);
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(currentDate);
+        endDate.setHours(23, 59, 59, 999);
+      } else if (currentView === "month") {
+        startDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth(),
+          1
+        );
+        endDate = new Date(
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1,
+          0
+        );
+        endDate.setHours(23, 59, 59, 999);
+      } else {
+        // week view
+        startDate = new Date(currentDate);
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + 6);
+        endDate.setHours(23, 59, 59, 999);
+      }
 
-    return { start: startDate, end: endDate };
-  };
+      return { start: startDate, end: endDate };
+    },
+    [] // This function doesn't depend on any variables, so empty dependency array
+  );
 
   // Load appointments when calendar view or date changes
   useEffect(() => {
@@ -239,11 +256,15 @@ function App() {
 
     // Convert to calendar events
     const calendarEvents: Event[] = filteredAppointments.map((appointment) => {
-      const doctor = doctors.find((d) => d.id === appointment.doctorId);
+      const doctor = doctors.find((d) => d.id === appointment.doctorId) as
+        | { id: string; name?: string }
+        | undefined;
+      const doctorLabel =
+        doctor && "name" in doctor
+          ? doctor.name || doctor.id
+          : appointment.doctorId;
       return {
-        title: `${appointment.patientId} - ${
-          doctor?.name || appointment.doctorId
-        }`,
+        title: `${appointment.patientId} - ${doctorLabel}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
@@ -345,8 +366,11 @@ function App() {
         patientId: selectedAppointment.patientId,
         doctorId: selectedAppointment.doctorId,
         doctorName:
-          doctors.find((doc) => doc.id === selectedAppointment.doctorId)
-            ?.name || "",
+          (
+            doctors.find((doc) => doc.id === selectedAppointment.doctorId) as
+              | { id: string; name?: string }
+              | undefined
+          )?.name || "",
         treatmentType: selectedAppointment.treatment,
         resourceId: selectedAppointment.unitId,
         start: new Date(selectedAppointment.start),
