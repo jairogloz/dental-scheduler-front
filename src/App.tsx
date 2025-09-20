@@ -448,8 +448,10 @@ function App() {
       // Add to appointment cache instead of events directly
       addAppointmentToCache(createdAppointment);
 
-      setShowModal(false);
-      setDate(new Date(createdAppointment.start)); // Navigate to appointment date
+      // Navigate to appointment date but don't close modal (let success modal handle that)
+      setDate(new Date(createdAppointment.start));
+
+      // Reset form for next appointment
       setAppointmentForm({
         appointmentId: "", // Reset appointmentId
         patientName: "",
@@ -461,6 +463,9 @@ function App() {
         start: new Date(),
         end: new Date(),
       });
+
+      // Return the created appointment so the modal can handle success
+      return createdAppointment;
     } catch (error) {
       if (error && typeof error === "object" && "message" in error) {
         // Check if this is a conflict that requires confirmation
@@ -494,16 +499,13 @@ function App() {
       cancelAppointmentInCache(cancelledAppointment);
 
       console.log("✅ Appointment cancelled successfully");
-      setShowModal(false);
-      alert("Cita cancelada exitosamente");
+
+      // Don't close modal or show alert - let the modal handle success display
+      return cancelledAppointment; // Return the cancelled appointment
     } catch (error) {
       console.error("❌ Failed to cancel appointment:", error);
-      if (error && typeof error === "object" && "message" in error) {
-        alert(error.message); // Show specific error message to the user
-      } else {
-        console.error("Unexpected error:", error);
-        alert("Error al cancelar la cita. Por favor intenta de nuevo."); // Generic error message
-      }
+      // Let the modal handle error display, just throw the error
+      throw error;
     }
   };
 
@@ -666,6 +668,7 @@ function App() {
               handleAddAppointment={handleAddAppointment}
               handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
               addAppointmentToCache={addAppointmentToCache} // Pass cache update function
+              cancelAppointmentInCache={cancelAppointmentInCache} // Pass cancel cache update function
               setAppointmentForm={setAppointmentForm}
             />
           )}

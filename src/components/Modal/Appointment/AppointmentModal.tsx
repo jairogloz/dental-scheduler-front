@@ -5,11 +5,15 @@ import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
-import { updateAppointment } from "../../../api/entities/Appointment";
+import {
+  updateAppointment,
+  cancelAppointment,
+} from "../../../api/entities/Appointment";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
 import ConfirmationDialog from "../ConfirmationDialog";
+import UniversalModal from "../UniversalModal";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
@@ -29,6 +33,7 @@ const AppointmentModal = ({
   handleAddAppointment,
   handleCancelAppointment, // New handler for canceling appointments
   addAppointmentToCache, // Cache update function for both create and update
+  cancelAppointmentInCache, // Cache update function for cancelling appointments
   setAppointmentForm,
   appointments, // Receive appointments prop
 }: any) => {
@@ -49,6 +54,50 @@ const AppointmentModal = ({
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState<string>("09:00");
   const [selectedDuration, setSelectedDuration] = useState<number>(60); // Duration in minutes
+
+  // Universal modal state
+  const [universalModal, setUniversalModal] = useState({
+    isOpen: false,
+    type: "success" as "confirmation" | "success" | "error",
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  // Helper functions for showing different types of modals
+  const showSuccessModal = (
+    title: string,
+    message: string,
+    onConfirm?: () => void
+  ) => {
+    setUniversalModal({
+      isOpen: true,
+      type: "success",
+      title,
+      message,
+      onConfirm:
+        onConfirm ||
+        (() => {
+          setUniversalModal((prev) => ({ ...prev, isOpen: false }));
+          handleCloseModal(); // Close appointment modal and return to calendar
+        }),
+    });
+  };
+
+  const showErrorModal = (title: string, message: string) => {
+    setUniversalModal({
+      isOpen: true,
+      type: "error",
+      title,
+      message,
+      onConfirm: () =>
+        setUniversalModal((prev) => ({ ...prev, isOpen: false })),
+    });
+  };
+
+  const closeUniversalModal = () => {
+    setUniversalModal((prev) => ({ ...prev, isOpen: false }));
+  };
 
   if (!showModal) return null;
 
@@ -340,7 +389,7 @@ const AppointmentModal = ({
   }, [showModal, currentMode, appointmentForm.start]); // Include appointmentForm.start to check if calendar selection exists
 
   // Validate and handle appointment creation
-  const handleValidatedAddAppointment = () => {
+  const handleValidatedAddAppointment = async () => {
     // Create a validated form object, ensuring patient data is properly set
     const validatedForm = { ...appointmentForm };
 
@@ -411,11 +460,29 @@ const AppointmentModal = ({
         end: undefined,
       };
 
-      // Sending appointment data
-      handleAddAppointment(appointmentData);
+      try {
+        // Call handleAddAppointment and wait for it to complete
+        await handleAddAppointment(appointmentData);
+
+        // Show success modal
+        showSuccessModal(
+          "¡Cita creada exitosamente!",
+          "La nueva cita se ha agregado al calendario."
+        );
+      } catch (createError: any) {
+        console.error("❌ Failed to create appointment:", createError);
+        showErrorModal(
+          "Error al crear la cita",
+          createError.message ||
+            "Ocurrió un error inesperado. Por favor intenta de nuevo."
+        );
+      }
     } catch (error) {
       console.error("❌ Error converting dates to ISO:", error);
-      alert("Error al procesar las fechas. Por favor intenta de nuevo.");
+      showErrorModal(
+        "Error en los datos",
+        "Error al procesar las fechas. Por favor intenta de nuevo."
+      );
     }
   };
 
@@ -431,19 +498,22 @@ const AppointmentModal = ({
 
     // Validate required fields using the validated form
     if (!validatedForm.doctorId) {
-      alert("Por favor selecciona un doctor");
+      showErrorModal("Campo requerido", "Por favor selecciona un doctor");
       return;
     }
     if (!validatedForm.patientId && !validatedForm.patientName) {
-      alert("Por favor selecciona un paciente");
+      showErrorModal("Campo requerido", "Por favor selecciona un paciente");
       return;
     }
     if (!validatedForm.resourceId) {
-      alert("Por favor selecciona una unidad");
+      showErrorModal("Campo requerido", "Por favor selecciona una unidad");
       return;
     }
     if (!validatedForm.treatmentType) {
-      alert("Por favor ingresa el tipo de tratamiento");
+      showErrorModal(
+        "Campo requerido",
+        "Por favor ingresa el tipo de tratamiento"
+      );
       return;
     }
 
@@ -513,7 +583,11 @@ const AppointmentModal = ({
         // Switch back to see-only mode
         setCurrentMode("see-only");
 
-        alert("Cita actualizada exitosamente");
+        // Show success modal
+        showSuccessModal(
+          "¡Cita actualizada exitosamente!",
+          "Los cambios se han guardado correctamente."
+        );
       } catch (updateError: any) {
         console.error("❌ Update appointment failed:", updateError);
         console.error("❌ Error details:", {
@@ -521,7 +595,8 @@ const AppointmentModal = ({
           response: updateError.response?.data,
           status: updateError.response?.status,
         });
-        alert(
+        showErrorModal(
+          "Error al actualizar la cita",
           updateError.message ||
             "Error al actualizar la cita. Por favor intenta de nuevo."
         );
@@ -536,12 +611,37 @@ const AppointmentModal = ({
     setShowCancelConfirmation(true);
   };
 
-  const handleConfirmCancel = () => {
+  const handleConfirmCancel = async () => {
     setShowCancelConfirmation(false);
-    if (handleCancelAppointment) {
-      handleCancelAppointment(appointmentForm.appointmentId);
+
+    try {
+      console.log(`🚫 Cancelling appointment ${appointmentForm.appointmentId}`);
+
+      // Cancel appointment directly using the API function
+      const cancelledAppointment = await cancelAppointment(
+        appointmentForm.appointmentId
+      );
+
+      // Update the cache with the cancelled appointment
+      if (cancelAppointmentInCache) {
+        cancelAppointmentInCache(cancelledAppointment);
+      }
+
+      console.log("✅ Appointment cancelled successfully");
+
+      // Show success modal
+      showSuccessModal(
+        "¡Cita cancelada exitosamente!",
+        "La cita ha sido cancelada correctamente."
+      );
+    } catch (error: any) {
+      console.error("❌ Failed to cancel appointment:", error);
+      showErrorModal(
+        "Error al cancelar la cita",
+        error.message ||
+          "Error al cancelar la cita. Por favor intenta de nuevo."
+      );
     }
-    handleCloseModal();
   };
 
   const handleCancelConfirmation = () => {
@@ -952,6 +1052,15 @@ const AppointmentModal = ({
         onConfirm={handleConfirmCancel}
         onCancel={handleCancelConfirmation}
         confirmButtonStyle="danger"
+      />
+
+      {/* Universal Modal for Success/Error Messages */}
+      <UniversalModal
+        isOpen={universalModal.isOpen}
+        type={universalModal.type}
+        title={universalModal.title}
+        message={universalModal.message}
+        onConfirm={universalModal.onConfirm}
       />
     </div>
   );
