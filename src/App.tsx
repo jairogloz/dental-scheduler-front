@@ -665,6 +665,7 @@ function App() {
               handleCloseModal={handleCloseModal}
               handleAddAppointment={handleAddAppointment}
               handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
+              addAppointmentToCache={addAppointmentToCache} // Pass cache update function
               setAppointmentForm={setAppointmentForm}
             />
           )}

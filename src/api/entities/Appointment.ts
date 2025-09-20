@@ -202,13 +202,12 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       }
     });
 
-    console.log('📤 Sending PATCH request:', requestData);
-    console.log('📤 Request URL:', `/appointments/${id}`);
+    console.log('📤 Sending PATCH request for update:', requestData);
 
     let response;
     const startTime = Date.now();
     try {
-      console.log('⏳ Making API call...');
+      console.log('⏳ Making update API call...');
       response = await apiClient.patch<AppointmentApiResponse>(
         `/appointments/${id}`,
         requestData
@@ -217,8 +216,8 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       console.log(`✅ Update response received in ${endTime - startTime}ms:`, response.data);
     } catch (apiError: any) {
       const endTime = Date.now();
-      console.error(`❌ API call failed after ${endTime - startTime}ms:`, apiError);
-      console.error('❌ API Error details:', {
+      console.error(`❌ Update API call failed after ${endTime - startTime}ms:`, apiError);
+      console.error('❌ Update API Error details:', {
         status: apiError.response?.status,
         statusText: apiError.response?.statusText,
         data: apiError.response?.data,

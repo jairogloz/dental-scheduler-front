@@ -28,6 +28,7 @@ const AppointmentModal = ({
   handleCloseModal,
   handleAddAppointment,
   handleCancelAppointment, // New handler for canceling appointments
+  addAppointmentToCache, // Cache update function for both create and update
   setAppointmentForm,
   appointments, // Receive appointments prop
 }: any) => {
@@ -504,14 +505,13 @@ const AppointmentModal = ({
           end: updatedAppointment.end,
         });
 
+        // Update the cache directly with the updated appointment
+        if (addAppointmentToCache) {
+          addAppointmentToCache(updatedAppointment);
+        }
+
         // Switch back to see-only mode
         setCurrentMode("see-only");
-
-        // Optionally refresh the calendar view if there's a callback
-        // handleAddAppointment could be renamed to handleAppointmentChange for both create/update
-        if (handleAddAppointment) {
-          handleAddAppointment(updatedAppointment);
-        }
 
         alert("Cita actualizada exitosamente");
       } catch (updateError: any) {
