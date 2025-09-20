@@ -5,7 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:check": "tsc -b --watch & vite",
     "build": "tsc -b && vite build",
+    "type-check": "tsc -b",
+    "type-check:watch": "tsc -b --watch",
     "lint": "eslint .",
     "preview": "vite preview"
   },

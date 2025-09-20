@@ -12,11 +12,7 @@ import type { View } from "react-big-calendar";
 
 // Note: organization-provided doctor objects may have a slightly different shape than the strict `Doctor` type.
 // We'll accept any objects that contain an `id` string to avoid brittle type mismatches.
-import {
-  createAppointment,
-  deleteAppointment,
-  cancelAppointment,
-} from "./api/entities/Appointment";
+import { createAppointment } from "./api/entities/Appointment";
 import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
@@ -125,7 +121,6 @@ function App() {
     loadAppointmentsForRange,
     getAppointmentsInRange,
     addAppointmentToCache,
-    removeAppointmentFromCache,
     cancelAppointmentInCache,
   } = useAuth();
 
@@ -583,29 +578,6 @@ function App() {
     }
   };
 
-  const handleCancelAppointment = async () => {
-    try {
-      console.log(`🚫 Cancelling appointment ${appointmentForm.appointmentId}`);
-
-      // Cancel appointment (PATCH with status="cancelled")
-      const cancelledAppointment = await cancelAppointment(
-        appointmentForm.appointmentId
-      );
-
-      // Update appointment cache with cancelled appointment
-      cancelAppointmentInCache(cancelledAppointment);
-
-      console.log("✅ Appointment cancelled successfully");
-
-      // Don't close modal or show alert - let the modal handle success display
-      return cancelledAppointment; // Return the cancelled appointment
-    } catch (error) {
-      console.error("❌ Failed to cancel appointment:", error);
-      // Let the modal handle error display, just throw the error
-      throw error;
-    }
-  };
-
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -811,7 +783,6 @@ function App() {
               doctors={doctors}
               handleCloseModal={handleCloseModal}
               handleAddAppointment={handleAddAppointment}
-              handleCancelAppointment={handleCancelAppointment} // Pass the cancel handler
               addAppointmentToCache={addAppointmentToCache} // Pass cache update function
               cancelAppointmentInCache={cancelAppointmentInCache} // Pass cancel cache update function
               setAppointmentForm={setAppointmentForm}

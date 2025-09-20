@@ -31,7 +31,6 @@ const AppointmentModal = ({
   doctors,
   handleCloseModal,
   handleAddAppointment,
-  handleCancelAppointment, // New handler for canceling appointments
   addAppointmentToCache, // Cache update function for both create and update
   cancelAppointmentInCache, // Cache update function for cancelling appointments
   setAppointmentForm,
@@ -93,10 +92,6 @@ const AppointmentModal = ({
       onConfirm: () =>
         setUniversalModal((prev) => ({ ...prev, isOpen: false })),
     });
-  };
-
-  const closeUniversalModal = () => {
-    setUniversalModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   if (!showModal) return null;

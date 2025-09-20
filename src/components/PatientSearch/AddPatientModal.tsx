@@ -4,7 +4,6 @@ import {
   type Patient,
   type CreatePatientRequest,
 } from "../../api/entities/Patient";
-import { useAuth } from "../../contexts/AuthContext";
 import "../../styles/Modal.css";
 import "./AddPatientModal.css";
 
@@ -21,7 +20,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   onPatientCreated,
   initialName = "",
 }) => {
-  const { organizationId } = useAuth(); // Use organizationId directly from context
   const [formData, setFormData] = useState<CreatePatientRequest>({
     name: "",
     phone: "",

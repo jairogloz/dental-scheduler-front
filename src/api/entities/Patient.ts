@@ -28,7 +28,6 @@ export type CreatePatientResponse = {
 // Search patients with debouncing-friendly API call
 export const searchPatients = async (
   query: string, 
-  organizationId?: string, // Make optional since JWT contains org info
   limit: number = 100
 ): Promise<Patient[]> => {
   if (query.length < 2) {
@@ -60,8 +59,7 @@ export const searchPatients = async (
 
 // Create a new patient
 export const createPatient = async (
-  patientData: CreatePatientRequest, 
-  organizationId?: string // Make optional since JWT contains org info
+  patientData: CreatePatientRequest
 ): Promise<Patient> => {
   try {
     // Call backend API - organization_id will be extracted from JWT token by backend
