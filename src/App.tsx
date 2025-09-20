@@ -116,6 +116,7 @@ function App() {
   const {
     organizationData,
     organizationLoading,
+    organizationError,
     loadOrganizationData,
     appointmentCache,
     loadAppointmentsForRange,
@@ -128,6 +129,7 @@ function App() {
   const [view, setView] = useState<View>(isMobile ? "day" : "week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
+  const [organizationDataFetched, setOrganizationDataFetched] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit" | "see-only">(
     "create"
   );
@@ -201,14 +203,21 @@ function App() {
 
   // Load organization data with current calendar view on initial load
   useEffect(() => {
-    if (!organizationData) {
+    if (!organizationDataFetched && !organizationLoading) {
       // Loading organization data with calendar view
       // Map calendar view types to our supported types
       const viewType =
         view === "work_week" ? "week" : (view as "day" | "week" | "month");
       loadOrganizationData(date, viewType);
+      setOrganizationDataFetched(true);
     }
-  }, [organizationData, loadOrganizationData, date, view]);
+  }, [
+    organizationDataFetched,
+    organizationLoading,
+    loadOrganizationData,
+    date,
+    view,
+  ]);
 
   // Initialize selectedClinics to all clinics when organization data loads
   useEffect(() => {
@@ -660,7 +669,60 @@ function App() {
                 }
               />
 
-              {organizationLoading ? (
+              {organizationError ? (
+                <div
+                  style={{
+                    height: "70vh",
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                    padding: "2rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      color: "#dc2626",
+                      fontSize: "1.5rem",
+                      fontWeight: "bold",
+                      marginBottom: "1rem",
+                      textAlign: "center",
+                    }}
+                  >
+                    ⚠️ Organization Setup Required
+                  </div>
+                  <div
+                    style={{
+                      color: "#6b7280",
+                      fontSize: "1rem",
+                      textAlign: "center",
+                      maxWidth: "600px",
+                      lineHeight: "1.5",
+                      marginBottom: "1.5rem",
+                    }}
+                  >
+                    {organizationError}
+                  </div>
+                  <button
+                    onClick={() => window.location.reload()}
+                    style={{
+                      backgroundColor: "#3b82f6",
+                      color: "white",
+                      padding: "0.75rem 1.5rem",
+                      borderRadius: "6px",
+                      border: "none",
+                      fontSize: "1rem",
+                      cursor: "pointer",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : organizationLoading ? (
                 <div
                   style={{
                     height: "70vh",

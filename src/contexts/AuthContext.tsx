@@ -34,6 +34,7 @@ interface AuthContextType {
   organizationId: string | null;
   organizationData: OrganizationData | null; // Add organization data
   organizationLoading: boolean; // Add loading state for organization data
+  organizationError: string | null; // Add error state for organization data
   loadOrganizationData: (
     calendarDate?: Date,
     calendarView?: "day" | "week" | "month",
@@ -76,6 +77,7 @@ const AuthContext = createContext<AuthContextType>({
   organizationId: null,
   organizationData: null, // Add organization data default
   organizationLoading: false, // Add organization loading default
+  organizationError: null, // Add organization error default
   loadOrganizationData: async () => {}, // Add default
   // Appointment cache defaults
   appointmentCache: {
@@ -122,6 +124,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [organizationData, setOrganizationData] =
     useState<OrganizationData | null>(null);
   const [organizationLoading, setOrganizationLoading] = useState(false);
+  const [organizationError, setOrganizationError] = useState<string | null>(
+    null
+  );
 
   // Add appointment cache state
   const [appointmentCache, setAppointmentCache] = useState<AppointmentCache>({
@@ -156,6 +161,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
     try {
       setOrganizationLoading(true);
+      setOrganizationError(null); // Clear any previous errors
       // Loading organization data
 
       // Calculate date range based on calendar view with buffer
@@ -253,6 +259,27 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Organization data loaded successfully
     } catch (error) {
       console.error("❌ Failed to load organization data:", error);
+
+      // Set appropriate error message based on error type
+      if (error && typeof error === "object" && "response" in error) {
+        const apiError = error as any;
+        if (apiError.response?.status === 404) {
+          setOrganizationError(
+            "Organization not found. Please contact your administrator to set up your organization access."
+          );
+        } else {
+          setOrganizationError(
+            `Failed to load organization data: ${
+              apiError.response?.status || "Unknown error"
+            }`
+          );
+        }
+      } else {
+        setOrganizationError(
+          "Failed to load organization data. Please check your internet connection and try again."
+        );
+      }
+
       setOrganizationData(null);
     } finally {
       setOrganizationLoading(false);
@@ -849,6 +876,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     organizationId,
     organizationData, // Add organization data to context value
     organizationLoading, // Add organization loading to context value
+    organizationError, // Add organization error to context value
     loadOrganizationData, // Add loadOrganizationData function
     // Appointment cache
     appointmentCache,

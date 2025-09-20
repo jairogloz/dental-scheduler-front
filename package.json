@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:railway": "vite --mode railway",
     "dev:check": "tsc -b --watch & vite",
     "build": "tsc -b && vite build",
+    "build:railway": "tsc -b && vite build --mode railway",
     "type-check": "tsc -b",
     "type-check:watch": "tsc -b --watch",
     "lint": "eslint .",
