@@ -42,6 +42,7 @@ type Event = {
   start: Date;
   end: Date;
   resourceId: string;
+  clinicId?: string; // Add clinic information for styling
 };
 
 type AppointmentForm = {
@@ -56,16 +57,32 @@ type AppointmentForm = {
   end: Date;
 };
 
-// Doctor colors - will be dynamically assigned based on available doctors
+// Doctor colors - darker/saturated tones suitable for white text
 const doctorColors: string[] = [
-  "#3B82F6", // Modern Blue - professional and calming
+  "#1E40AF", // Deep Blue - professional and calming
+  "#059669", // Deep Emerald - fresh and medical
+  "#7C3AED", // Deep Purple - sophisticated and distinctive
+  "#D97706", // Deep Amber - warm and energetic
+  "#DC2626", // Deep Red - attention-grabbing but not harsh
+  "#0891B2", // Deep Cyan - medical and clean
+  "#92400E", // Deep Brown - warm and reliable
+  "#BE185D", // Deep Pink - caring and approachable
+  "#4338CA", // Deep Indigo - calm and trustworthy
+  "#065F46", // Deep Teal - professional and soothing
+];
+
+// Clinic colors - bright, high-contrast colors for left borders (visible against dark backgrounds)
+const clinicColors: string[] = [
+  "#FCD34D", // Golden Yellow - high visibility
   "#10B981", // Emerald Green - fresh and medical
-  "#8B5CF6", // Purple - sophisticated and distinctive
-  "#F59E0B", // Amber Orange - warm and energetic
-  "#EF4444", // Modern Red - attention-grabbing but not harsh
+  "#F59E0B", // Amber - warm and visible
+  "#3B82F6", // Blue - professional and clear
+  "#EF4444", // Red - attention-grabbing
+  "#8B5CF6", // Purple - distinctive
   "#06B6D4", // Cyan - medical and clean
-  "#8B5A2B", // Brown - warm and reliable
-  "#EC4899", // Pink - caring and approachable
+  "#F97316", // Orange - energetic and visible
+  "#EC4899", // Pink - caring and noticeable
+  "#84CC16", // Lime Green - vibrant and clear
 ];
 
 const getDoctorColor = (
@@ -74,12 +91,28 @@ const getDoctorColor = (
 ): string => {
   // Defensive: if we don't have a valid doctorId or doctors list, return a neutral color
   if (!doctorId || !Array.isArray(doctors) || doctors.length === 0) {
-    return "#ccc";
+    return "#6B7280"; // Neutral gray that works with white text
   }
 
   const doctorIndex = doctors.findIndex((doctor) => doctor.id === doctorId);
-  if (doctorIndex === -1) return "#ccc"; // Default color for unknown doctors
+  if (doctorIndex === -1) return "#6B7280"; // Default color for unknown doctors
   return doctorColors[doctorIndex % doctorColors.length];
+};
+
+const getClinicColor = (
+  clinicId?: string | null,
+  clinics?: { id: string }[] | null
+): string => {
+  // Defensive: if we don't have a valid clinicId or clinics list, return a neutral color
+  if (!clinicId || !Array.isArray(clinics) || clinics.length === 0) {
+    return "#9CA3AF"; // Neutral light gray for borders
+  }
+
+  const clinicIndex = clinics.findIndex((clinic) => clinic.id === clinicId);
+  // If clinicIndex is not found (-1), default to the first color
+  return clinicColors[
+    clinicIndex === -1 ? 0 : clinicIndex % clinicColors.length
+  ];
 };
 
 function App() {
@@ -135,21 +168,43 @@ function App() {
   );
   // clinics are managed by selectedClinics state
 
-  // Event styling function - now based on doctor
+  // Event styling function - based on doctor (background) and clinic (left border)
   const eventPropGetter = (event: Event) => {
     const backgroundColor = getDoctorColor(event.resourceId, doctors);
+    const borderLeftColor = getClinicColor(
+      event.clinicId,
+      organizationData?.clinics
+    );
+
+    // Debug logging to see what's happening
+    console.log("Event styling:", {
+      clinicId: event.clinicId,
+      borderLeftColor,
+      backgroundColor,
+      clinics: organizationData?.clinics?.map((c) => ({
+        id: c.id,
+        name: c.name || "No name",
+      })),
+    });
+
     return {
       style: {
         backgroundColor,
         color: "white",
         borderRadius: "4px",
-        border: "none",
+        border: `6px solid ${borderLeftColor}`, // Use full border with clinic color
+        borderRight: `1px solid ${backgroundColor}`, // Thin right border with doctor color
+        borderTop: `1px solid ${backgroundColor}`, // Thin top border with doctor color
+        borderBottom: `1px solid ${backgroundColor}`, // Thin bottom border with doctor color
         padding: "2px 5px",
+        paddingLeft: "10px", // Extra padding to account for wider border
         opacity: "0.95", // Slight transparency to show overlaps
         fontSize: "13.5px", // Slightly smaller font for better fit
         fontWeight: "500", // Medium font weight for better readability
         outline: "1px solid rgba(255, 255, 255, 0.8)", // Additional outer outline for extra separation
-      },
+        "--clinic-color": borderLeftColor, // CSS custom property for debugging
+      } as React.CSSProperties & { "--clinic-color": string },
+      className: "calendar-event-with-clinic-border",
     };
   };
 
@@ -274,12 +329,20 @@ function App() {
           : appointment.doctorId;
       // Use patient_name directly from appointment object
       const patientLabel = appointment.patient_name || appointment.patientId;
+
+      // Find the unit and its associated clinic for color coding
+      const unit = organizationData.units.find(
+        (u) => u.id === appointment.unitId
+      );
+      const clinicId = unit?.clinic_id;
+
       return {
         title: `${patientLabel} - ${doctorLabel}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
         appointmentId: appointment.id,
+        clinicId: clinicId, // Add clinic information for styling
       };
     });
 
@@ -589,6 +652,9 @@ function App() {
               <ClinicFilterBar
                 selectedClinics={selectedClinics}
                 onClinicsChange={setSelectedClinics}
+                getClinicColor={(clinicId: string) =>
+                  getClinicColor(clinicId, organizationData?.clinics)
+                }
               />
 
               {organizationLoading ? (

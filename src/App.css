@@ -40,3 +40,37 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Enhanced Calendar Event Styling */
+.rbc-event {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+
+.rbc-event:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  z-index: 10 !important;
+}
+
+/* Ensure good visibility in different calendar views */
+.rbc-month-view .rbc-event {
+  font-size: 12px !important;
+  padding: 1px 4px !important;
+}
+
+.rbc-day-view .rbc-event, .rbc-week-view .rbc-event {
+  font-size: 13px !important;
+  padding: 2px 6px !important;
+}
+
+/* Improve readability of event text */
+.rbc-event-content {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  font-weight: 500 !important;
+}
+
+/* Clinic border styling - ensure borders are visible */
+.calendar-event-with-clinic-border {
+  box-sizing: border-box !important;
+}

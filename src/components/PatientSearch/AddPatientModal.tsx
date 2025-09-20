@@ -68,23 +68,14 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
       return;
     }
 
-    // Validate organization_id
-    if (!organizationId) {
-      setError("Error: No se pudo obtener la información de la organización");
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
     try {
-      const newPatient = await createPatient(
-        {
-          name: formData.name.trim(),
-          phone: formData.phone?.trim() || undefined,
-        },
-        organizationId
-      );
+      const newPatient = await createPatient({
+        name: formData.name.trim(),
+        phone: formData.phone?.trim() || undefined,
+      });
 
       // Success - notify parent and close modal
       onPatientCreated(newPatient);

@@ -4,11 +4,13 @@ import { useClinics } from "../../hooks/useOrganizationHelpers";
 interface ClinicFilterBarProps {
   selectedClinics: string[];
   onClinicsChange: (selectedClinicIds: string[]) => void;
+  getClinicColor?: (clinicId: string) => string;
 }
 
 const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
   selectedClinics,
   onClinicsChange,
+  getClinicColor,
 }) => {
   const { clinics, loading } = useClinics();
 
@@ -59,29 +61,42 @@ const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
         Clínicas:
       </span>
 
-      {clinics.map((clinic) => (
-        <label
-          key={clinic.id}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            cursor: "pointer",
-            color: "#374151",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={selectedClinics.includes(clinic.id)}
-            onChange={() => handleClinicToggle(clinic.id)}
+      {clinics.map((clinic) => {
+        const clinicColor = getClinicColor
+          ? getClinicColor(clinic.id)
+          : "#9CA3AF";
+
+        return (
+          <label
+            key={clinic.id}
             style={{
-              margin: 0,
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
               cursor: "pointer",
+              color: "#374151",
+              padding: "4px 8px",
+              borderLeft: `3px solid ${clinicColor}`,
+              borderRadius: "4px",
+              backgroundColor: selectedClinics.includes(clinic.id)
+                ? "rgba(59, 130, 246, 0.1)"
+                : "transparent",
+              transition: "background-color 0.2s ease",
             }}
-          />
-          {clinic.name}
-        </label>
-      ))}
+          >
+            <input
+              type="checkbox"
+              checked={selectedClinics.includes(clinic.id)}
+              onChange={() => handleClinicToggle(clinic.id)}
+              style={{
+                margin: 0,
+                cursor: "pointer",
+              }}
+            />
+            {clinic.name}
+          </label>
+        );
+      })}
     </div>
   );
 };

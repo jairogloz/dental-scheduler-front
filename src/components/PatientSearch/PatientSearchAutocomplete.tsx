@@ -41,14 +41,6 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
         return;
       }
 
-      // Validate organization_id
-      if (!organizationId) {
-        console.error("No organization_id available for patient search");
-        setError("Error: No se pudo obtener la información de la organización");
-        setIsLoading(false);
-        return;
-      }
-
       // Cancel any previous search
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
@@ -62,8 +54,8 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
       setError(null);
 
       try {
-        // Starting patient search
-        const patients = await searchPatients(searchQuery, organizationId);
+        // Starting patient search (organizationId extracted from JWT by backend)
+        const patients = await searchPatients(searchQuery);
 
         // Check if this search was aborted
         if (currentController.signal.aborted) {

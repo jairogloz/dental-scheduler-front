@@ -28,7 +28,7 @@ export type CreatePatientResponse = {
 // Search patients with debouncing-friendly API call
 export const searchPatients = async (
   query: string, 
-  organizationId: string,
+  organizationId?: string, // Make optional since JWT contains org info
   limit: number = 100
 ): Promise<Patient[]> => {
   if (query.length < 2) {
@@ -36,8 +36,9 @@ export const searchPatients = async (
   }
 
   try {
+    // Call backend API - organization_id will be extracted from JWT token by backend
     const { data, error } = await apiClient.get<PatientSearchResponse>(
-      `/patients/search?q=${encodeURIComponent(query)}&organization_id=${encodeURIComponent(organizationId)}&limit=${limit}`
+      `/patients/search?q=${encodeURIComponent(query)}&limit=${limit}`
     );
 
     if (error) {
@@ -60,11 +61,12 @@ export const searchPatients = async (
 // Create a new patient
 export const createPatient = async (
   patientData: CreatePatientRequest, 
-  organizationId: string
+  organizationId?: string // Make optional since JWT contains org info
 ): Promise<Patient> => {
   try {
+    // Call backend API - organization_id will be extracted from JWT token by backend
     const { data, error } = await apiClient.post<CreatePatientResponse>(
-      `/patients?organization_id=${encodeURIComponent(organizationId)}`, 
+      `/patients`, 
       patientData
     );
 
