@@ -3,11 +3,6 @@ import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
-// Debug log to verify which API URL is being used
-console.log('🔧 API Base URL:', API_BASE_URL);
-console.log('🔧 Environment Mode:', import.meta.env.MODE);
-console.log('🔧 All VITE env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
-
 // Token cache to avoid repeated session calls
 let tokenCache: {
   token: string | null;
@@ -76,12 +71,6 @@ const apiClient = axios.create({
 // Request interceptor - attach auth token to every request
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    // Debug: Log the full URL being requested
-    const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
-    console.log('🌐 Making API request to:', fullUrl);
-    console.log('🔧 Base URL:', config.baseURL);
-    console.log('🔧 Endpoint:', config.url);
-    
     try {
       const token = await getValidToken();
       
