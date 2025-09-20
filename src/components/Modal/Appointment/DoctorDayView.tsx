@@ -35,28 +35,58 @@ const DoctorDayView = ({
   onSlotSelect,
   existingAppointments = [], // Default to empty array
 }: DoctorDayViewProps) => {
-  const [appointments, setAppointments] =
-    useState<Appointment[]>(existingAppointments);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      setIsLoading(true);
-      try {
-        const doctorAppointments = await getDoctorAvailability(
-          doctorId,
-          selectedDate
-        );
-        setAppointments(doctorAppointments);
-      } catch (error) {
-        console.error("Error fetching appointments:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // If existingAppointments are provided, use them and filter for the selected doctor and date
+    if (existingAppointments.length > 0) {
+      const doctorAppointmentsForDate = existingAppointments.filter((apt) => {
+        const appointmentDate = new Date(apt.start);
+        const selectedDateStr = selectedDate.toDateString();
+        const appointmentDateStr = appointmentDate.toDateString();
 
-    fetchAppointments();
-  }, [doctorId, selectedDate]); // Add doctorId to dependencies
+        return (
+          apt.doctorId === doctorId &&
+          appointmentDateStr === selectedDateStr &&
+          apt.status !== "cancelled"
+        ); // Exclude cancelled appointments
+      });
+
+      console.log(
+        `📅 DoctorDayView: Found ${
+          doctorAppointmentsForDate.length
+        } appointments for doctor ${doctorId} on ${selectedDate.toDateString()}`
+      );
+      setAppointments(doctorAppointmentsForDate);
+      setIsLoading(false);
+    } else {
+      // Fallback to the old API call if no existing appointments are provided
+      console.log(
+        `📅 DoctorDayView: No existing appointments provided, falling back to API call`
+      );
+      const fetchAppointments = async () => {
+        setIsLoading(true);
+        try {
+          const doctorAppointments = await getDoctorAvailability(
+            doctorId,
+            selectedDate
+          );
+          setAppointments(doctorAppointments);
+          console.log(
+            `📅 DoctorDayView: Fetched ${doctorAppointments.length} appointments from API`
+          );
+        } catch (error) {
+          console.error("Error fetching appointments:", error);
+          setAppointments([]); // Set to empty array on error
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      fetchAppointments();
+    }
+  }, [doctorId, selectedDate, existingAppointments]); // Include existingAppointments in dependencies
 
   const handleSelectSlot = (slotInfo: { start: Date; end: Date }) => {
     onSlotSelect(slotInfo.start, slotInfo.end);
@@ -75,7 +105,7 @@ const DoctorDayView = ({
         views={[Views.DAY]}
         events={[
           ...appointments.map((apt) => ({
-            title: `${apt.patientId} - ${apt.treatment}`, // Show patient and treatment
+            title: `${apt.patient_name || apt.patientId} - ${apt.treatment}`, // Show patient name (fallback to ID) and treatment
             start: new Date(apt.start),
             end: new Date(apt.end),
           })),

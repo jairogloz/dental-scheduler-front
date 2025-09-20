@@ -718,6 +718,7 @@ function App() {
               addAppointmentToCache={addAppointmentToCache} // Pass cache update function
               cancelAppointmentInCache={cancelAppointmentInCache} // Pass cancel cache update function
               setAppointmentForm={setAppointmentForm}
+              appointments={Array.from(appointmentCache.appointments.values())} // Pass all appointments from cache
             />
           )}
         </div>
