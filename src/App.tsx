@@ -366,7 +366,8 @@ function App() {
 
       setAppointmentForm({
         appointmentId: selectedAppointment.id,
-        patientName: selectedAppointment.patient_name || selectedAppointment.patientId,
+        patientName:
+          selectedAppointment.patient_name || selectedAppointment.patientId,
         patientId: selectedAppointment.patientId,
         doctorId: selectedAppointment.doctorId,
         doctorName:
