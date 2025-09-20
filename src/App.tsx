@@ -263,8 +263,10 @@ function App() {
         doctor && "name" in doctor
           ? doctor.name || doctor.id
           : appointment.doctorId;
+      // Use patient_name directly from appointment object
+      const patientLabel = appointment.patient_name || appointment.patientId;
       return {
-        title: `${appointment.patientId} - ${doctorLabel}`,
+        title: `${patientLabel} - ${doctorLabel}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
@@ -364,7 +366,7 @@ function App() {
 
       setAppointmentForm({
         appointmentId: selectedAppointment.id,
-        patientName: selectedAppointment.patientId, // This needs to be fixed to get actual patient name
+        patientName: selectedAppointment.patient_name || selectedAppointment.patientId,
         patientId: selectedAppointment.patientId,
         doctorId: selectedAppointment.doctorId,
         doctorName:

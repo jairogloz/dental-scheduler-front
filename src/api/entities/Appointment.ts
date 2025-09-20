@@ -8,6 +8,13 @@ export type Appointment = {
   unitId: string;
   start: Date;
   end: Date;
+  // Additional fields from API responses
+  patient_name?: string;
+  doctor_name?: string;
+  unit_name?: string;
+  clinic_id?: string;
+  clinic_name?: string;
+  status?: string;
 };
 
 // Backend API request/response types

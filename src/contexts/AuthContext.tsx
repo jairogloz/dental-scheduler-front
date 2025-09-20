@@ -180,6 +180,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           start: new Date(appt.start_time),
           end: new Date(appt.end_time),
           treatment: appt.treatment_type,
+          // Preserve additional fields from API response
+          patient_name: appt.patient_name,
+          doctor_name: appt.doctor_name,
+          unit_name: appt.unit_name,
+          status: appt.status,
         }));
 
         setAppointmentCache((prev) => {
