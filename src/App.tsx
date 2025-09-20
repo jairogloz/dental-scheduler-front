@@ -15,7 +15,6 @@ import type { View } from "react-big-calendar";
 import {
   createAppointment,
   deleteAppointment,
-  getAppointments as getAppointmentsEntity,
 } from "./api/entities/Appointment";
 import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
@@ -174,38 +173,39 @@ function App() {
   // Calculate date range for current calendar view
   // Memoize this function to prevent infinite re-renders
   const getCalendarDateRange = useMemo(
-    () => (currentDate: Date, currentView: View): { start: Date; end: Date } => {
-      let startDate: Date, endDate: Date;
+    () =>
+      (currentDate: Date, currentView: View): { start: Date; end: Date } => {
+        let startDate: Date, endDate: Date;
 
-      if (currentView === "day") {
-        startDate = new Date(currentDate);
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(currentDate);
-        endDate.setHours(23, 59, 59, 999);
-      } else if (currentView === "month") {
-        startDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth(),
-          1
-        );
-        endDate = new Date(
-          currentDate.getFullYear(),
-          currentDate.getMonth() + 1,
-          0
-        );
-        endDate.setHours(23, 59, 59, 999);
-      } else {
-        // week view
-        startDate = new Date(currentDate);
-        startDate.setDate(startDate.getDate() - startDate.getDay());
-        startDate.setHours(0, 0, 0, 0);
-        endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + 6);
-        endDate.setHours(23, 59, 59, 999);
-      }
+        if (currentView === "day") {
+          startDate = new Date(currentDate);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(currentDate);
+          endDate.setHours(23, 59, 59, 999);
+        } else if (currentView === "month") {
+          startDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth(),
+            1
+          );
+          endDate = new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          );
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          // week view
+          startDate = new Date(currentDate);
+          startDate.setDate(startDate.getDate() - startDate.getDay());
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(startDate);
+          endDate.setDate(endDate.getDate() + 6);
+          endDate.setHours(23, 59, 59, 999);
+        }
 
-      return { start: startDate, end: endDate };
-    },
+        return { start: startDate, end: endDate };
+      },
     [] // This function doesn't depend on any variables, so empty dependency array
   );
 
@@ -350,7 +350,9 @@ function App() {
     const isPastEvent = event.start < new Date();
 
     try {
-      const appointments = await getAppointmentsEntity(); // Fetch appointments from memory
+      // Use cached appointments instead of fetching from API
+      const { start, end } = getCalendarDateRange(new Date(event.start), view);
+      const appointments = getAppointmentsInRange(start, end);
       const selectedAppointment = appointments.find(
         (appointment) => appointment.id === event.appointmentId
       );
