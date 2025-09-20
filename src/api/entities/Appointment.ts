@@ -27,9 +27,20 @@ export type CreateAppointmentRequest = {
   treatment_type: string; // Changed from treatment to treatment_type
 };
 
+export type UpdateAppointmentRequest = {
+  patient_id?: string;
+  doctor_id?: string;
+  unit_id?: string;
+  start_time?: string; // ISO string format
+  end_time?: string;   // ISO string format
+  treatment_type?: string;
+  status?: string;
+};
+
 export type AppointmentResponse = {
   id: string;
   patient_id: string;
+  patient_name?: string; // Now included in backend response
   doctor_id: string;
   unit_id: string;
   start_time: string;
@@ -119,6 +130,9 @@ export const createAppointment = async (
       start: startDate,
       end: endDate,
       treatment: appointmentData.treatment_type, // Map treatment_type back to treatment
+      // Preserve patient_name from backend response for display
+      patient_name: appointmentData.patient_name,
+      status: appointmentData.status,
     };
   } catch (error: any) {
     // Log detailed error information for debugging
@@ -165,33 +179,104 @@ export const createAppointment = async (
   }
 };
 
-export const updateAppointment = async (id: string, newData: Partial<Appointment>): Promise<Appointment> => {
+export const updateAppointment = async (id: string, appointmentData: any): Promise<Appointment> => {
   try {
-    // TODO: Implement real backend API call for updating appointments
-    const updateData: any = {};
-    
-    // Transform fields as needed
-    if (newData.start) updateData.start_time = newData.start.toISOString();
-    if (newData.end) updateData.end_time = newData.end.toISOString();
-    if (newData.treatment) updateData.treatment_type = newData.treatment; // Map treatment to treatment_type
-    if (newData.patientId) updateData.patient_id = newData.patientId;
-    if (newData.doctorId) updateData.doctor_id = newData.doctorId;
-    if (newData.unitId) updateData.unit_id = newData.unitId;
+    console.log('🔄 Updating appointment:', { id, appointmentData });
 
-    const response = await apiClient.put<AppointmentResponse>(`/appointments/${id}`, updateData);
-
-    return {
-      id: response.data.id,
-      patientId: response.data.patient_id,
-      doctorId: response.data.doctor_id,
-      unitId: response.data.unit_id,
-      start: new Date(response.data.start_time),
-      end: new Date(response.data.end_time),
-      treatment: response.data.treatment_type, // Map treatment_type back to treatment
+    // Transform frontend format to backend format
+    const requestData: UpdateAppointmentRequest = {
+      patient_id: appointmentData.patientId,
+      doctor_id: appointmentData.doctorId,
+      unit_id: appointmentData.resourceId,
+      start_time: appointmentData.start_time,
+      end_time: appointmentData.end_time,
+      treatment_type: appointmentData.treatmentType,
+      status: appointmentData.status,
     };
-  } catch (error) {
-    console.error("Error actualizando cita:", error);
-    throw { code: 500, message: "Error al actualizar la cita" };
+
+    // Remove undefined or empty fields
+    Object.keys(requestData).forEach(key => {
+      const value = requestData[key as keyof UpdateAppointmentRequest];
+      if (value === undefined || value === null || value === "") {
+        delete requestData[key as keyof UpdateAppointmentRequest];
+      }
+    });
+
+    console.log('📤 Sending PATCH request:', requestData);
+    console.log('📤 Request URL:', `/appointments/${id}`);
+
+    let response;
+    const startTime = Date.now();
+    try {
+      console.log('⏳ Making API call...');
+      response = await apiClient.patch<AppointmentApiResponse>(
+        `/appointments/${id}`,
+        requestData
+      );
+      const endTime = Date.now();
+      console.log(`✅ Update response received in ${endTime - startTime}ms:`, response.data);
+    } catch (apiError: any) {
+      const endTime = Date.now();
+      console.error(`❌ API call failed after ${endTime - startTime}ms:`, apiError);
+      console.error('❌ API Error details:', {
+        status: apiError.response?.status,
+        statusText: apiError.response?.statusText,
+        data: apiError.response?.data,
+        message: apiError.message,
+        isTimeout: apiError.code === 'ECONNABORTED'
+      });
+      throw apiError;
+    }
+
+    // Access the nested appointment data
+    const updatedAppointment = response.data.data;
+
+    // Validate date strings before creating Date objects
+    const startDate = new Date(updatedAppointment.start_time);
+    const endDate = new Date(updatedAppointment.end_time);
+    
+    if (isNaN(startDate.getTime())) {
+      throw new Error(`Invalid start_time from backend: ${updatedAppointment.start_time}`);
+    }
+    if (isNaN(endDate.getTime())) {
+      throw new Error(`Invalid end_time from backend: ${updatedAppointment.end_time}`);
+    }
+
+    // Transform backend response to frontend format
+    return {
+      id: updatedAppointment.id,
+      patientId: updatedAppointment.patient_id,
+      doctorId: updatedAppointment.doctor_id,
+      unitId: updatedAppointment.unit_id,
+      start: startDate,
+      end: endDate,
+      treatment: updatedAppointment.treatment_type,
+      // Preserve patient_name from backend response for display
+      patient_name: updatedAppointment.patient_name,
+      status: updatedAppointment.status,
+    };
+  } catch (error: any) {
+    console.error("❌ Error updating appointment:", error);
+    console.error("📋 Update error details:", {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.config?.data
+      }
+    });
+
+    // Handle specific error cases
+    if (error.response?.status === 404) {
+      throw new Error("Appointment not found");
+    } else if (error.response?.status === 400) {
+      const errorData = error.response.data;
+      throw new Error(errorData.message || "Invalid appointment data");
+    }
+
+    throw error;
   }
 };
 

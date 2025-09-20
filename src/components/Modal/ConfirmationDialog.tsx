@@ -24,25 +24,26 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const confirmButtonColor = confirmButtonStyle === "danger" ? "#dc3545" : "#007bff";
+  const confirmButtonColor =
+    confirmButtonStyle === "danger" ? "#dc3545" : "#007bff";
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1001 }}>
-      <div 
-        className="modal-content" 
+      <div
+        className="modal-content"
         style={{
           maxWidth: "400px",
           backgroundColor: "white",
           padding: "30px",
           borderRadius: "8px",
-          textAlign: "center"
+          textAlign: "center",
         }}
       >
         <h3 style={{ marginBottom: "15px", color: "#333" }}>{title}</h3>
         <p style={{ marginBottom: "25px", color: "#666", lineHeight: "1.5" }}>
           {message}
         </p>
-        
+
         <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
           <button
             onClick={onCancel}
@@ -53,7 +54,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               border: "none",
               borderRadius: "4px",
               cursor: "pointer",
-              fontSize: "14px"
+              fontSize: "14px",
             }}
           >
             {cancelText}
@@ -67,7 +68,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
               border: "none",
               borderRadius: "4px",
               cursor: "pointer",
-              fontSize: "14px"
+              fontSize: "14px",
             }}
           >
             {confirmText}

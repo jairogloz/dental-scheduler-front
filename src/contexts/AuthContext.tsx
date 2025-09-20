@@ -35,7 +35,8 @@ interface AuthContextType {
   organizationLoading: boolean; // Add loading state for organization data
   loadOrganizationData: (
     calendarDate?: Date,
-    calendarView?: "day" | "week" | "month"
+    calendarView?: "day" | "week" | "month",
+    forceRefresh?: boolean
   ) => Promise<void>; // Updated signature
   // Appointment cache
   appointmentCache: AppointmentCache;
@@ -125,11 +126,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Function to load organization data with calendar view support
   const loadOrganizationData = async (
     calendarDate?: Date,
-    calendarView?: "day" | "week" | "month"
+    calendarView?: "day" | "week" | "month",
+    forceRefresh?: boolean
   ) => {
     if (!organizationId) {
       // No organization ID available, skipping organization data load
       return;
+    }
+
+    // Clear all caches if force refresh is requested
+    if (forceRefresh) {
+      console.log(
+        "🧹 Force refresh: clearing all caches before loading fresh data"
+      );
+      setAppointmentCache({
+        appointments: new Map(),
+        loadedRanges: [],
+        lastUpdated: new Date(),
+      });
+      setOrganizationData(null);
     }
 
     try {
@@ -172,6 +187,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       // Populate appointment cache with organization data
       if (data.appointments && data.appointments.length > 0) {
+        console.log(
+          `📅 Loading ${data.appointments.length} appointments from organization data`
+        );
         const appointments: Appointment[] = data.appointments.map((appt) => ({
           id: appt.id,
           // Organization API might not have patient_id if patient doesn't exist in database
@@ -189,24 +207,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }));
 
         setAppointmentCache((prev) => {
-          const newAppointments = new Map(prev.appointments);
+          const newAppointments = forceRefresh
+            ? new Map()
+            : new Map(prev.appointments);
 
-          // Add appointments to cache
+          // Add appointments to cache (replace all if force refresh)
           appointments.forEach((appointment) => {
             newAppointments.set(appointment.id, appointment);
           });
 
           return {
             appointments: newAppointments,
-            loadedRanges: mergeDateRanges([
-              ...prev.loadedRanges,
-              { start: startDate, end: endDate },
-            ]),
+            loadedRanges: forceRefresh
+              ? [{ start: startDate, end: endDate }]
+              : mergeDateRanges([
+                  ...prev.loadedRanges,
+                  { start: startDate, end: endDate },
+                ]),
             lastUpdated: new Date(),
           };
         });
 
-        // Added appointments to cache from organization data
+        console.log(
+          `✅ Added ${appointments.length} appointments to cache from organization data`
+        );
+      } else {
+        console.log("📅 No appointments found in organization data");
+        if (forceRefresh) {
+          // Ensure cache reflects empty state
+          setAppointmentCache({
+            appointments: new Map(),
+            loadedRanges: [{ start: startDate, end: endDate }],
+            lastUpdated: new Date(),
+          });
+        }
       }
 
       // Organization data loaded successfully
@@ -495,8 +529,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Load organization data when organizationId changes
   useEffect(() => {
     if (organizationId && !loading) {
-      // Organization ID changed, loading organization data
-      loadOrganizationData();
+      // Organization ID changed, loading organization data with force refresh
+      console.log(
+        "🚀 Initial organization data load - forcing fresh data from backend"
+      );
+      loadOrganizationData(undefined, undefined, true); // Force refresh on initial load
     } else if (!organizationId) {
       // Clear organization data when no organization ID
       setOrganizationData(null);
@@ -591,6 +628,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       redirectTo: `${window.location.origin}/reset-password`,
     });
   };
+
+  // Development helper: clear all caches (expose to window for console access)
+  const clearAllCaches = () => {
+    console.log("🧹 Clearing all appointment caches...");
+    setAppointmentCache({
+      appointments: new Map(),
+      loadedRanges: [],
+      lastUpdated: new Date(),
+    });
+    setOrganizationData(null);
+    console.log("✅ All caches cleared");
+  };
+
+  // Expose cache clearing function to window for development
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any).clearAppointmentCache = clearAllCaches;
+    }
+  }, []);
 
   const value: AuthContextType = {
     user,

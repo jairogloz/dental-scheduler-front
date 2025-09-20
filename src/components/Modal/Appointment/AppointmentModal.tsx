@@ -5,6 +5,7 @@ import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
+import { updateAppointment } from "../../../api/entities/Appointment";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
@@ -39,7 +40,8 @@ const AppointmentModal = ({
   const [currentMode, setCurrentMode] = useState(mode); // Internal mode state for switching
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
-  const [originalAppointmentForm, setOriginalAppointmentForm] = useState<any>(null); // Store original form data
+  const [originalAppointmentForm, setOriginalAppointmentForm] =
+    useState<any>(null); // Store original form data
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [initialPatientName, setInitialPatientName] = useState<string>("");
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
@@ -192,7 +194,7 @@ const AppointmentModal = ({
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
     setSelectedPatient(patient);
-    
+
     // Only update form data when actually selecting a patient (not when clearing)
     // In edit mode, clearing the search doesn't clear the original patient data
     if (patient) {
@@ -249,10 +251,10 @@ const AppointmentModal = ({
     if (originalAppointmentForm) {
       setAppointmentForm(originalAppointmentForm);
     }
-    
+
     // Reset mode to see-only
     setCurrentMode("see-only");
-    
+
     // Clear any patient selection
     setSelectedPatient(null);
   };
@@ -340,7 +342,7 @@ const AppointmentModal = ({
   const handleValidatedAddAppointment = () => {
     // Create a validated form object, ensuring patient data is properly set
     const validatedForm = { ...appointmentForm };
-    
+
     // If we have a selectedPatient but the form doesn't have patientId, use selectedPatient data
     if (selectedPatient && selectedPatient.id && !validatedForm.patientId) {
       validatedForm.patientId = selectedPatient.id;
@@ -416,6 +418,120 @@ const AppointmentModal = ({
     }
   };
 
+  const handleValidatedUpdateAppointment = async () => {
+    // Create a validated form object, ensuring patient data is properly set
+    const validatedForm = { ...appointmentForm };
+
+    // If we have a selectedPatient but the form doesn't have patientId, use selectedPatient data
+    if (selectedPatient && selectedPatient.id && !validatedForm.patientId) {
+      validatedForm.patientId = selectedPatient.id;
+      validatedForm.patientName = selectedPatient.name;
+    }
+
+    // Validate required fields using the validated form
+    if (!validatedForm.doctorId) {
+      alert("Por favor selecciona un doctor");
+      return;
+    }
+    if (!validatedForm.patientId && !validatedForm.patientName) {
+      alert("Por favor selecciona un paciente");
+      return;
+    }
+    if (!validatedForm.resourceId) {
+      alert("Por favor selecciona una unidad");
+      return;
+    }
+    if (!validatedForm.treatmentType) {
+      alert("Por favor ingresa el tipo de tratamiento");
+      return;
+    }
+
+    // Enhanced date validation with debugging
+    if (!validatedForm.start || !validatedForm.end) {
+      console.error("❌ Missing start or end dates:", {
+        start: validatedForm.start,
+        end: validatedForm.end,
+      });
+      alert(
+        "Por favor selecciona fecha, hora y duración válidas - fechas faltantes"
+      );
+      return;
+    }
+
+    // Check if start/end are valid Date objects
+    const startDate = new Date(validatedForm.start);
+    const endDate = new Date(validatedForm.end);
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      console.error("❌ Invalid dates:", {
+        start: validatedForm.start,
+        end: validatedForm.end,
+        startValid: !isNaN(startDate.getTime()),
+        endValid: !isNaN(endDate.getTime()),
+      });
+      alert(
+        "Por favor selecciona fecha, hora y duración válidas - fechas inválidas"
+      );
+      return;
+    }
+
+    // Convert dates to ISO strings for the backend
+    try {
+      const appointmentData = {
+        appointmentId: validatedForm.appointmentId,
+        patientId: validatedForm.patientId,
+        doctorId: validatedForm.doctorId,
+        resourceId: validatedForm.resourceId,
+        treatmentType: validatedForm.treatmentType,
+        start_time: startDate.toISOString(),
+        end_time: endDate.toISOString(),
+      };
+
+      console.log("🔄 Calling updateAppointment with:", appointmentData);
+
+      try {
+        const updatedAppointment = await updateAppointment(
+          validatedForm.appointmentId,
+          appointmentData
+        );
+
+        console.log("✅ Appointment updated successfully:", updatedAppointment);
+
+        // Update the appointment form with the response data to reflect changes
+        setAppointmentForm({
+          ...validatedForm,
+          start: updatedAppointment.start,
+          end: updatedAppointment.end,
+        });
+
+        // Switch back to see-only mode
+        setCurrentMode("see-only");
+
+        // Optionally refresh the calendar view if there's a callback
+        // handleAddAppointment could be renamed to handleAppointmentChange for both create/update
+        if (handleAddAppointment) {
+          handleAddAppointment(updatedAppointment);
+        }
+
+        alert("Cita actualizada exitosamente");
+      } catch (updateError: any) {
+        console.error("❌ Update appointment failed:", updateError);
+        console.error("❌ Error details:", {
+          message: updateError.message,
+          response: updateError.response?.data,
+          status: updateError.response?.status,
+        });
+        alert(
+          updateError.message ||
+            "Error al actualizar la cita. Por favor intenta de nuevo."
+        );
+      }
+    } catch (error: any) {
+      console.error("❌ Error in validation/preparation:", error);
+      alert("Error al procesar los datos. Por favor intenta de nuevo.");
+    }
+  };
+
   const handleCancel = () => {
     setShowCancelConfirmation(true);
   };
@@ -438,7 +554,9 @@ const AppointmentModal = ({
         className="modal-content"
         style={{
           maxWidth:
-            appointmentForm.doctorId && currentMode === "create" ? "900px" : "400px",
+            appointmentForm.doctorId && currentMode === "create"
+              ? "900px"
+              : "400px",
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
           gap: "20px",
@@ -663,7 +781,8 @@ const AppointmentModal = ({
           <div
             style={{
               display: "flex",
-              justifyContent: currentMode === "create" ? "flex-end" : "space-between",
+              justifyContent:
+                currentMode === "create" ? "flex-end" : "space-between",
               gap: "10px",
             }}
           >
@@ -731,7 +850,7 @@ const AppointmentModal = ({
                   </button>
                 </div>
                 <button
-                  onClick={handleValidatedAddAppointment}
+                  onClick={handleValidatedUpdateAppointment}
                   style={{
                     padding: "10px 20px",
                     backgroundColor: "#28a745",
