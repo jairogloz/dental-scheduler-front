@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const LoginPage = () => {
+  console.log("🔐 LoginPage component rendered");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -17,12 +19,39 @@ const LoginPage = () => {
     setLoading(true);
     setError(null);
 
-    const { error } = await signIn(email, password, rememberMe);
+    console.log("🔐 Attempting sign in...");
+    const { error, data } = await signIn(email, password, rememberMe);
+
+    console.log("🔐 Sign in result:", {
+      hasError: !!error,
+      errorMessage: error?.message,
+      hasData: !!data,
+      hasSession: !!data?.session,
+      hasUser: !!data?.user,
+    });
 
     if (error) {
       setError(error.message);
+      console.error("❌ Sign in error:", error);
     } else {
-      navigate("/dashboard");
+      console.log("✅ Sign in successful, navigating to dashboard...");
+      console.log(
+        "🛣️ Current location before navigation:",
+        window.location.pathname
+      );
+      try {
+        navigate("/dashboard");
+        console.log("✅ Navigate call completed");
+        // Check location after navigation attempt
+        setTimeout(() => {
+          console.log(
+            "🛣️ Current location after navigation:",
+            window.location.pathname
+          );
+        }, 100);
+      } catch (navError) {
+        console.error("❌ Navigation error:", navError);
+      }
     }
 
     setLoading(false);

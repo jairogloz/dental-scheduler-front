@@ -6,9 +6,24 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  console.log("🔒 ProtectedRoute component rendered");
+
+  const { user, loading, session, organizationId } = useAuth();
+
+  // Add debugging logs
+  console.log("🔒 ProtectedRoute state:", {
+    hasUser: !!user,
+    userId: user?.id,
+    loading,
+    hasSession: !!session,
+    organizationId,
+    userEmail: user?.email,
+  });
 
   if (loading) {
+    console.log(
+      "🔒 ProtectedRoute showing loading spinner due to loading=true"
+    );
     return (
       <div
         style={{
@@ -50,8 +65,13 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   }
 
   if (!user) {
+    console.log("🔒 ProtectedRoute redirecting to login due to no user");
     return <Navigate to="/login" replace />;
   }
+
+  console.log(
+    "🔒 ProtectedRoute rendering children - user authenticated successfully"
+  );
 
   return <>{children}</>;
 };

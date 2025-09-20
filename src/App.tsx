@@ -9,7 +9,7 @@ import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es"; // Import Spanish locale
 import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import type { View } from "react-big-calendar";
-import { getDoctors, getUnits, getAppointments } from "./api/useAPI";
+
 import type { Doctor } from "./api/entities/Doctor";
 import {
   createAppointment,
@@ -20,6 +20,7 @@ import { useWindowSize } from "./hooks/useWindowSize";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
+import { useAuth } from "./contexts/AuthContext";
 
 const locales = {
   "en-US": enUS,
@@ -74,6 +75,17 @@ const getDoctorColor = (doctorId: string, doctors: Doctor[]): string => {
 
 function App() {
   const { isMobile } = useWindowSize();
+  const {
+    organizationData,
+    organizationLoading,
+    loadOrganizationData,
+    appointmentCache,
+    loadAppointmentsForRange,
+    getAppointmentsInRange,
+    addAppointmentToCache,
+    removeAppointmentFromCache,
+  } = useAuth();
+
   const [events, setEvents] = useState<Event[]>([]);
   const [view, setView] = useState<View>(isMobile ? "day" : "week");
   const [date, setDate] = useState<Date>(new Date());
@@ -94,11 +106,16 @@ function App() {
     start: new Date(),
     end: new Date(),
   });
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [units, setUnits] = useState<
-    { resourceId: string; resourceTitle: string }[]
-  >([]);
   const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
+
+  // Get doctors and units from organization data
+  const doctors = organizationData?.doctors || [];
+  const units =
+    organizationData?.units.map((unit) => ({
+      resourceId: unit.id,
+      resourceTitle: unit.name,
+    })) || [];
+  const clinics = organizationData?.clinics || [];
 
   // Event styling function - now based on doctor
   const eventPropGetter = (event: Event) => {
@@ -118,50 +135,181 @@ function App() {
     };
   };
 
+  // Load organization data with current calendar view on initial load
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [fetchedDoctors, fetchedUnits, fetchedAppointments] =
-          await Promise.all([
-            getDoctors(),
-            getUnits("clinic-1"), // Assuming clinicId is "clinic-1"
-            getAppointments(),
-          ]);
+    if (!organizationData) {
+      console.log("🔄 Loading organization data with calendar view:", {
+        date,
+        view,
+      });
+      // Map calendar view types to our supported types
+      const viewType =
+        view === "work_week" ? "week" : (view as "day" | "week" | "month");
+      loadOrganizationData(date, viewType);
+    }
+  }, [organizationData, loadOrganizationData, date, view]);
 
-        setDoctors(fetchedDoctors);
-        setUnits(
-          fetchedUnits.map((unit) => ({
-            resourceId: unit.id,
-            resourceTitle: unit.name,
-          }))
-        );
-        setEvents(
-          fetchedAppointments.map((appointment) => {
-            const doctor = fetchedDoctors.find(
-              (d) => d.id === appointment.doctorId
-            );
-            return {
-              title: `${appointment.patientId} - ${
-                doctor?.name || appointment.doctorId
-              }`,
-              start: new Date(appointment.start),
-              end: new Date(appointment.end),
-              resourceId: appointment.doctorId, // Changed from unitId to doctorId for color assignment
-              appointmentId: appointment.id,
-            };
-          })
+  // Initialize selectedClinics to all clinics when organization data loads
+  useEffect(() => {
+    if (organizationData?.clinics && selectedClinics.length === 0) {
+      const allClinicIds = organizationData.clinics.map((clinic) => clinic.id);
+      setSelectedClinics(allClinicIds);
+      console.log(
+        "✅ Initialized selectedClinics with all clinics:",
+        allClinicIds
+      );
+    }
+  }, [organizationData?.clinics, selectedClinics.length]);
+
+  // Calculate date range for current calendar view
+  const getCalendarDateRange = (
+    currentDate: Date,
+    currentView: View
+  ): { start: Date; end: Date } => {
+    let startDate: Date, endDate: Date;
+
+    if (currentView === "day") {
+      startDate = new Date(currentDate);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(currentDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else if (currentView === "month") {
+      startDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      endDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // week view
+      startDate = new Date(currentDate);
+      startDate.setDate(startDate.getDate() - startDate.getDay());
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    return { start: startDate, end: endDate };
+  };
+
+  // Load appointments when calendar view or date changes
+  useEffect(() => {
+    const loadAppointmentsForCalendarView = async () => {
+      if (!organizationData) return; // Wait for organization data to load
+
+      const { start, end } = getCalendarDateRange(date, view);
+
+      // Add buffer to the range
+      const bufferedStart = new Date(start);
+      bufferedStart.setDate(bufferedStart.getDate() - 7); // 1 week before
+      const bufferedEnd = new Date(end);
+      bufferedEnd.setDate(bufferedEnd.getDate() + 7); // 1 week after
+
+      try {
+        await loadAppointmentsForRange(bufferedStart, bufferedEnd);
+        console.log(
+          `✅ Loaded appointments for ${view} view: ${
+            bufferedStart.toISOString().split("T")[0]
+          } to ${bufferedEnd.toISOString().split("T")[0]}`
         );
       } catch (error) {
-        console.error("Error fetching data:", error);
-        // Set empty arrays as fallback to prevent UI errors
-        setDoctors([]);
-        setUnits([]);
-        setEvents([]);
+        console.error(
+          "❌ Failed to load appointments for calendar view:",
+          error
+        );
       }
     };
 
-    fetchData();
-  }, []);
+    loadAppointmentsForCalendarView();
+  }, [date, view, organizationData, loadAppointmentsForRange]);
+
+  // Update events based on appointment cache and clinic filter
+  useEffect(() => {
+    if (!organizationData) {
+      setEvents([]);
+      return;
+    }
+
+    const { start, end } = getCalendarDateRange(date, view);
+    const appointments = getAppointmentsInRange(start, end);
+
+    // Filter by selected clinics
+    const filteredAppointments = appointments.filter((appointment) => {
+      const unit = organizationData.units.find(
+        (u) => u.id === appointment.unitId
+      );
+      return unit && selectedClinics.includes(unit.clinic_id);
+    });
+
+    // Convert to calendar events
+    const calendarEvents: Event[] = filteredAppointments.map((appointment) => {
+      const doctor = doctors.find((d) => d.id === appointment.doctorId);
+      return {
+        title: `${appointment.patientId} - ${
+          doctor?.name || appointment.doctorId
+        }`,
+        start: appointment.start,
+        end: appointment.end,
+        resourceId: appointment.doctorId,
+        appointmentId: appointment.id,
+      };
+    });
+
+    setEvents(calendarEvents);
+    console.log(
+      `✅ Updated calendar events: ${calendarEvents.length} appointments visible`
+    );
+  }, [
+    appointmentCache.lastUpdated,
+    date,
+    view,
+    selectedClinics,
+    organizationData,
+    doctors,
+    getAppointmentsInRange,
+  ]);
+
+  // Polling mechanism for real-time updates (every 2 minutes)
+  useEffect(() => {
+    if (!organizationData) return; // Don't poll if no organization data
+
+    const pollForUpdates = async () => {
+      // Only poll when document is visible (user is active)
+      if (document.visibilityState !== "visible") {
+        console.log("📋 Skipping poll - document not visible");
+        return;
+      }
+
+      const { start, end } = getCalendarDateRange(date, view);
+
+      try {
+        console.log("🔄 Polling for appointment updates...");
+        await loadAppointmentsForRange(start, end);
+      } catch (error) {
+        console.error("❌ Failed to poll for appointment updates:", error);
+      }
+    };
+
+    // Initial delay before first poll (to avoid immediate polling after load)
+    const initialDelay = setTimeout(() => {
+      const pollInterval = setInterval(pollForUpdates, 2 * 60 * 1000); // Every 2 minutes
+
+      // Cleanup function
+      return () => {
+        clearInterval(pollInterval);
+      };
+    }, 2 * 60 * 1000); // Start polling after 2 minutes
+
+    return () => {
+      clearTimeout(initialDelay);
+    };
+  }, [organizationData, date, view, loadAppointmentsForRange]);
 
   useEffect(() => {
     // Set view to "day" when switching to mobile
@@ -275,16 +423,10 @@ function App() {
         newAppointment,
         forceCreate
       );
-      setEvents([
-        ...events,
-        {
-          title: `${appointmentForm.patientName} - ${selectedDoctor.name}`, // Use patientName for display
-          start: new Date(createdAppointment.start),
-          end: new Date(createdAppointment.end),
-          resourceId: createdAppointment.doctorId, // Changed from unitId to doctorId for color assignment
-          appointmentId: createdAppointment.id,
-        },
-      ]);
+
+      // Add to appointment cache instead of events directly
+      addAppointmentToCache(createdAppointment);
+
       setShowModal(false);
       setDate(new Date(createdAppointment.start)); // Navigate to appointment date
       setAppointmentForm({
@@ -321,11 +463,10 @@ function App() {
   const handleCancelAppointment = async () => {
     try {
       await deleteAppointment(appointmentForm.appointmentId); // Use appointmentId for deletion
-      setEvents(
-        events.filter(
-          (event) => event.appointmentId !== appointmentForm.appointmentId
-        )
-      );
+
+      // Remove from appointment cache instead of events directly
+      removeAppointmentFromCache(appointmentForm.appointmentId);
+
       setShowModal(false);
     } catch (error) {
       if (error && typeof error === "object" && "message" in error) {

@@ -202,6 +202,95 @@ export const deleteAppointment = async (id: string): Promise<void> => {
   }
 };
 
+// Get appointments for a specific date range - for incremental loading
+export const getAppointmentsByDateRange = async (
+  startDate: string, // YYYY-MM-DD format
+  endDate: string    // YYYY-MM-DD format
+): Promise<Appointment[]> => {
+  try {
+    const params = new URLSearchParams({
+      startDate,
+      endDate
+    });
+    
+    const url = `/appointments?${params.toString()}`;
+    console.log('🔍 Fetching appointments from:', url);
+    
+    // The backend should return an array of AppointmentResponse
+    const response = await apiClient.get<AppointmentResponse[]>(url);
+    
+    console.log('✅ Appointments API Response:', response);
+    console.log('✅ Response data type:', typeof response.data);
+    console.log('✅ Response data is array:', Array.isArray(response.data));
+    console.log('✅ Response data structure:', response.data);
+    
+    // Check if response.data is an array, if not handle the different structure
+    let appointmentsData: AppointmentResponse[];
+    if (Array.isArray(response.data)) {
+      appointmentsData = response.data;
+    } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+      // Handle case where response structure is { data: { appointments: [...] }, success: true }
+      const responseData = (response.data as any).data;
+      if (responseData && 'appointments' in responseData && Array.isArray(responseData.appointments)) {
+        appointmentsData = responseData.appointments;
+      } else {
+        console.error('❌ No appointments array found in response.data.data:', responseData);
+        throw new Error('Invalid response format: no appointments array found');
+      }
+    } else if (response.data && typeof response.data === 'object' && 'appointments' in response.data) {
+      // Handle case where data is wrapped in an object like { appointments: [...] }
+      appointmentsData = (response.data as any).appointments;
+    } else {
+      console.error('❌ Unexpected response data structure:', response.data);
+      throw new Error('Invalid response format from appointments API');
+    }
+    
+    console.log('✅ Final appointments data to process (should be array):', appointmentsData);
+    console.log('✅ Is appointments data an array?', Array.isArray(appointmentsData));
+    
+    // Transform backend format to frontend format
+    const appointments: Appointment[] = appointmentsData.map((appt) => {
+      const startDate = new Date(appt.start_time);
+      const endDate = new Date(appt.end_time);
+      
+      // Validate dates
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.warn("Invalid appointment dates:", {
+          id: appt.id,
+          start_time: appt.start_time,
+          end_time: appt.end_time
+        });
+        // Skip invalid appointments
+        return null;
+      }
+      
+      return {
+        id: appt.id,
+        patientId: appt.patient_id,
+        doctorId: appt.doctor_id,
+        unitId: appt.unit_id,
+        start: startDate,
+        end: endDate,
+        treatment: appt.treatment_type,
+      };
+    }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
+    
+    console.log(`✅ Loaded ${appointments.length} appointments for date range ${startDate} to ${endDate}`);
+    return appointments;
+  } catch (error) {
+    console.error('❌ Error fetching appointments by date range:', error);
+    
+    // Log more details about the error
+    if (error && typeof error === 'object' && 'response' in error) {
+      const apiError = error as any;
+      console.error('❌ API Error Status:', apiError.response?.status);
+      console.error('❌ API Error Data:', apiError.response?.data);
+    }
+    
+    throw error;
+  }
+};
+
 export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date; end: Date }): Promise<void> => {
   try {
     // TODO: Implement real backend API call for blocking doctor time
