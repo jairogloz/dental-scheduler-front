@@ -138,10 +138,7 @@ function App() {
   // Load organization data with current calendar view on initial load
   useEffect(() => {
     if (!organizationData) {
-      console.log("🔄 Loading organization data with calendar view:", {
-        date,
-        view,
-      });
+      // Loading organization data with calendar view
       // Map calendar view types to our supported types
       const viewType =
         view === "work_week" ? "week" : (view as "day" | "week" | "month");
@@ -154,10 +151,7 @@ function App() {
     if (organizationData?.clinics && selectedClinics.length === 0) {
       const allClinicIds = organizationData.clinics.map((clinic) => clinic.id);
       setSelectedClinics(allClinicIds);
-      console.log(
-        "✅ Initialized selectedClinics with all clinics:",
-        allClinicIds
-      );
+      // Initialized selectedClinics with all clinics
     }
   }, [organizationData?.clinics, selectedClinics.length]);
 
@@ -213,11 +207,7 @@ function App() {
 
       try {
         await loadAppointmentsForRange(bufferedStart, bufferedEnd);
-        console.log(
-          `✅ Loaded appointments for ${view} view: ${
-            bufferedStart.toISOString().split("T")[0]
-          } to ${bufferedEnd.toISOString().split("T")[0]}`
-        );
+        // Appointments loaded for calendar view
       } catch (error) {
         console.error(
           "❌ Failed to load appointments for calendar view:",
@@ -262,9 +252,6 @@ function App() {
     });
 
     setEvents(calendarEvents);
-    console.log(
-      `✅ Updated calendar events: ${calendarEvents.length} appointments visible`
-    );
   }, [
     appointmentCache.lastUpdated,
     date,
@@ -282,14 +269,14 @@ function App() {
     const pollForUpdates = async () => {
       // Only poll when document is visible (user is active)
       if (document.visibilityState !== "visible") {
-        console.log("📋 Skipping poll - document not visible");
+        // Skipping poll - document not visible
         return;
       }
 
       const { start, end } = getCalendarDateRange(date, view);
 
       try {
-        console.log("🔄 Polling for appointment updates...");
+        // Polling for appointment updates
         await loadAppointmentsForRange(start, end);
       } catch (error) {
         console.error("❌ Failed to poll for appointment updates:", error);

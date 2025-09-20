@@ -30,8 +30,7 @@ const OrganizationTest: React.FC = () => {
 
   if (!data) return <div style={{ padding: "20px" }}>No data received</div>;
 
-  // Debug: Log the actual response structure
-  console.log("🔍 Organization API Response:", data);
+  // Organization API response available for inspection
 
   return (
     <div

@@ -101,7 +101,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  console.log("🚀 AuthProvider component initialized");
+  // AuthProvider component initialized
 
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -128,15 +128,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     calendarView?: "day" | "week" | "month"
   ) => {
     if (!organizationId) {
-      console.log(
-        "📋 No organization ID available, skipping organization data load"
-      );
+      // No organization ID available, skipping organization data load
       return;
     }
 
     try {
       setOrganizationLoading(true);
-      console.log("📋 Loading organization data...");
+      // Loading organization data
 
       // Calculate date range based on calendar view with buffer
       let startDate: Date, endDate: Date;
@@ -162,14 +160,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         endDate.setDate(endDate.getDate() + (6 - baseDate.getDay()) + 7); // End of week + 1 week
       }
 
-      console.log(
-        `📋 Loading organization data for ${calendarView || "week"} view:`,
-        {
-          baseDate: baseDate.toISOString().split("T")[0],
-          startDate: startDate.toISOString().split("T")[0],
-          endDate: endDate.toISOString().split("T")[0],
-        }
-      );
+      // Loading organization data for calendar view
 
       const data = await getOrganizationData({
         start_date: startDate.toISOString().split("T")[0],
@@ -209,19 +200,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           };
         });
 
-        console.log(
-          `✅ Added ${appointments.length} appointments to cache from organization data`
-        );
+        // Added appointments to cache from organization data
       }
 
-      console.log("✅ Organization data loaded successfully:", {
-        organization: data.organization.name,
-        clinics: data.clinics.length,
-        units: data.units.length,
-        doctors: data.doctors.length,
-        appointments: data.appointments ? data.appointments.length : 0,
-        cacheSize: appointmentCache.appointments.size,
-      });
+      // Organization data loaded successfully
     } catch (error) {
       console.error("❌ Failed to load organization data:", error);
       setOrganizationData(null);
@@ -295,20 +277,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ): Promise<void> => {
     // Check if range is already loaded
     if (isRangeLoaded(startDate, endDate)) {
-      console.log(
-        `📋 Date range ${startDate.toISOString().split("T")[0]} to ${
-          endDate.toISOString().split("T")[0]
-        } already loaded`
-      );
+      // Date range already loaded
       return;
     }
 
     try {
-      console.log(
-        `📋 Loading appointments for range: ${
-          startDate.toISOString().split("T")[0]
-        } to ${endDate.toISOString().split("T")[0]}`
-      );
+      // Loading appointments for range
 
       const appointments = await getAppointmentsByDateRange(
         startDate.toISOString().split("T")[0],
@@ -333,11 +307,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         };
       });
 
-      console.log(
-        `✅ Loaded ${appointments.length} appointments. Cache now has ${
-          appointmentCache.appointments.size + appointments.length
-        } total appointments`
-      );
+      // Loaded appointments and updated cache
     } catch (error) {
       console.error("❌ Failed to load appointments for range:", error);
       throw error;
@@ -372,7 +342,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       };
     });
 
-    console.log(`✅ Added appointment ${appointment.id} to cache`);
+    // Appointment added to cache
   };
 
   const removeAppointmentFromCache = (appointmentId: string) => {
@@ -381,7 +351,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const removed = newAppointments.delete(appointmentId);
 
       if (removed) {
-        console.log(`✅ Removed appointment ${appointmentId} from cache`);
+        // Appointment removed from cache
       } else {
         console.warn(`⚠️ Appointment ${appointmentId} not found in cache`);
       }
@@ -406,12 +376,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     let isMounted = true;
     let initialCheckComplete = false;
-    console.log("🚀 Iniciando AuthContext...");
+    // Initializing AuthContext
 
     // Get initial session immediately
     const initializeAuth = async () => {
       try {
-        console.log("🔍 Obteniendo sesión inicial...");
+        // Getting initial session
 
         // Small delay to ensure Supabase client is fully initialized
         await new Promise((resolve) => setTimeout(resolve, 200));
@@ -422,16 +392,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           error,
         } = await supabase.auth.getSession();
 
-        console.log("📊 Resultado getSession:", {
-          hasSession: !!session,
-          hasUser: !!session?.user,
-          userId: session?.user?.id,
-          accessToken: session?.access_token ? "presente" : "ausente",
-          error: error?.message,
-        });
+        // getSession result processed
 
         if (!isMounted) {
-          console.log("🚫 Componente desmontado, ignorando resultado");
+          // Component unmounted, ignoring result
           return;
         }
 
@@ -449,7 +413,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
           const orgId = await getUserOrganizationId();
           setOrganizationId(orgId);
-          console.log("🏢 Organization ID configurado:", orgId);
+          // Organization ID configured
         } else {
           setOrganizationId(null);
         }
@@ -457,10 +421,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         initialCheckComplete = true;
         setLoading(false);
 
-        console.log(
-          "✅ Sesión inicial configurada",
-          session ? "con usuario" : "sin usuario"
-        );
+        // Initial session configured
       } catch (error) {
         console.error("💥 Error obteniendo sesión inicial:", error);
         if (isMounted) {
@@ -486,12 +447,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Auth state change:", event, {
-        hasSession: !!session,
-        hasUser: !!session?.user,
-        userId: session?.user?.id,
-      });
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      // Auth state change
 
       if (isMounted) {
         if (isMounted) {
@@ -502,26 +459,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           if (session?.user) {
             const orgId = await getUserOrganizationId();
             setOrganizationId(orgId);
-            console.log(
-              "🏢 Organization ID configurado en auth change:",
-              orgId
-            );
+            // Organization ID configured in auth change
           } else {
             setOrganizationId(null);
           }
 
           // Only set loading to false if we haven't completed initial check
           if (!initialCheckComplete) {
-            console.log(
-              "🔄 Setting loading to false after auth state change (initial check)"
-            );
+            // Setting loading to false after auth state change (initial check)
             setLoading(false);
             initialCheckComplete = true;
           } else {
-            console.log(
-              "🔄 Auth state changed but initial check already complete, loading state:",
-              loading
-            );
+            // Auth state changed after initial check
           }
 
           clearTimeout(safetyTimeout);
@@ -530,7 +479,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
 
     return () => {
-      console.log("🧹 Limpiando AuthContext...");
+      // Cleaning up AuthContext
       isMounted = false;
       subscription.unsubscribe();
       clearTimeout(safetyTimeout);
@@ -540,7 +489,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Load organization data when organizationId changes
   useEffect(() => {
     if (organizationId && !loading) {
-      console.log("🔄 Organization ID changed, loading organization data...");
+      // Organization ID changed, loading organization data
       loadOrganizationData();
     } else if (!organizationId) {
       // Clear organization data when no organization ID
@@ -554,36 +503,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     password: string,
     rememberMe: boolean = false
   ) => {
-    console.log("🔐 Ejecutando signIn en AuthContext...");
+    // Executing signIn in AuthContext
 
     const result = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    console.log("📊 Resultado de Supabase signIn:", {
-      hasData: !!result.data,
-      hasSession: !!result.data?.session,
-      hasUser: !!result.data?.user,
-      userId: result.data?.user?.id,
-      userEmail: result.data?.user?.email,
-      error: result.error?.message,
-    });
+    // Supabase signIn result processed
 
-    console.log("📊 Current AuthContext state after signIn:", {
-      currentUser: user?.id,
-      currentSession: !!session,
-      currentLoading: loading,
-    });
+    // Current AuthContext state after signIn processed
 
     // Set session persistence if rememberMe is true
     if (result.data.session && rememberMe) {
       // The session will be persisted by default, we can manage this on the client side
       localStorage.setItem("rememberMe", "true");
-      console.log("💾 Guardando rememberMe en localStorage");
+      // rememberMe saved
     } else {
       localStorage.removeItem("rememberMe");
-      console.log("🗑️ Eliminando rememberMe de localStorage");
+      // rememberMe removed
     }
 
     return result;

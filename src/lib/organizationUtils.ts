@@ -5,38 +5,29 @@ import { supabase } from './supabase';
  */
 export const debugProfilesTable = async () => {
   try {
-    console.log('🔍 Testing profiles table access...');
+  // Testing profiles table access
     
     // Test basic table access
-    const { data, error, count } = await supabase
+  const { error, count } = await supabase
       .from('profiles')
       .select('id, organization_id', { count: 'exact' })
       .limit(1);
     
-    console.log('📊 Profiles table test:', {
-      data,
-      error,
-      count,
-      errorCode: error?.code,
-      errorMessage: error?.message
-    });
+  // Profiles table test completed
     
     if (error) {
       if (error.code === 'PGRST205') {
         console.error('❌ Profiles table does not exist in public schema');
-        console.log('💡 Contact backend team to ensure profiles table exists');
+  // Contact backend team to ensure profiles table exists
       } else if (error.code === 'PGRST301') {
         console.error('🔒 RLS policy is blocking access to profiles table');
-        console.log('💡 Contact backend team to check RLS policies for profiles table');
+  // Contact backend team to check RLS policies for profiles table
       } else {
         console.error('❌ Other profiles table error:', error);
-        console.log('💡 Contact backend team to investigate profiles table issues');
+  // Contact backend team to investigate profiles table issues
       }
     } else {
-      console.log('✅ Profiles table is accessible, total rows:', count);
-      if (data && data.length > 0) {
-        console.log('📝 Sample profile structure:', data[0]);
-      }
+  // Profiles table is accessible
     }
     
     return { success: !error, error, count };
@@ -63,7 +54,7 @@ export const updateUserOrganization = async (organizationId: string): Promise<bo
       return false;
     }
 
-    console.log('✅ User organization updated successfully');
+  // User organization updated successfully
     return true;
   } catch (error) {
     console.error('💥 Unexpected error updating user organization:', error);
@@ -77,7 +68,7 @@ export const updateUserOrganization = async (organizationId: string): Promise<bo
  */
 export const getUserOrganizationId = async (): Promise<string | null> => {
   try {
-    console.log('🔍 Fetching user organization ID...');
+  // Fetching user organization ID
     // First try to get from current user metadata
     const { data: { user }, error } = await supabase.auth.getUser();
     
@@ -89,13 +80,11 @@ export const getUserOrganizationId = async (): Promise<string | null> => {
     // Check user metadata first (preferred method)
     const orgIdFromMetadata = user.user_metadata?.organization_id;
     if (orgIdFromMetadata) {
-      console.log('📊 Organization ID found in user metadata:', orgIdFromMetadata);
       return orgIdFromMetadata;
     }
 
     // Fallback: check profiles table (for migration)
-    console.log('🔍 Organization ID not in metadata, checking profiles table...');
-    console.log('👤 User ID for profiles query:', user.id);
+  // Organization ID not in metadata, checking profiles table
     
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
@@ -103,12 +92,7 @@ export const getUserOrganizationId = async (): Promise<string | null> => {
       .eq('id', user.id)
       .single();
 
-    console.log('📊 Profiles query result:', { 
-      profile, 
-      error: profileError,
-      errorCode: profileError?.code,
-      errorMessage: profileError?.message 
-    });
+  // Profiles query result processed
 
     if (profileError) {
       console.warn('⚠️ Error querying profiles table:', profileError);
@@ -131,7 +115,7 @@ export const getUserOrganizationId = async (): Promise<string | null> => {
     
     // If found in profiles but not in metadata, update metadata
     if (orgIdFromProfile) {
-      console.log('🔄 Migrating organization_id from profile to user metadata...');
+  // Migrating organization_id from profile to user metadata
       const updated = await updateUserOrganization(orgIdFromProfile);
       if (updated) {
         return orgIdFromProfile;

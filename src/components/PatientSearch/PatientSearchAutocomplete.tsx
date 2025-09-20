@@ -62,39 +62,35 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
       setError(null);
 
       try {
-        console.log("🔍 Starting patient search for:", searchQuery);
+        // Starting patient search
         const patients = await searchPatients(searchQuery, organizationId);
 
         // Check if this search was aborted
         if (currentController.signal.aborted) {
-          console.log("🚫 Patient search aborted for:", searchQuery);
+          // Patient search aborted
           return;
         }
 
-        console.log(
-          "✅ Patient search completed for:",
-          searchQuery,
-          "Found:",
-          patients.length
-        );
+        // Patient search completed
         setResults(patients);
         setShowDropdown(true);
         setFocusedIndex(-1);
       } catch (err) {
         // Don't update state if the request was aborted
         if (currentController.signal.aborted) {
-          console.log("🚫 Patient search aborted (in catch) for:", searchQuery);
+          // Patient search aborted (in catch)
+          return;
           return;
         }
 
-        console.error("❌ Patient search error for:", searchQuery, err);
+        console.error("❌ Patient search error:", err);
         setError("Error searching patients. Please try again.");
         setResults([]);
         setShowDropdown(true); // Still show dropdown to display error
       } finally {
         // Only update loading state if not aborted
         if (!currentController.signal.aborted) {
-          console.log("🏁 Patient search finished for:", searchQuery);
+          // Patient search finished
           setIsLoading(false);
         }
       }
@@ -217,7 +213,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
     let safetyTimer: NodeJS.Timeout;
 
     if (isLoading) {
-      console.log("⏰ Setting safety timer for patient search loading state");
+      // Setting safety timer for patient search loading state
       safetyTimer = setTimeout(() => {
         console.warn("⚠️ Patient search loading timeout - forcing reset");
         setIsLoading(false);

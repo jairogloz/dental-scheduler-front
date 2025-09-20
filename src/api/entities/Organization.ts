@@ -88,15 +88,13 @@ export const getOrganizationData = async (
       queryParams.append('limit', params.limit.toString());
     }
 
-    const url = `/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    console.log('🔍 Fetching organization data from:', url);
+  const url = `/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+  // Fetching organization data
     
     // The API returns { data: OrganizationData, success: boolean }
     const response = await apiClient.get<OrganizationApiResponse>(url);
     
-    console.log('✅ Organization API Full Response:', response);
-    console.log('✅ Organization Response Data:', response.data);
-    console.log('✅ Organization Nested Data:', response.data.data);
+  // Organization API response received
     
     // Extract the nested data object
     const organizationData = response.data.data;

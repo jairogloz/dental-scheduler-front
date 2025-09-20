@@ -11,8 +11,7 @@ export const useOrganizationData = (params: GetOrganizationDataParams = {}) => {
       setLoading(true);
       setError(null);
       const organizationData = await getOrganizationData(params);
-      setData(organizationData);
-      console.log('✅ Organization data loaded successfully:', organizationData);
+  setData(organizationData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch organization data';
       setError(errorMessage);

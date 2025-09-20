@@ -30,9 +30,7 @@ apiClient.interceptors.request.use(
           config.headers = {} as any;
         }
         config.headers.Authorization = `Bearer ${session.access_token}`;
-        console.log('🔑 ApiClient sending token:', session.access_token);
-        console.log('🕐 Token expires at:', new Date(session.expires_at! * 1000));
-        console.log('⏰ Is token expired?', Date.now() > (session.expires_at! * 1000));
+  // ApiClient attaching access token to request
       } else {
         // Remove auth header if no token
         if (config.headers) {
@@ -61,7 +59,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       
       try {
-        console.log('🔄 Token expired, refreshing session...');
+  // Token expired, attempting refresh
         
         // Attempt to refresh the session
         const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
@@ -78,7 +76,7 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
         
-        console.log('✅ Session refreshed successfully');
+  // Session refreshed successfully
         
         // Update original request with new token
         originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
@@ -87,7 +85,7 @@ apiClient.interceptors.response.use(
         await new Promise(resolve => setTimeout(resolve, 100));
         
         // Retry the original request
-        console.log('🔄 Retrying original request after token refresh');
+  // Retrying original request after token refresh
         return apiClient.request(originalRequest);
         
       } catch (refreshError) {

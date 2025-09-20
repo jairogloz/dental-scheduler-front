@@ -57,10 +57,7 @@ export const createAppointment = async (
 ): Promise<Appointment> => {
   try {
     // Log input data for debugging
-    console.log("🔍 Datos de entrada para crear cita:", {
-      appointment,
-      forceCreate
-    });
+  // Input data for creating appointment
 
     // Transform frontend format to backend format
     const requestData: CreateAppointmentRequest = {
@@ -73,7 +70,7 @@ export const createAppointment = async (
     };
 
     // Log transformed data for debugging
-    console.log("📤 Datos transformados para enviar al backend:", requestData);
+  // Transformed request data ready to send to backend
 
     const params = new URLSearchParams();
     if (forceCreate) {
@@ -83,14 +80,12 @@ export const createAppointment = async (
     const queryString = params.toString();
     const url = `/appointments${queryString ? '?' + queryString : ''}`;
 
-    console.log("🌐 URL de la petición:", url);
+  // Request URL prepared
 
     const response = await apiClient.post<AppointmentApiResponse>(url, requestData);
 
     // Debug: Log the backend response to see the exact format
-    console.log("📥 Respuesta del backend:", response.data);
-    console.log("📅 start_time del backend:", response.data.data.start_time, typeof response.data.data.start_time);
-    console.log("📅 end_time del backend:", response.data.data.end_time, typeof response.data.data.end_time);
+  // Backend response received for created appointment
 
     // Access the nested appointment data
     const appointmentData = response.data.data;
@@ -106,7 +101,7 @@ export const createAppointment = async (
       throw new Error(`Invalid end_time from backend: ${appointmentData.end_time}`);
     }
 
-    console.log("✅ Fechas parseadas correctamente:", { startDate, endDate });
+  // Dates parsed successfully
 
     // Transform backend response to frontend format
     return {
@@ -214,15 +209,12 @@ export const getAppointmentsByDateRange = async (
     });
     
     const url = `/appointments?${params.toString()}`;
-    console.log('🔍 Fetching appointments from:', url);
+  // Fetching appointments from URL
     
     // The backend should return an array of AppointmentResponse
     const response = await apiClient.get<AppointmentResponse[]>(url);
     
-    console.log('✅ Appointments API Response:', response);
-    console.log('✅ Response data type:', typeof response.data);
-    console.log('✅ Response data is array:', Array.isArray(response.data));
-    console.log('✅ Response data structure:', response.data);
+  // Appointments API response received
     
     // Check if response.data is an array, if not handle the different structure
     let appointmentsData: AppointmentResponse[];
@@ -245,8 +237,7 @@ export const getAppointmentsByDateRange = async (
       throw new Error('Invalid response format from appointments API');
     }
     
-    console.log('✅ Final appointments data to process (should be array):', appointmentsData);
-    console.log('✅ Is appointments data an array?', Array.isArray(appointmentsData));
+  // Final appointments data prepared for processing
     
     // Transform backend format to frontend format
     const appointments: Appointment[] = appointmentsData.map((appt) => {
@@ -275,7 +266,7 @@ export const getAppointmentsByDateRange = async (
       };
     }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
     
-    console.log(`✅ Loaded ${appointments.length} appointments for date range ${startDate} to ${endDate}`);
+  // Loaded appointments for date range
     return appointments;
   } catch (error) {
     console.error('❌ Error fetching appointments by date range:', error);

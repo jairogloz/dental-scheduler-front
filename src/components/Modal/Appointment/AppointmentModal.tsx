@@ -292,21 +292,7 @@ const AppointmentModal = ({
 
   // Validate and handle appointment creation
   const handleValidatedAddAppointment = () => {
-    // Debug logging
-    console.log("🐛 DEBUG - appointmentForm:", appointmentForm);
-    console.log(
-      "🐛 DEBUG - appointmentForm.start:",
-      appointmentForm.start,
-      typeof appointmentForm.start
-    );
-    console.log(
-      "🐛 DEBUG - appointmentForm.end:",
-      appointmentForm.end,
-      typeof appointmentForm.end
-    );
-    console.log("🐛 DEBUG - selectedDate:", selectedDate);
-    console.log("🐛 DEBUG - selectedTime:", selectedTime);
-    console.log("🐛 DEBUG - selectedDuration:", selectedDuration);
+    // Removed debug console logs
 
     // Validate required fields
     if (!appointmentForm.doctorId) {
@@ -369,7 +355,7 @@ const AppointmentModal = ({
         end: undefined,
       };
 
-      console.log("✅ Sending appointment data:", appointmentData);
+      // Sending appointment data
       handleAddAppointment(appointmentData);
     } catch (error) {
       console.error("❌ Error converting dates to ISO:", error);
