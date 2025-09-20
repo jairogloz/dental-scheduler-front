@@ -31,7 +31,7 @@ const locales = {
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek,
+  startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn: 0 }), // Ensure Sunday start
   getDay,
   locales,
 });
@@ -192,18 +192,15 @@ function App() {
         backgroundColor,
         color: "white",
         borderRadius: "4px",
-        border: `6px solid ${borderLeftColor}`, // Use full border with clinic color
-        borderRight: `1px solid ${backgroundColor}`, // Thin right border with doctor color
-        borderTop: `1px solid ${backgroundColor}`, // Thin top border with doctor color
-        borderBottom: `1px solid ${backgroundColor}`, // Thin bottom border with doctor color
+        border: "none",
+        borderLeft: "8px solid #FF0000", // TEST: Fixed red left border
         padding: "2px 5px",
-        paddingLeft: "10px", // Extra padding to account for wider border
-        opacity: "0.95", // Slight transparency to show overlaps
-        fontSize: "13.5px", // Slightly smaller font for better fit
-        fontWeight: "500", // Medium font weight for better readability
-        outline: "1px solid rgba(255, 255, 255, 0.8)", // Additional outer outline for extra separation
-        "--clinic-color": borderLeftColor, // CSS custom property for debugging
-      } as React.CSSProperties & { "--clinic-color": string },
+        paddingLeft: "12px", // Extra padding for the thick border
+        opacity: "0.95",
+        fontSize: "13.5px",
+        fontWeight: "500",
+        outline: "1px solid rgba(255, 255, 255, 0.8)",
+      },
       className: "calendar-event-with-clinic-border",
     };
   };
@@ -253,14 +250,23 @@ function App() {
           );
           endDate.setHours(23, 59, 59, 999);
         } else {
-          // week view
-          startDate = new Date(currentDate);
-          startDate.setDate(startDate.getDate() - startDate.getDay());
+          // week view - use the same startOfWeek logic as React Big Calendar
+          // Use Sunday as week start to match typical calendar behavior in Mexico
+          startDate = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
           startDate.setHours(0, 0, 0, 0);
           endDate = new Date(startDate);
           endDate.setDate(endDate.getDate() + 6);
           endDate.setHours(23, 59, 59, 999);
         }
+
+        console.log('📅 Date range calculated:', {
+          view: currentView,
+          currentDate: currentDate.toISOString(),
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          startDayOfWeek: startDate.getDay(), // Should be 0 (Sunday) for week view
+          endDayOfWeek: endDate.getDay()     // Should be 6 (Saturday) for week view
+        });
 
         return { start: startDate, end: endDate };
       },
@@ -296,13 +302,28 @@ function App() {
 
   // Update events based on appointment cache and clinic filter
   useEffect(() => {
+    console.log('🎯 Events update effect triggered:', {
+      organizationLoading,
+      hasOrganizationData: !!organizationData,
+      cacheLastUpdated: appointmentCache.lastUpdated,
+      selectedClinics: selectedClinics.length,
+      currentDate: date.toISOString(),
+      currentView: view
+    });
+
     // Don't show any events while organization data is loading to prevent flickering
     if (organizationLoading || !organizationData) {
+      console.log('⏳ Clearing events - organization loading or no data');
       setEvents([]);
       return;
     }
 
     const { start, end } = getCalendarDateRange(date, view);
+    console.log('📅 Calendar date range:', {
+      start: start.toISOString(),
+      end: end.toISOString()
+    });
+
     const appointments = getAppointmentsInRange(start, end);
 
     // Filter by selected clinics and exclude cancelled appointments
@@ -346,6 +367,11 @@ function App() {
       };
     });
 
+    console.log('📊 Final calendar events:', {
+      totalEvents: calendarEvents.length,
+      eventIds: calendarEvents.map(e => e.appointmentId)
+    });
+
     setEvents(calendarEvents);
   }, [
     organizationLoading,
@@ -372,8 +398,9 @@ function App() {
       const { start, end } = getCalendarDateRange(date, view);
 
       try {
-        // Polling for appointment updates
-        await loadAppointmentsForRange(start, end);
+        // Polling for appointment updates with force refresh
+        console.log('⏰ Polling for appointment updates');
+        await loadAppointmentsForRange(start, end, true);
       } catch (error) {
         console.error("❌ Failed to poll for appointment updates:", error);
       }
@@ -511,8 +538,13 @@ function App() {
         forceCreate
       );
 
-      // Add to appointment cache instead of events directly
+      // Add to appointment cache
       addAppointmentToCache(createdAppointment);
+
+      // Force refresh the current calendar range to ensure consistency
+      const { start, end } = getCalendarDateRange(date, view);
+      console.log('🔄 Force refreshing appointments after creation');
+      await loadAppointmentsForRange(start, end, true);
 
       // Navigate to appointment date but don't close modal (let success modal handle that)
       setDate(new Date(createdAppointment.start));
