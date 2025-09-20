@@ -562,6 +562,85 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   }, [organizationId, loading]);
 
+  // Proactive token refresh mechanism with user activity detection
+  useEffect(() => {
+    if (!session?.access_token) return;
+
+    let refreshTimer: NodeJS.Timeout;
+    let lastActivity = Date.now();
+
+    const updateLastActivity = () => {
+      lastActivity = Date.now();
+    };
+
+    const scheduleTokenRefresh = () => {
+      // JWT tokens typically expire in 1 hour (3600 seconds)
+      // We'll refresh proactively after 45 minutes (2700 seconds) to prevent expiration
+      // But we'll check user activity and refresh more frequently if user is active
+      const baseRefreshInterval = 45 * 60 * 1000; // 45 minutes in milliseconds
+      const activeUserInterval = 30 * 60 * 1000; // 30 minutes for active users
+
+      // Check if user has been active in the last 10 minutes
+      const timeSinceActivity = Date.now() - lastActivity;
+      const userIsActive = timeSinceActivity < 10 * 60 * 1000; // 10 minutes
+
+      const refreshInterval = userIsActive
+        ? activeUserInterval
+        : baseRefreshInterval;
+
+      refreshTimer = setTimeout(async () => {
+        try {
+          const activityStatus = userIsActive ? "active user" : "inactive user";
+          console.log(
+            `🔄 Proactively refreshing session token for ${activityStatus}`
+          );
+
+          const { data, error } = await supabase.auth.refreshSession();
+
+          if (error) {
+            console.error("❌ Proactive token refresh failed:", error.message);
+            // Try again with a shorter interval on failure
+            setTimeout(scheduleTokenRefresh, 5 * 60 * 1000); // 5 minutes
+          } else if (data.session) {
+            console.log("✅ Session token refreshed successfully");
+            // The onAuthStateChange listener will handle updating the session state
+            // Schedule the next refresh
+            scheduleTokenRefresh();
+          }
+        } catch (error) {
+          console.error("❌ Error during proactive token refresh:", error);
+          // Try again with a shorter interval on error
+          setTimeout(scheduleTokenRefresh, 5 * 60 * 1000); // 5 minutes
+        }
+      }, refreshInterval);
+    };
+
+    // Track user activity
+    const activityEvents = [
+      "mousedown",
+      "mousemove",
+      "keypress",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
+    activityEvents.forEach((event) => {
+      document.addEventListener(event, updateLastActivity, true);
+    });
+
+    scheduleTokenRefresh();
+
+    return () => {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      // Remove activity listeners
+      activityEvents.forEach((event) => {
+        document.removeEventListener(event, updateLastActivity, true);
+      });
+    };
+  }, [session?.access_token]);
+
   const signIn = async (
     email: string,
     password: string,

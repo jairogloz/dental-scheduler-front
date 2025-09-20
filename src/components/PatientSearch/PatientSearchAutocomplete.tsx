@@ -80,11 +80,42 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
         if (currentController.signal.aborted) {
           // Patient search aborted (in catch)
           return;
-          return;
         }
 
         console.error("❌ Patient search error:", err);
-        setError("Error searching patients. Please try again.");
+
+        // Provide more specific error messages
+        let errorMessage = "Error searching patients. Please try again.";
+        if (err instanceof Error) {
+          const errorMsg = err.message.toLowerCase();
+          if (
+            errorMsg.includes("timeout") ||
+            errorMsg.includes("network error")
+          ) {
+            errorMessage =
+              "Search timeout. Please check your connection and try again.";
+          } else if (
+            errorMsg.includes("401") ||
+            errorMsg.includes("unauthorized")
+          ) {
+            errorMessage =
+              "Session expired. Please refresh the page and try again.";
+          } else if (
+            errorMsg.includes("403") ||
+            errorMsg.includes("forbidden")
+          ) {
+            errorMessage = "Access denied. Please contact your administrator.";
+          } else if (
+            errorMsg.includes("500") ||
+            errorMsg.includes("internal server error")
+          ) {
+            errorMessage = "Server error. Please try again in a moment.";
+          } else if (errorMsg.includes("organization")) {
+            errorMessage = "Organization setup issue. Please refresh the page.";
+          }
+        }
+
+        setError(errorMessage);
         setResults([]);
         setShowDropdown(true); // Still show dropdown to display error
       } finally {
@@ -218,7 +249,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
         console.warn("⚠️ Patient search loading timeout - forcing reset");
         setIsLoading(false);
         setError("Search timeout. Please try again.");
-      }, 10000); // 10 second timeout
+      }, 35000); // 35 second timeout to allow for token refresh (30s API timeout + 5s buffer)
     }
 
     return () => {
