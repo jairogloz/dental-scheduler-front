@@ -31,7 +31,7 @@ const locales = {
 const localizer = dateFnsLocalizer({
   format,
   parse,
-  startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn: 0 }), // Ensure Sunday start
+  startOfWeek: (date: Date) => startOfWeek(date, { weekStartsOn: 1 }), // Monday start
   getDay,
   locales,
 });
@@ -251,21 +251,21 @@ function App() {
           endDate.setHours(23, 59, 59, 999);
         } else {
           // week view - use the same startOfWeek logic as React Big Calendar
-          // Use Sunday as week start to match typical calendar behavior in Mexico
-          startDate = startOfWeek(currentDate, { weekStartsOn: 0 }); // 0 = Sunday
+          // Use Monday as week start (1 = Monday, more common for business applications)
+          startDate = startOfWeek(currentDate, { weekStartsOn: 1 }); // 1 = Monday
           startDate.setHours(0, 0, 0, 0);
           endDate = new Date(startDate);
           endDate.setDate(endDate.getDate() + 6);
           endDate.setHours(23, 59, 59, 999);
         }
 
-        console.log('📅 Date range calculated:', {
+        console.log("📅 Date range calculated:", {
           view: currentView,
           currentDate: currentDate.toISOString(),
           startDate: startDate.toISOString(),
           endDate: endDate.toISOString(),
-          startDayOfWeek: startDate.getDay(), // Should be 0 (Sunday) for week view
-          endDayOfWeek: endDate.getDay()     // Should be 6 (Saturday) for week view
+          startDayOfWeek: startDate.getDay(), // Should be 1 (Monday) for week view
+          endDayOfWeek: endDate.getDay(), // Should be 0 (Sunday) for week view
         });
 
         return { start: startDate, end: endDate };
@@ -302,26 +302,26 @@ function App() {
 
   // Update events based on appointment cache and clinic filter
   useEffect(() => {
-    console.log('🎯 Events update effect triggered:', {
+    console.log("🎯 Events update effect triggered:", {
       organizationLoading,
       hasOrganizationData: !!organizationData,
       cacheLastUpdated: appointmentCache.lastUpdated,
       selectedClinics: selectedClinics.length,
       currentDate: date.toISOString(),
-      currentView: view
+      currentView: view,
     });
 
     // Don't show any events while organization data is loading to prevent flickering
     if (organizationLoading || !organizationData) {
-      console.log('⏳ Clearing events - organization loading or no data');
+      console.log("⏳ Clearing events - organization loading or no data");
       setEvents([]);
       return;
     }
 
     const { start, end } = getCalendarDateRange(date, view);
-    console.log('📅 Calendar date range:', {
+    console.log("📅 Calendar date range:", {
       start: start.toISOString(),
-      end: end.toISOString()
+      end: end.toISOString(),
     });
 
     const appointments = getAppointmentsInRange(start, end);
@@ -367,9 +367,9 @@ function App() {
       };
     });
 
-    console.log('📊 Final calendar events:', {
+    console.log("📊 Final calendar events:", {
       totalEvents: calendarEvents.length,
-      eventIds: calendarEvents.map(e => e.appointmentId)
+      eventIds: calendarEvents.map((e) => e.appointmentId),
     });
 
     setEvents(calendarEvents);
@@ -399,7 +399,7 @@ function App() {
 
       try {
         // Polling for appointment updates with force refresh
-        console.log('⏰ Polling for appointment updates');
+        console.log("⏰ Polling for appointment updates");
         await loadAppointmentsForRange(start, end, true);
       } catch (error) {
         console.error("❌ Failed to poll for appointment updates:", error);
@@ -543,7 +543,7 @@ function App() {
 
       // Force refresh the current calendar range to ensure consistency
       const { start, end } = getCalendarDateRange(date, view);
-      console.log('🔄 Force refreshing appointments after creation');
+      console.log("🔄 Force refreshing appointments after creation");
       await loadAppointmentsForRange(start, end, true);
 
       // Navigate to appointment date but don't close modal (let success modal handle that)

@@ -40,7 +40,11 @@ interface AuthContextType {
   ) => Promise<void>; // Updated signature
   // Appointment cache
   appointmentCache: AppointmentCache;
-  loadAppointmentsForRange: (startDate: Date, endDate: Date, forceRefresh?: boolean) => Promise<void>;
+  loadAppointmentsForRange: (
+    startDate: Date,
+    endDate: Date,
+    forceRefresh?: boolean
+  ) => Promise<void>;
   getAppointmentsInRange: (startDate: Date, endDate: Date) => Appointment[];
   addAppointmentToCache: (appointment: Appointment) => void;
   removeAppointmentFromCache: (appointmentId: string) => void;
@@ -325,11 +329,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
 
     try {
-      console.log('🔄 Loading appointments for range:', {
+      console.log("🔄 Loading appointments for range:", {
         startDate: startDate.toISOString().split("T")[0],
         endDate: endDate.toISOString().split("T")[0],
         forceRefresh,
-        currentCacheSize: appointmentCache.appointments.size
+        currentCacheSize: appointmentCache.appointments.size,
       });
 
       const appointments = await getAppointmentsByDateRange(
@@ -337,9 +341,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         endDate.toISOString().split("T")[0]
       );
 
-      console.log('📥 Received appointments from API:', {
+      console.log("📥 Received appointments from API:", {
         count: appointments.length,
-        appointmentIds: appointments.map(a => a.id)
+        appointmentIds: appointments.map((a) => a.id),
       });
 
       setAppointmentCache((prev) => {
@@ -347,7 +351,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         // If force refresh, remove appointments that fall within this date range first
         if (forceRefresh) {
-          console.log('🧹 Force refresh: clearing appointments in range before adding new ones');
+          console.log(
+            "🧹 Force refresh: clearing appointments in range before adding new ones"
+          );
           for (const [id, appointment] of prev.appointments.entries()) {
             // Remove appointments that overlap with the requested range
             if (appointment.start < endDate && appointment.end > startDate) {
@@ -362,11 +368,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           newAppointments.set(appointment.id, appointment);
         });
 
-        console.log('💾 Cache updated:', {
+        console.log("💾 Cache updated:", {
           previousSize: prev.appointments.size,
           newSize: newAppointments.size,
           addedCount: appointments.length,
-          forceRefresh
+          forceRefresh,
         });
 
         return {
@@ -392,12 +398,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   ): Appointment[] => {
     const appointments: Appointment[] = [];
 
-    console.log('🔍 Getting appointments from cache:', {
+    console.log("🔍 Getting appointments from cache:", {
       requestedRange: {
         start: startDate.toISOString(),
-        end: endDate.toISOString()
+        end: endDate.toISOString(),
       },
-      totalCachedAppointments: appointmentCache.appointments.size
+      totalCachedAppointments: appointmentCache.appointments.size,
     });
 
     for (const appointment of appointmentCache.appointments.values()) {
@@ -407,9 +413,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       }
     }
 
-    console.log('📋 Filtered appointments for range:', {
+    console.log("📋 Filtered appointments for range:", {
       count: appointments.length,
-      appointmentIds: appointments.map(a => a.id)
+      appointmentIds: appointments.map((a) => a.id),
     });
 
     return appointments.sort((a, b) => a.start.getTime() - b.start.getTime());
@@ -418,15 +424,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const addAppointmentToCache = (appointment: Appointment) => {
     const dayOfWeek = appointment.start.getDay();
     const isSunday = dayOfWeek === 0;
-    
-    console.log('📝 Adding appointment to cache:', {
+
+    console.log("📝 Adding appointment to cache:", {
       appointmentId: appointment.id,
       start: appointment.start.toISOString(),
       end: appointment.end.toISOString(),
       patientName: appointment.patient_name,
       dayOfWeek,
-      dayName: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][dayOfWeek],
-      isSunday: isSunday
+      dayName: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][dayOfWeek],
+      isSunday: isSunday,
     });
 
     setAppointmentCache((prev) => {
@@ -439,10 +445,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         lastUpdated: new Date(),
       };
 
-      console.log('📊 Cache updated:', {
+      console.log("📊 Cache updated:", {
         totalAppointments: newCache.appointments.size,
         loadedRanges: newCache.loadedRanges.length,
-        lastUpdated: newCache.lastUpdated
+        lastUpdated: newCache.lastUpdated,
       });
 
       return newCache;
