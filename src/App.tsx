@@ -86,6 +86,7 @@ function App() {
   const { isMobile } = useWindowSize();
   const {
     organizationData,
+    organizationLoading,
     loadOrganizationData,
     appointmentCache,
     loadAppointmentsForRange,
@@ -240,7 +241,8 @@ function App() {
 
   // Update events based on appointment cache and clinic filter
   useEffect(() => {
-    if (!organizationData) {
+    // Don't show any events while organization data is loading to prevent flickering
+    if (organizationLoading || !organizationData) {
       setEvents([]);
       return;
     }
@@ -283,6 +285,7 @@ function App() {
 
     setEvents(calendarEvents);
   }, [
+    organizationLoading,
     appointmentCache.lastUpdated,
     date,
     view,
@@ -588,38 +591,83 @@ function App() {
                 onClinicsChange={setSelectedClinics}
               />
 
-              <Calendar
-                localizer={localizer}
-                events={events}
-                culture="es-MX" // Set culture to Spanish (Mexico)
-                resources={view === "day" ? units : undefined}
-                resourceIdAccessor={view === "day" ? "resourceId" : undefined}
-                resourceTitleAccessor="resourceTitle"
-                startAccessor="start"
-                endAccessor="end"
-                date={date}
-                onNavigate={(newDate) => setDate(newDate)}
-                view={view}
-                onView={setView}
-                views={["month", "week", "day"]}
-                step={15}
-                timeslots={1}
-                style={{
-                  height: "70vh",
-                  backgroundColor: "white",
-                  borderRadius: "8px",
-                }}
-                selectable
-                onSelectSlot={handleSelectSlot}
-                onSelectEvent={handleSelectEvent}
-                eventPropGetter={eventPropGetter}
-                formats={{
-                  timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
-                  agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
-                }}
-                min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
-                max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
-              />
+              {organizationLoading ? (
+                <div
+                  style={{
+                    height: "70vh",
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      border: "4px solid #e5e7eb",
+                      borderTop: "4px solid #3b82f6",
+                      borderRadius: "50%",
+                      animation: "spin 1s linear infinite",
+                      marginBottom: "16px",
+                    }}
+                  />
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: "16px",
+                      color: "#6b7280",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Cargando citas...
+                  </p>
+                  <style>
+                    {`
+                      @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                      }
+                    `}
+                  </style>
+                </div>
+              ) : (
+                <Calendar
+                  localizer={localizer}
+                  events={events}
+                  culture="es-MX" // Set culture to Spanish (Mexico)
+                  resources={view === "day" ? units : undefined}
+                  resourceIdAccessor={view === "day" ? "resourceId" : undefined}
+                  resourceTitleAccessor="resourceTitle"
+                  startAccessor="start"
+                  endAccessor="end"
+                  date={date}
+                  onNavigate={(newDate) => setDate(newDate)}
+                  view={view}
+                  onView={setView}
+                  views={["month", "week", "day"]}
+                  step={15}
+                  timeslots={1}
+                  style={{
+                    height: "70vh",
+                    backgroundColor: "white",
+                    borderRadius: "8px",
+                  }}
+                  selectable
+                  onSelectSlot={handleSelectSlot}
+                  onSelectEvent={handleSelectEvent}
+                  eventPropGetter={eventPropGetter}
+                  formats={{
+                    timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
+                    agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
+                  }}
+                  min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
+                  max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
+                />
+              )}
             </>
           ) : (
             <div
