@@ -349,8 +349,6 @@ function App() {
   };
 
   const handleSelectEvent = async (event: Event) => {
-    const isPastEvent = event.start < new Date();
-
     try {
       // Use cached appointments instead of fetching from API
       const { start, end } = getCalendarDateRange(new Date(event.start), view);
@@ -382,7 +380,7 @@ function App() {
         end: new Date(selectedAppointment.end),
       });
 
-      setModalMode(isPastEvent ? "see-only" : "edit");
+      setModalMode("see-only");
       setShowModal(true);
     } catch (error) {
       console.error("Error fetching appointment:", error);

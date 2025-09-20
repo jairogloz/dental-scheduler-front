@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
+import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
@@ -221,9 +222,10 @@ const AppointmentModal = ({
     setShowAddPatientModal(false);
   };
 
-  // Sync selectedPatient with appointmentForm when modal opens or form changes
+  // Sync selectedPatient with appointmentForm for create/edit modes only
   useEffect(() => {
-    if (showModal) {
+    console.log(mode);
+    if (showModal && mode !== "see-only") {
       // Reset patient selection state when modal opens
       if (appointmentForm.patientName && appointmentForm.patientId) {
         // If we have both name and ID, create a patient object
@@ -232,22 +234,8 @@ const AppointmentModal = ({
           name: appointmentForm.patientName,
         };
         setSelectedPatient(patient);
-      } else if (appointmentForm.patientName && !appointmentForm.patientId) {
-        // If we only have a name but no patient ID (appointment has patient_name but patient doesn't exist in database)
-        // For view-only mode, still show the name; for edit mode, allow search
-        if (mode === "see-only") {
-          // Create a temporary patient object just for display
-          const tempPatient = {
-            id: "temp",
-            name: appointmentForm.patientName,
-          };
-          setSelectedPatient(tempPatient);
-        } else {
-          // For edit mode, clear selection to allow search
-          setSelectedPatient(null);
-        }
       } else {
-        // Clear selection if no patient data
+        // Clear selection to allow search
         setSelectedPatient(null);
       }
     }
@@ -460,13 +448,21 @@ const AppointmentModal = ({
 
           <div className="form-field">
             <label>Nombre del Paciente:</label>
-            <PatientSearchAutocomplete
-              selectedPatient={selectedPatient}
-              onPatientSelect={handlePatientSelect}
-              onAddNewPatient={handleAddNewPatient}
-              disabled={isReadOnly}
-              placeholder="Buscar paciente por nombre..."
-            />
+            {mode === "see-only" ? (
+              <PatientDisplay
+                patientName={appointmentForm.patientName}
+                patientId={appointmentForm.patientId}
+                placeholder="Sin paciente asignado"
+              />
+            ) : (
+              <PatientSearchAutocomplete
+                selectedPatient={selectedPatient}
+                onPatientSelect={handlePatientSelect}
+                onAddNewPatient={handleAddNewPatient}
+                disabled={false}
+                placeholder="Buscar paciente por nombre..."
+              />
+            )}
           </div>
 
           <div className="form-field">
