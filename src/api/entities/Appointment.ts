@@ -247,7 +247,7 @@ export const getAppointmentsByDateRange = async (
   // Final appointments data prepared for processing
     
     // Transform backend format to frontend format
-    const appointments: Appointment[] = appointmentsData.map((appt) => {
+    const appointments = appointmentsData.map((appt) => {
       const startDate = new Date(appt.start_time);
       const endDate = new Date(appt.end_time);
       
@@ -270,7 +270,14 @@ export const getAppointmentsByDateRange = async (
         start: startDate,
         end: endDate,
         treatment: appt.treatment_type,
-      };
+        // Preserve additional fields from API response
+        patient_name: (appt as any).patient_name,
+        doctor_name: (appt as any).doctor_name,
+        unit_name: (appt as any).unit_name,
+        clinic_id: (appt as any).clinic_id,
+        clinic_name: (appt as any).clinic_name,
+        status: (appt as any).status,
+      } as Appointment;
     }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
     
   // Loaded appointments for date range

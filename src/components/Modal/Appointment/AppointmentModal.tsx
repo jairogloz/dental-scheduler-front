@@ -233,14 +233,25 @@ const AppointmentModal = ({
         };
         setSelectedPatient(patient);
       } else if (appointmentForm.patientName && !appointmentForm.patientId) {
-        // If we only have a name (legacy data), clear selection to allow search
-        setSelectedPatient(null);
+        // If we only have a name but no patient ID (appointment has patient_name but patient doesn't exist in database)
+        // For view-only mode, still show the name; for edit mode, allow search
+        if (mode === "see-only") {
+          // Create a temporary patient object just for display
+          const tempPatient = {
+            id: "temp",
+            name: appointmentForm.patientName,
+          };
+          setSelectedPatient(tempPatient);
+        } else {
+          // For edit mode, clear selection to allow search
+          setSelectedPatient(null);
+        }
       } else {
         // Clear selection if no patient data
         setSelectedPatient(null);
       }
     }
-  }, [showModal, appointmentForm.patientName, appointmentForm.patientId]);
+  }, [showModal, appointmentForm.patientName, appointmentForm.patientId, mode]);
 
   // Initialize clinic when editing appointment based on selected unit
   useEffect(() => {

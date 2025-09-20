@@ -174,7 +174,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (data.appointments && data.appointments.length > 0) {
         const appointments: Appointment[] = data.appointments.map((appt) => ({
           id: appt.id,
-          patientId: appt.patient_id,
+          // Organization API might not have patient_id if patient doesn't exist in database
+          patientId: appt.patient_id || "",
           doctorId: appt.doctor_id,
           unitId: appt.unit_id,
           start: new Date(appt.start_time),
