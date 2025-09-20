@@ -70,7 +70,19 @@
   font-weight: 500 !important;
 }
 
-/* Clinic border styling - ensure borders are visible */
-.calendar-event-with-clinic-border {
+/* Clinic left border styling - ensure left borders are visible */
+.calendar-event-with-clinic-left-border {
   box-sizing: border-box !important;
+}
+
+/* High specificity rules to force left border display */
+.rbc-calendar .rbc-event.calendar-event-with-clinic-left-border {
+  border-left-width: 4px !important;
+  border-left-style: solid !important;
+}
+
+/* Even higher specificity for stubborn cases */
+.rbc-calendar .rbc-event-content .calendar-event-with-clinic-left-border,
+.rbc-calendar .rbc-event.calendar-event-with-clinic-left-border * {
+  border-left: inherit !important;
 }

@@ -168,10 +168,10 @@ function App() {
   );
   // clinics are managed by selectedClinics state
 
-  // Event styling function - based on doctor (background) and clinic (left border)
+  // Event styling function - based on doctor (background) and clinic (outline)
   const eventPropGetter = (event: Event) => {
     const backgroundColor = getDoctorColor(event.resourceId, doctors);
-    const borderLeftColor = getClinicColor(
+    const clinicColor = getClinicColor(
       event.clinicId,
       organizationData?.clinics
     );
@@ -179,7 +179,7 @@ function App() {
     // Debug logging to see what's happening
     console.log("Event styling:", {
       clinicId: event.clinicId,
-      borderLeftColor,
+      clinicColor,
       backgroundColor,
       clinics: organizationData?.clinics?.map((c) => ({
         id: c.id,
@@ -193,15 +193,14 @@ function App() {
         color: "white",
         borderRadius: "4px",
         border: "none",
-        borderLeft: "8px solid #FF0000", // TEST: Fixed red left border
         padding: "2px 5px",
-        paddingLeft: "12px", // Extra padding for the thick border
         opacity: "0.95",
         fontSize: "13.5px",
         fontWeight: "500",
-        outline: "1px solid rgba(255, 255, 255, 0.8)",
+        outline: `2px solid ${clinicColor}`, // Use clinic color for 2px outline
+        outlineOffset: "-1px", // Inset the outline slightly
       },
-      className: "calendar-event-with-clinic-border",
+      className: "calendar-event-with-clinic-outline",
     };
   };
 
