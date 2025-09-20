@@ -8,6 +8,7 @@ import type { Patient } from "../../../api/entities/Patient";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
+import ConfirmationDialog from "../ConfirmationDialog";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
@@ -35,8 +36,10 @@ const AppointmentModal = ({
   const { clinics } = useClinics();
   const { units } = useUnits();
 
+  const [currentMode, setCurrentMode] = useState(mode); // Internal mode state for switching
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [originalAppointmentForm, setOriginalAppointmentForm] = useState<any>(null); // Store original form data
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [initialPatientName, setInitialPatientName] = useState<string>("");
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
@@ -69,7 +72,7 @@ const AppointmentModal = ({
     }));
   };
 
-  const isReadOnly = mode === "see-only" || mode === "edit";
+  const isReadOnly = currentMode === "see-only";
 
   // Generate time options with 15-minute intervals
   const generateTimeOptions = () => {
@@ -189,11 +192,25 @@ const AppointmentModal = ({
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
     setSelectedPatient(patient);
-    setAppointmentForm((prevForm: any) => ({
-      ...prevForm,
-      patientName: patient?.name || "",
-      patientId: patient?.id || "",
-    }));
+    
+    // Only update form data when actually selecting a patient (not when clearing)
+    // In edit mode, clearing the search doesn't clear the original patient data
+    if (patient) {
+      setAppointmentForm((prevForm: any) => ({
+        ...prevForm,
+        patientName: patient.name,
+        patientId: patient.id,
+      }));
+    } else if (currentMode === "create") {
+      // In create mode, clearing should clear the form
+      setAppointmentForm((prevForm: any) => ({
+        ...prevForm,
+        patientName: "",
+        patientId: "",
+      }));
+    }
+    // In edit mode, when clearing (patient is null), we don't update the form
+    // This preserves the original patient data for cancel changes functionality
   };
 
   const handleAddNewPatient = (searchQuery?: string) => {
@@ -222,16 +239,36 @@ const AppointmentModal = ({
     setShowAddPatientModal(false);
   };
 
-  // Sync selectedPatient with appointmentForm for create/edit modes only
+  // Mode switching functions
+  const handleEditAppointment = () => {
+    setCurrentMode("edit");
+  };
+
+  const handleCancelChanges = () => {
+    // Reset form to original data
+    if (originalAppointmentForm) {
+      setAppointmentForm(originalAppointmentForm);
+    }
+    
+    // Reset mode to see-only
+    setCurrentMode("see-only");
+    
+    // Clear any patient selection
+    setSelectedPatient(null);
+  };
+
+  // Sync selectedPatient when switching to edit mode (only on mode change, not form data change)
   useEffect(() => {
-    console.log(mode);
-    if (showModal && mode !== "see-only") {
-      // Reset patient selection state when modal opens
-      if (appointmentForm.patientName && appointmentForm.patientId) {
-        // If we have both name and ID, create a patient object
-        const patient = {
-          id: appointmentForm.patientId,
-          name: appointmentForm.patientName,
+    if (currentMode === "edit") {
+      // Use the current appointmentForm data to set initial patient selection
+      const currentForm = appointmentForm; // Capture current form data
+      if (currentForm.patientName) {
+        // If we have patient name, create a patient object
+        const patient: Patient = {
+          id: currentForm.patientId || "",
+          name: currentForm.patientName,
+          email: undefined,
+          phone: undefined,
         };
         setSelectedPatient(patient);
       } else {
@@ -239,7 +276,17 @@ const AppointmentModal = ({
         setSelectedPatient(null);
       }
     }
-  }, [showModal, appointmentForm.patientName, appointmentForm.patientId, mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentMode]); // Only depend on currentMode to avoid interference with user interactions
+
+  // Sync internal mode with prop mode when modal opens and store original form data
+  useEffect(() => {
+    if (showModal) {
+      setCurrentMode(mode);
+      // Store the original form data when modal opens (only once)
+      setOriginalAppointmentForm({ ...appointmentForm });
+    }
+  }, [showModal, mode]); // Removed appointmentForm dependency to prevent mode reset on form changes
 
   // Initialize clinic when editing appointment based on selected unit
   useEffect(() => {
@@ -282,23 +329,30 @@ const AppointmentModal = ({
 
   // Initialize appointment dates when creating a new appointment (only if no time was set from calendar)
   useEffect(() => {
-    if (showModal && mode === "create" && !appointmentForm.start) {
+    if (showModal && currentMode === "create" && !appointmentForm.start) {
       // Only initialize when modal opens for creation AND no start time is set
       // This prevents overriding calendar slot selections
       updateAppointmentDateTime(selectedDate, selectedTime, selectedDuration);
     }
-  }, [showModal, mode, appointmentForm.start]); // Include appointmentForm.start to check if calendar selection exists
+  }, [showModal, currentMode, appointmentForm.start]); // Include appointmentForm.start to check if calendar selection exists
 
   // Validate and handle appointment creation
   const handleValidatedAddAppointment = () => {
-    // Removed debug console logs
+    // Create a validated form object, ensuring patient data is properly set
+    const validatedForm = { ...appointmentForm };
+    
+    // If we have a selectedPatient but the form doesn't have patientId, use selectedPatient data
+    if (selectedPatient && selectedPatient.id && !validatedForm.patientId) {
+      validatedForm.patientId = selectedPatient.id;
+      validatedForm.patientName = selectedPatient.name;
+    }
 
-    // Validate required fields
-    if (!appointmentForm.doctorId) {
+    // Validate required fields using the validated form
+    if (!validatedForm.doctorId) {
       alert("Por favor selecciona un doctor");
       return;
     }
-    if (!appointmentForm.patientId) {
+    if (!validatedForm.patientId && !validatedForm.patientName) {
       alert("Por favor selecciona un paciente");
       return;
     }
@@ -312,10 +366,10 @@ const AppointmentModal = ({
     }
 
     // Enhanced date validation with debugging
-    if (!appointmentForm.start || !appointmentForm.end) {
+    if (!validatedForm.start || !validatedForm.end) {
       console.error("❌ Missing start or end dates:", {
-        start: appointmentForm.start,
-        end: appointmentForm.end,
+        start: validatedForm.start,
+        end: validatedForm.end,
       });
       alert(
         "Por favor selecciona fecha, hora y duración válidas - fechas faltantes"
@@ -324,13 +378,13 @@ const AppointmentModal = ({
     }
 
     // Check if start/end are valid Date objects
-    const startDate = new Date(appointmentForm.start);
-    const endDate = new Date(appointmentForm.end);
+    const startDate = new Date(validatedForm.start);
+    const endDate = new Date(validatedForm.end);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       console.error("❌ Invalid dates:", {
-        start: appointmentForm.start,
-        end: appointmentForm.end,
+        start: validatedForm.start,
+        end: validatedForm.end,
         startValid: !isNaN(startDate.getTime()),
         endValid: !isNaN(endDate.getTime()),
       });
@@ -343,12 +397,12 @@ const AppointmentModal = ({
     // Convert dates to ISO strings for the backend
     try {
       const appointmentData = {
-        ...appointmentForm,
+        ...validatedForm,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
-        patient_id: appointmentForm.patientId,
-        doctor_id: appointmentForm.doctorId,
-        unit_id: appointmentForm.resourceId,
+        patient_id: validatedForm.patientId,
+        doctor_id: validatedForm.doctorId,
+        unit_id: validatedForm.resourceId,
         // Remove the Date objects since we're sending ISO strings
         start: undefined,
         end: undefined,
@@ -366,13 +420,25 @@ const AppointmentModal = ({
     setShowCancelConfirmation(true);
   };
 
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
+    if (handleCancelAppointment) {
+      handleCancelAppointment(appointmentForm.appointmentId);
+    }
+    handleCloseModal();
+  };
+
+  const handleCancelConfirmation = () => {
+    setShowCancelConfirmation(false);
+  };
+
   return (
     <div className="modal-overlay">
       <div
         className="modal-content"
         style={{
           maxWidth:
-            appointmentForm.doctorId && mode === "create" ? "900px" : "400px",
+            appointmentForm.doctorId && currentMode === "create" ? "900px" : "400px",
           display: "flex",
           flexDirection: isMobile ? "column" : "row",
           gap: "20px",
@@ -409,9 +475,9 @@ const AppointmentModal = ({
           style={{ flex: isMobile ? "none" : "1" }}
         >
           <h3>
-            {mode === "create"
+            {currentMode === "create"
               ? "Nueva Cita Dental"
-              : mode === "edit"
+              : currentMode === "edit"
               ? "Editar Cita Dental"
               : "Detalles de la Cita"}
           </h3>
@@ -448,7 +514,7 @@ const AppointmentModal = ({
 
           <div className="form-field">
             <label>Nombre del Paciente:</label>
-            {mode === "see-only" ? (
+            {currentMode === "see-only" ? (
               <PatientDisplay
                 patientName={appointmentForm.patientName}
                 patientId={appointmentForm.patientId}
@@ -597,25 +663,91 @@ const AppointmentModal = ({
           <div
             style={{
               display: "flex",
-              justifyContent: mode === "create" ? "flex-end" : "space-between",
+              justifyContent: currentMode === "create" ? "flex-end" : "space-between",
+              gap: "10px",
             }}
           >
-            {mode === "edit" && (
-              <button
-                onClick={handleCancel}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#dc3545",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancelar cita
-              </button>
+            {/* See-Only Mode Buttons */}
+            {currentMode === "see-only" && (
+              <>
+                <button
+                  onClick={handleCancel}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#dc3545",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar Cita
+                </button>
+                <button
+                  onClick={handleEditAppointment}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Editar Cita
+                </button>
+              </>
             )}
-            {mode === "create" && (
+
+            {/* Edit Mode Buttons */}
+            {currentMode === "edit" && (
+              <>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    onClick={handleCancel}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: "#dc3545",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancelar Cita
+                  </button>
+                  <button
+                    onClick={handleCancelChanges}
+                    style={{
+                      padding: "10px 20px",
+                      backgroundColor: "#6c757d",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Cancelar Cambios
+                  </button>
+                </div>
+                <button
+                  onClick={handleValidatedAddAppointment}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#28a745",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Guardar Cambios
+                </button>
+              </>
+            )}
+
+            {/* Create Mode Buttons */}
+            {currentMode === "create" && (
               <button
                 onClick={handleValidatedAddAppointment}
                 style={{
@@ -634,7 +766,7 @@ const AppointmentModal = ({
         </div>
 
         {/* Calendar Section */}
-        {appointmentForm.doctorId && mode === "create" && (
+        {appointmentForm.doctorId && currentMode === "create" && (
           <div
             style={{
               flex: isMobile ? "none" : "1",
@@ -692,40 +824,16 @@ const AppointmentModal = ({
       />
 
       {/* Cancel Confirmation Dialog */}
-      {showCancelConfirmation && (
-        <div className="modal-overlay" style={{ zIndex: 1100 }}>
-          <div
-            className="modal-content"
-            style={{
-              width: isMobile ? "90vw" : "400px",
-              textAlign: "center",
-              padding: "20px",
-            }}
-          >
-            <p>
-              ¿Estás seguro de que deseas cancelar esta cita? Esta acción no se
-              puede deshacer.
-            </p>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                marginTop: "20px",
-              }}
-            >
-              <button
-                onClick={() => setShowCancelConfirmation(false)}
-                className="btn-danger"
-              >
-                No, mantener
-              </button>
-              <button onClick={handleCancelAppointment} className="btn-success">
-                Sí, cancelar cita
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog
+        isOpen={showCancelConfirmation}
+        title="Cancelar Cita"
+        message="¿Estás seguro de que deseas cancelar esta cita? Esta acción no se puede deshacer."
+        confirmText="Sí, cancelar cita"
+        cancelText="No, mantener"
+        onConfirm={handleConfirmCancel}
+        onCancel={handleCancelConfirmation}
+        confirmButtonStyle="danger"
+      />
     </div>
   );
 };

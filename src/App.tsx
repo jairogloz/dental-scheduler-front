@@ -417,8 +417,8 @@ function App() {
       return;
     }
 
-    // Validate that we have a patient ID
-    if (!appointmentForm.patientId) {
+    // Validate that we have a patient ID or name
+    if (!appointmentForm.patientId && !appointmentForm.patientName) {
       alert("Por favor selecciona un paciente antes de crear la cita.");
       return;
     }
