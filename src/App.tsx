@@ -360,14 +360,11 @@ function App() {
       );
       const clinicId = unit?.clinic_id;
 
-      // Format time in AM/PM format for display
-      const timeFormatted = format(appointment.start, "hh:mm a");
-
       // Add checkmark if appointment is confirmed
       const checkmark = appointment.status === "confirmed" ? "✓ " : "";
 
       return {
-        title: `${timeFormatted}\n${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel}`,
+        title: `${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
@@ -800,6 +797,8 @@ function App() {
                   formats={{
                     timeGutterFormat: (date) => format(date, "hh:mm a"), // AM/PM format for time slots
                     agendaTimeFormat: (date) => format(date, "hh:mm a"), // AM/PM format for agenda view
+                    eventTimeRangeFormat: ({ start, end }) =>
+                      `${format(start, "hh:mm a")} - ${format(end, "hh:mm a")}`, // AM/PM format for event times
                   }}
                   min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
                   max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
