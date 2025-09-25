@@ -360,8 +360,14 @@ function App() {
       );
       const clinicId = unit?.clinic_id;
 
+      // Format time in AM/PM format for display
+      const timeFormatted = format(appointment.start, "hh:mm a");
+
+      // Add checkmark if appointment is confirmed
+      const checkmark = appointment.status === "confirmed" ? "✓ " : "";
+
       return {
-        title: `${patientLabel} - ${doctorLabel}`,
+        title: `${timeFormatted}\n${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
