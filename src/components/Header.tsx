@@ -1,15 +1,29 @@
 import { useAuth } from "../contexts/AuthContext";
 import { getRoleDisplayText } from "../utils/roleUtils";
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const { user, userProfile, signOut, loadingProfile } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
-    setShowDropdown(false);
+    try {
+      // Close dropdown first
+      setShowDropdown(false);
+
+      // Navigate to login immediately to prevent race conditions
+      navigate("/login", { replace: true });
+
+      // Then call signOut to clean up auth state
+      await signOut();
+    } catch (error) {
+      console.error("Error during logout:", error);
+      // Even if signOut fails, make sure we go to login
+      navigate("/login", { replace: true });
+    }
   };
 
   const toggleDropdown = () => {
