@@ -627,9 +627,35 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
           // Extract organization_id using helper function (with fallback to profiles table)
           if (session?.user) {
-            const orgId = await getUserOrganizationId();
+            // Clear previous user's data when switching users
+            if (event === "SIGNED_IN") {
+              console.log("🔄 New user signing in, clearing previous data");
+              setOrganizationData(null);
+              setOrganizationLoading(false); // Reset organization loading state
+              setOrganizationError(null); // Clear any previous errors
+              setAppointmentCache({
+                appointments: new Map(),
+                loadedRanges: [],
+                lastUpdated: new Date(),
+              });
+              clearTokenCache();
+            }
+
+            // Get organization ID directly from user metadata (no async database call needed)
+            console.log(
+              "🔍 Getting organization ID for user:",
+              session.user.email
+            );
+            const orgId = session.user.user_metadata?.organization_id || null;
+            console.log("✅ Organization ID retrieved from metadata:", orgId);
             setOrganizationId(orgId);
-            // Organization ID configured in auth change
+
+            if (!orgId) {
+              console.warn("⚠️ No organization_id found in user metadata");
+              setOrganizationError(
+                "No organization access found. Please contact support."
+              );
+            }
           } else {
             setOrganizationId(null);
           }
@@ -640,7 +666,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             setLoading(false);
             initialCheckComplete = true;
           } else {
-            // Auth state changed after initial check
+            // Auth state changed after initial check - ensure loading is false for user switches
+            if (event === "SIGNED_IN") {
+              setLoading(false);
+            }
           }
 
           clearTimeout(safetyTimeout);
@@ -658,6 +687,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Load organization data when organizationId changes
   useEffect(() => {
+    console.log("🔧 Organization data effect triggered:", {
+      organizationId,
+      loading,
+      shouldLoad: organizationId && !loading,
+    });
+
     if (organizationId && !loading) {
       // Organization ID changed, loading organization data with force refresh
       console.log(
@@ -666,8 +701,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       loadOrganizationData(undefined, undefined, true); // Force refresh on initial load
     } else if (!organizationId) {
       // Clear organization data when no organization ID
+      console.log("🧹 Clearing organization data - no organization ID");
       setOrganizationData(null);
       setOrganizationLoading(false);
+    } else {
+      console.log(
+        "⏳ Waiting for loading to complete before loading organization data"
+      );
     }
   }, [organizationId, loading]);
 
