@@ -125,7 +125,6 @@ function App() {
     cancelAppointmentInCache,
   } = useAuth();
 
-  const [events, setEvents] = useState<Event[]>([]);
   const [view, setView] = useState<View>(isMobile ? "day" : "week");
   const [date, setDate] = useState<Date>(new Date());
   const [showModal, setShowModal] = useState(false);
@@ -304,21 +303,29 @@ function App() {
   }, [date, view, organizationData]); // Removed loadAppointmentsForRange from deps - it's a stable function
 
   // Update events based on appointment cache and clinic filter
-  useEffect(() => {
-    console.log("🎯 Events update effect triggered:", {
+  // Memoized calendar events calculation to prevent redundant processing
+  const events = useMemo(() => {
+    console.log("🎯 Events memoization triggered:", {
       organizationLoading,
       hasOrganizationData: !!organizationData,
-      cacheLastUpdated: appointmentCache.lastUpdated,
       selectedClinics: selectedClinics.length,
       currentDate: date.toISOString(),
       currentView: view,
+      cacheLastUpdated: appointmentCache.lastUpdated,
     });
 
     // Don't show any events while organization data is loading to prevent flickering
     if (organizationLoading || !organizationData) {
-      console.log("⏳ Clearing events - organization loading or no data");
-      setEvents([]);
-      return;
+      console.log(
+        "⏳ Returning empty events - organization loading or no data"
+      );
+      return [];
+    }
+
+    // Skip if no clinics are selected - this prevents unnecessary processing
+    if (selectedClinics.length === 0) {
+      console.log("⏳ Returning empty events - no clinics selected");
+      return [];
     }
 
     const { start, end } = getCalendarDateRange(date, view);
@@ -378,7 +385,7 @@ function App() {
       eventIds: calendarEvents.map((e) => e.appointmentId),
     });
 
-    setEvents(calendarEvents);
+    return calendarEvents;
   }, [
     organizationLoading,
     appointmentCache.lastUpdated,
