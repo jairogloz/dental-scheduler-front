@@ -191,6 +191,14 @@ function App() {
         return;
       }
 
+      // Get first clinic and its first unit as defaults
+      const firstClinic = organizationData.clinics?.[0];
+      const firstUnitOfFirstClinic = firstClinic
+        ? organizationData.units?.find(
+            (unit) => unit.clinic_id === firstClinic.id
+          )
+        : null;
+
       const defaultDoctor = organizationData.doctors[0];
       setAppointmentForm({
         appointmentId: "",
@@ -199,14 +207,18 @@ function App() {
         doctorId: defaultDoctor.id,
         doctorName: defaultDoctor.name || defaultDoctor.id,
         treatmentType: "",
-        resourceId: defaultDoctor.id,
+        resourceId: firstUnitOfFirstClinic?.id || "", // Use first unit ID as resourceId
         start: slotInfo.start,
         end: slotInfo.end,
       });
       setModalMode("create");
       setShowModal(true);
     },
-    [organizationData?.doctors]
+    [
+      organizationData?.doctors,
+      organizationData?.clinics,
+      organizationData?.units,
+    ]
   );
 
   const handleSelectEvent = useCallback(
@@ -246,7 +258,7 @@ function App() {
     async (appointmentData: any) => {
       try {
         await createAppointmentMutation.mutateAsync(appointmentData);
-        setShowModal(false);
+        // Don't close modal here - let the success modal handle it
       } catch (error) {
         console.error("❌ Failed to create appointment:", error);
         alert("Failed to create appointment. Please try again.");

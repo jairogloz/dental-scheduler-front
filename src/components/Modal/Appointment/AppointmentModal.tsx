@@ -361,6 +361,18 @@ const AppointmentModal = ({
     }
   }, [showModal, appointmentForm.resourceId, units, selectedClinicId]);
 
+  // Initialize clinic to first available clinic for new appointments
+  useEffect(() => {
+    if (
+      showModal &&
+      mode === "create" &&
+      clinics.length > 0 &&
+      !selectedClinicId
+    ) {
+      setSelectedClinicId(clinics[0].id);
+    }
+  }, [showModal, mode, clinics, selectedClinicId]);
+
   // Initialize date, time, and duration from appointmentForm
   useEffect(() => {
     if (showModal && appointmentForm.start) {
@@ -455,18 +467,16 @@ const AppointmentModal = ({
       return;
     }
 
-    // Convert dates to ISO strings for the backend
+    // Prepare appointment data with Date objects for the API
     try {
       const appointmentData = {
         ...validatedForm,
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
-        patient_id: validatedForm.patientId,
-        doctor_id: validatedForm.doctorId,
-        unit_id: validatedForm.resourceId,
-        // Remove the Date objects since we're sending ISO strings
-        start: undefined,
-        end: undefined,
+        start: startDate, // Keep as Date object
+        end: endDate, // Keep as Date object
+        patientId: validatedForm.patientId,
+        doctorId: validatedForm.doctorId,
+        unitId: validatedForm.resourceId, // Map resourceId to unitId
+        treatment: validatedForm.treatmentType, // Map treatmentType to treatment
       };
 
       try {
