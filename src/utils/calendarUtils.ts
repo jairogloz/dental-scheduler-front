@@ -31,26 +31,32 @@ export const getCalendarDateRangeUtil = (date: Date, view: View) => {
 };
 
 // Color arrays for doctors and clinics
+// Doctor colors: Dark, professional colors with good white text contrast and psychological comfort
 const doctorColors = [
-  "#3498db", // Blue
-  "#e74c3c", // Red
-  "#2ecc71", // Green
-  "#f39c12", // Orange
-  "#9b59b6", // Purple
-  "#1abc9c", // Turquoise
-  "#e67e22", // Dark Orange
-  "#34495e", // Dark Blue-Gray
+  "#2C3E50", // Deep blue-gray: professional, trustworthy, calming
+  "#27AE60", // Forest green: natural, balanced, soothing
+  "#8E44AD", // Deep purple: sophisticated, creative, calm
+  "#16A085", // Dark teal: refreshing, modern, stable
+  "#D35400", // Warm orange-brown: energetic but grounded, approachable
+  "#7F8C8D", // Slate gray: neutral, professional, easy on eyes
+  "#2980B9", // Deep blue: trustworthy, reliable, calming
+  "#A0522D", // Saddle brown: warm, stable, earthy
+  "#5D4E75", // Muted purple: calming, sophisticated
+  "#2F4F4F", // Dark slate gray: professional, timeless
 ];
 
+// Clinic colors: Medium-bright colors for borders that stand out against white background
 const clinicColors = [
-  "#3498db", // Blue
-  "#e74c3c", // Red
-  "#2ecc71", // Green
-  "#f39c12", // Orange
-  "#9b59b6", // Purple
-  "#1abc9c", // Turquoise
-  "#e67e22", // Dark Orange
-  "#95a5a6", // Gray
+  "#3498DB", // Bright blue: trustworthy, professional, highly visible
+  "#E74C3C", // Coral red: energetic, attention-grabbing, warm
+  "#2ECC71", // Emerald green: fresh, positive, natural
+  "#F39C12", // Golden orange: optimistic, friendly, vibrant
+  "#9B59B6", // Rich purple: sophisticated, creative, distinctive
+  "#1ABC9C", // Turquoise: modern, calm, refreshing
+  "#E67E22", // Burnt orange: warm, energetic, professional
+  "#34495E", // Steel blue: stable, trustworthy, modern
+  "#E91E63", // Rose pink: caring, warm, distinctive
+  "#00BCD4", // Cyan: fresh, modern, tech-forward
 ];
 
 export const getDoctorColor = (

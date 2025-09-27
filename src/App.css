@@ -87,6 +87,30 @@
   border-left: inherit !important;
 }
 
+/* Clinic outline styling - new approach with soft colored borders */
+.calendar-event-with-clinic-outline {
+  box-sizing: border-box !important;
+  outline-style: solid !important;
+  outline-width: 2px !important;
+  outline-offset: -1px !important;
+}
+
+/* Enhanced text readability on dark backgrounds */
+.calendar-event-with-clinic-outline {
+  color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  font-weight: 600 !important;
+}
+
+/* Ensure outline is preserved in different calendar views */
+.rbc-month-view .calendar-event-with-clinic-outline,
+.rbc-day-view .calendar-event-with-clinic-outline,
+.rbc-week-view .calendar-event-with-clinic-outline {
+  outline-style: solid !important;
+  outline-width: 2px !important;
+  outline-offset: -1px !important;
+}
+
 /* Time gutter styling for 15-minute intervals */
 .rbc-time-gutter .rbc-time-slot {
   font-size: 11px !important;
