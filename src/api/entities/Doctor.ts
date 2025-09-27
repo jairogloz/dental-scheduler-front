@@ -19,13 +19,10 @@ export const getDoctors = async (): Promise<Doctor[]> => {
   // The JWT token now contains organization_id as a custom claim
   
   // Call backend API - organization_id will be extracted from JWT token by backend
-  const { data, error } = await apiClient.get<{ data: Doctor[] }>('/doctors');
-  if (error) {
-    throw error;
-  }
+  const response = await apiClient.get<{ data: Doctor[] }>('/doctors');
 
   // Extract the actual doctors array from the nested data property
-  const result = data?.data ?? [];
+  const result = response.data?.data ?? [];
   if (result.length === 0) {
     console.info('No doctors found for this organization. Please add some first.');
   }

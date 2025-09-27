@@ -6,23 +6,6 @@ import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
 
-type Clinic = {
-  id: string;
-  name: string;
-  organization_id: string;
-  created_at: string;
-  updated_at: string;
-};
-
-type Unit = {
-  id: string;
-  name: string;
-  clinic_id: string;
-  organization_id: string;
-  created_at: string;
-  updated_at: string;
-};
-
 import {
   useUpdateAppointment,
   useCancelAppointmentMutation,
