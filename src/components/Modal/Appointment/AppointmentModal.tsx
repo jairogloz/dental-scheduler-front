@@ -644,8 +644,15 @@ const AppointmentModal = ({
     setShowCancelConfirmation(false);
   };
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only close if clicking directly on the overlay, not on modal content
+    if (e.target === e.currentTarget) {
+      handleCloseModal();
+    }
+  };
+
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" onClick={handleOverlayClick}>
       <div
         className="modal-content"
         style={{
