@@ -10,6 +10,7 @@ export type Appointment = {
   end: Date;
   // Additional fields from API responses
   patient_name?: string;
+  patient_phone?: string;
   doctor_name?: string;
   unit_name?: string;
   clinic_id?: string;
@@ -442,6 +443,7 @@ export const getAppointmentsByDateRange = async (
         treatment: appt.treatment_type,
         // Preserve additional fields from API response
         patient_name: (appt as any).patient_name,
+        patient_phone: (appt as any).patient_phone,
         doctor_name: (appt as any).doctor_name,
         unit_name: (appt as any).unit_name,
         clinic_id: (appt as any).clinic_id,

@@ -57,6 +57,7 @@ type AppointmentForm = {
   appointmentId: string;
   patientName: string;
   patientId: string;
+  patientPhone?: string;
   doctorId: string;
   doctorName: string;
   treatmentType: string;
@@ -234,6 +235,7 @@ function App() {
         appointmentId: appointment.id,
         patientName: appointment.patient_name || "",
         patientId: appointment.patientId,
+        patientPhone: appointment.patient_phone || "",
         doctorId: appointment.doctorId,
         doctorName: doctor?.name || appointment.doctorId,
         treatmentType: appointment.treatment || "",

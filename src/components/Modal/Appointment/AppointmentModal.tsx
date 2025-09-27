@@ -745,6 +745,12 @@ const AppointmentModal = ({
             )}
           </div>
 
+          {currentMode === "see-only" && (
+            <div className="form-field">
+              <label>Tel: {appointmentForm.patientPhone || "(vacío)"}</label>
+            </div>
+          )}
+
           <div className="form-field">
             <label>Tipo de Tratamiento:</label>
             <input
