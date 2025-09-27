@@ -18,7 +18,10 @@ import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
 // Hooks
 import { useWindowSize } from "./hooks/useWindowSize";
 import { useAuth } from "./contexts/AuthContext";
-import { useOrganizationQuery } from "./hooks/queries/useOrganizationQuery";
+import {
+  useOrganizationQuery,
+  useDoctors,
+} from "./hooks/queries/useOrganizationQuery";
 import {
   useFilteredAppointments,
   useCreateAppointment,
@@ -93,12 +96,10 @@ function App() {
     end: new Date(),
   });
 
-  // Data queries - only call useOrganizationQuery once
+  // Data queries
   const { data: organizationData, isLoading: organizationLoading } =
     useOrganizationQuery();
-
-  // Extract doctors from organization data to avoid multiple API calls
-  const doctors = organizationData?.doctors || [];
+  const { doctors } = useDoctors();
 
   // Calculate date range for appointments query
   const dateRange = useMemo(() => {
@@ -255,6 +256,16 @@ function App() {
     [createAppointmentMutation]
   );
 
+  // Units for resources
+  const units = useMemo(() => {
+    return (
+      organizationData?.units?.map((unit) => ({
+        resourceId: unit.id,
+        resourceTitle: unit.name,
+      })) || []
+    );
+  }, [organizationData?.units]);
+
   // Show loading state
   if (organizationLoading && !organizationData) {
     return (
@@ -337,15 +348,12 @@ function App() {
                   onView={setView}
                   date={date}
                   onNavigate={setDate}
+                  resources={units}
+                  resourceIdAccessor="resourceId"
+                  resourceTitleAccessor="resourceTitle"
                   eventPropGetter={eventPropGetter}
-                  step={15}
-                  timeslots={1}
-                  showMultiDayTimes
                   formats={{
-                    timeGutterFormat: (date) => {
-                      // Show time label for every 15-minute increment
-                      return format(date, "h:mm a");
-                    },
+                    timeGutterFormat: (date) => format(date, "hh:mm a"),
                     agendaTimeFormat: (date) => format(date, "hh:mm a"),
                     eventTimeRangeFormat: ({ start, end }) =>
                       `${format(start, "hh:mm a")} - ${format(end, "hh:mm a")}`,
@@ -375,14 +383,12 @@ function App() {
 
         {showModal && (
           <AppointmentModal
-            showModal={showModal}
+            isOpen={showModal}
             mode={modalMode}
             appointmentForm={appointmentForm}
             doctors={doctors}
             handleCloseModal={handleCloseModal}
             handleAddAppointment={handleAddAppointment}
-            addAppointmentToCache={() => {}} // Placeholder - queries handle this
-            cancelAppointmentInCache={() => {}} // Placeholder - queries handle this
             setAppointmentForm={setAppointmentForm}
             appointments={filteredAppointments}
           />

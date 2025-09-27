@@ -86,3 +86,25 @@
 .rbc-calendar .rbc-event.calendar-event-with-clinic-left-border * {
   border-left: inherit !important;
 }
+
+/* Time gutter styling for 15-minute intervals */
+.rbc-time-gutter .rbc-time-slot {
+  font-size: 11px !important;
+  text-align: right !important;
+  padding-right: 8px !important;
+}
+
+.rbc-time-gutter .rbc-time-slot > span {
+  display: block !important;
+  font-weight: normal !important;
+  color: #666 !important;
+}
+
+/* Ensure all time labels are visible */
+.rbc-time-view .rbc-time-gutter {
+  width: 60px !important;
+}
+
+.rbc-time-slot {
+  border-bottom: 1px solid #ddd !important;
+}
