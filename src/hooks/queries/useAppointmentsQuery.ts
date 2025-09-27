@@ -182,6 +182,58 @@ export const useCancelAppointment = () => {
 };
 
 /**
+ * Hook for updating appointments with cache invalidation
+ */
+export const useUpdateAppointment = () => {
+  const queryClient = useQueryClient();
+  const { organizationId } = useAuth();
+
+  return useMutation({
+    mutationFn: (updatedAppointment: Appointment) => 
+      import("../../api/entities/Appointment").then(module => 
+        module.updateAppointment(updatedAppointment.id, updatedAppointment)
+      ),
+    
+    onSuccess: () => {
+      // Invalidate appointments queries to refetch fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["appointments", organizationId],
+      });
+    },
+    
+    onError: (error) => {
+      console.error("Failed to update appointment:", error);
+    },
+  });
+};
+
+/**
+ * Hook for canceling appointments with cache invalidation  
+ */
+export const useCancelAppointmentMutation = () => {
+  const queryClient = useQueryClient();
+  const { organizationId } = useAuth();
+
+  return useMutation({
+    mutationFn: (appointmentId: string) => 
+      import("../../api/entities/Appointment").then(module => 
+        module.cancelAppointment(appointmentId)
+      ),
+    
+    onSuccess: () => {
+      // Invalidate appointments queries to refetch fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["appointments", organizationId],
+      });
+    },
+    
+    onError: (error) => {
+      console.error("Failed to cancel appointment:", error);
+    },
+  });
+};
+
+/**
  * Utility hook to get appointments within a date range with filtering
  * Replaces the getAppointmentsInRange function from AuthContext
  */

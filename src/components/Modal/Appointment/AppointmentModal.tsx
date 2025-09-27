@@ -22,10 +22,11 @@ type Unit = {
   created_at: string;
   updated_at: string;
 };
+
 import {
-  updateAppointment,
-  cancelAppointment,
-} from "../../../api/entities/Appointment";
+  useUpdateAppointment,
+  useCancelAppointmentMutation,
+} from "../../../hooks/queries/useAppointmentsQuery";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
@@ -49,12 +50,15 @@ const AppointmentModal = ({
   units, // Passed as prop
   handleCloseModal,
   handleAddAppointment,
-  addAppointmentToCache, // Cache update function for both create and update
-  cancelAppointmentInCache, // Cache update function for cancelling appointments
+
   setAppointmentForm,
   appointments, // Receive appointments prop
 }: any) => {
   const { isMobile } = useWindowSize();
+
+  // Mutation hooks for appointments
+  const updateAppointmentMutation = useUpdateAppointment();
+  const cancelAppointmentMutation = useCancelAppointmentMutation();
 
   const [currentMode, setCurrentMode] = useState(mode); // Internal mode state for switching
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
@@ -580,10 +584,16 @@ const AppointmentModal = ({
       console.log("🔄 Calling updateAppointment with:", appointmentData);
 
       try {
-        const updatedAppointment = await updateAppointment(
-          validatedForm.appointmentId,
-          appointmentData
-        );
+        // Use the mutation hook which handles cache invalidation automatically
+        const updatedAppointment = await updateAppointmentMutation.mutateAsync({
+          id: validatedForm.appointmentId,
+          patientId: validatedForm.patientId,
+          doctorId: validatedForm.doctorId,
+          unitId: validatedForm.resourceId,
+          treatment: validatedForm.treatmentType,
+          start: startDate,
+          end: endDate,
+        });
 
         console.log("✅ Appointment updated successfully:", updatedAppointment);
 
@@ -593,11 +603,6 @@ const AppointmentModal = ({
           start: updatedAppointment.start,
           end: updatedAppointment.end,
         });
-
-        // Update the cache directly with the updated appointment
-        if (addAppointmentToCache) {
-          addAppointmentToCache(updatedAppointment);
-        }
 
         // Switch back to see-only mode
         setCurrentMode("see-only");
@@ -636,15 +641,10 @@ const AppointmentModal = ({
     try {
       console.log(`🚫 Cancelling appointment ${appointmentForm.appointmentId}`);
 
-      // Cancel appointment directly using the API function
-      const cancelledAppointment = await cancelAppointment(
+      // Use the mutation hook which handles cache invalidation automatically
+      await cancelAppointmentMutation.mutateAsync(
         appointmentForm.appointmentId
       );
-
-      // Update the cache with the cancelled appointment
-      if (cancelAppointmentInCache) {
-        cancelAppointmentInCache(cancelledAppointment);
-      }
 
       console.log("✅ Appointment cancelled successfully");
 

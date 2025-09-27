@@ -396,8 +396,6 @@ function App() {
             units={organizationData?.units || []}
             handleCloseModal={handleCloseModal}
             handleAddAppointment={handleAddAppointment}
-            addAppointmentToCache={() => {}} // Placeholder - queries handle this
-            cancelAppointmentInCache={() => {}} // Placeholder - queries handle this
             setAppointmentForm={setAppointmentForm}
             appointments={filteredAppointments}
           />
