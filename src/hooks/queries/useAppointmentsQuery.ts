@@ -241,6 +241,7 @@ export const useFilteredAppointments = (
   startDate: Date,
   endDate: Date,
   selectedClinicIds: string[] = [],
+  selectedDoctorIds: string[] = [],
   excludeCancelled = true
 ) => {
   const { data: appointments = [], isLoading, error } = useAppointmentsQuery(startDate, endDate);
@@ -264,9 +265,16 @@ export const useFilteredAppointments = (
         }
       }
 
+      // Filter by selected doctors if specified
+      if (selectedDoctorIds.length > 0) {
+        if (!selectedDoctorIds.includes(appointment.doctorId)) {
+          return false;
+        }
+      }
+
       return true;
     });
-  }, [appointments, organizationData, selectedClinicIds, excludeCancelled]);
+  }, [appointments, organizationData, selectedClinicIds, selectedDoctorIds, excludeCancelled]);
 
   return {
     appointments: filteredAppointments,

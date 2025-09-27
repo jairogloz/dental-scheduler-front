@@ -14,6 +14,7 @@ import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
 import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
+import DoctorFilterBar from "./components/DoctorFilterBar/DoctorFilterBar";
 
 // Hooks
 import { useWindowSize } from "./hooks/useWindowSize";
@@ -80,6 +81,7 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeSection, setActiveSection] = useState("appointments");
   const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
+  const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
 
   // Form state
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
@@ -112,6 +114,7 @@ function App() {
       dateRange.start,
       dateRange.end,
       selectedClinics,
+      selectedDoctors,
       true // exclude cancelled
     );
 
@@ -120,12 +123,24 @@ function App() {
     return organizationData?.clinics?.map((clinic) => clinic.id) || [];
   }, [organizationData?.clinics]);
 
+  // Initialize selected doctors when organization data loads
+  const allDoctorIds = useMemo(() => {
+    return organizationData?.doctors?.map((doctor) => doctor.id) || [];
+  }, [organizationData?.doctors]);
+
   // Set initial clinic selection
   useEffect(() => {
     if (allClinicIds.length > 0 && selectedClinics.length === 0) {
       setSelectedClinics(allClinicIds);
     }
   }, [allClinicIds, selectedClinics.length]);
+
+  // Set initial doctor selection
+  useEffect(() => {
+    if (allDoctorIds.length > 0 && selectedDoctors.length === 0) {
+      setSelectedDoctors(allDoctorIds);
+    }
+  }, [allDoctorIds, selectedDoctors.length]);
 
   // Transform appointments to calendar events (memoized)
   const events = useMemo((): Event[] => {
@@ -330,6 +345,15 @@ function App() {
                 clinics={organizationData.clinics}
                 getClinicColor={(clinicId) =>
                   getClinicColor(clinicId, organizationData.clinics)
+                }
+              />
+
+              <DoctorFilterBar
+                selectedDoctors={selectedDoctors}
+                onDoctorsChange={setSelectedDoctors}
+                doctors={organizationData.doctors}
+                getDoctorColor={(doctorId) =>
+                  getDoctorColor(doctorId, organizationData.doctors)
                 }
               />
 
