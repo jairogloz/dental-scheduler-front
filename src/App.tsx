@@ -301,7 +301,7 @@ function App() {
     };
 
     loadAppointmentsForCalendarView();
-  }, [date, view, organizationData, loadAppointmentsForRange]);
+  }, [date, view, organizationData]); // Removed loadAppointmentsForRange from deps - it's a stable function
 
   // Update events based on appointment cache and clinic filter
   useEffect(() => {

@@ -117,6 +117,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
+
+  // Add logging to track state changes that might cause infinite loops
+  const loggedSetSession = (newSession: Session | null) => {
+    console.log("🔄 setSession called:", {
+      hasSession: !!newSession,
+      userId: newSession?.user?.id,
+      tokenPreview: newSession?.access_token?.substring(0, 20) + "...",
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack?.split("\n").slice(2, 5),
+    });
+    setSession(newSession);
+  };
+
+  const loggedSetOrganizationId = (orgId: string | null) => {
+    console.log("🏢 setOrganizationId called:", {
+      oldOrgId: organizationId,
+      newOrgId: orgId,
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack?.split("\n").slice(2, 5),
+    });
+    setOrganizationId(orgId);
+  };
+
+  const loggedSetLoading = (loadingState: boolean) => {
+    console.log("⏳ setLoading called:", {
+      oldLoading: loading,
+      newLoading: loadingState,
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack?.split("\n").slice(2, 5),
+    });
+    setLoading(loadingState);
+  };
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loadingProfile] = useState(false);
 
@@ -605,17 +637,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔐 Auth state change:", event);
+      console.log("🔐 Auth state change:", event, {
+        hasSession: !!session,
+        accessToken: session?.access_token?.substring(0, 20) + "...",
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        expiresAt: session?.expires_at,
+        timestamp: new Date().toISOString(),
+      });
 
       if (isMounted) {
         if (isMounted) {
-          setSession(session);
+          loggedSetSession(session);
           setUser(session?.user ?? null);
 
           // Clear token cache on sign out
           if (event === "SIGNED_OUT") {
             clearTokenCache();
-            setOrganizationId(null);
+            loggedSetOrganizationId(null);
             setOrganizationData(null);
             setAppointmentCache({
               appointments: new Map(),
@@ -625,21 +664,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             return;
           }
 
-          // Extract organization_id using helper function (with fallback to profiles table)
-          if (session?.user) {
-            // Clear previous user's data when switching users
-            if (event === "SIGNED_IN") {
-              console.log("🔄 New user signing in, clearing previous data");
-              setOrganizationData(null);
-              setOrganizationLoading(false); // Reset organization loading state
-              setOrganizationError(null); // Clear any previous errors
-              setAppointmentCache({
-                appointments: new Map(),
-                loadedRanges: [],
-                lastUpdated: new Date(),
-              });
-              clearTokenCache();
-            }
+          // Only process organization data on actual sign-in events, not token refreshes
+          if (event === "SIGNED_IN" && session?.user) {
+            console.log("🔄 New user signing in, clearing previous data");
+            setOrganizationData(null);
+            setOrganizationLoading(false); // Reset organization loading state
+            setOrganizationError(null); // Clear any previous errors
+            setAppointmentCache({
+              appointments: new Map(),
+              loadedRanges: [],
+              lastUpdated: new Date(),
+            });
 
             // Get organization ID directly from user metadata (no async database call needed)
             console.log(
@@ -648,7 +683,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             );
             const orgId = session.user.user_metadata?.organization_id || null;
             console.log("✅ Organization ID retrieved from metadata:", orgId);
-            setOrganizationId(orgId);
+            loggedSetOrganizationId(orgId);
 
             if (!orgId) {
               console.warn("⚠️ No organization_id found in user metadata");
@@ -656,19 +691,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
                 "No organization access found. Please contact support."
               );
             }
-          } else {
-            setOrganizationId(null);
           }
+          // For TOKEN_REFRESHED and other events, we just update session/user but don't change organization data
 
           // Only set loading to false if we haven't completed initial check
           if (!initialCheckComplete) {
             // Setting loading to false after auth state change (initial check)
-            setLoading(false);
+            loggedSetLoading(false);
             initialCheckComplete = true;
           } else {
             // Auth state changed after initial check - ensure loading is false for user switches
             if (event === "SIGNED_IN") {
-              setLoading(false);
+              loggedSetLoading(false);
             }
           }
 
@@ -691,6 +725,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       organizationId,
       loading,
       shouldLoad: organizationId && !loading,
+      timestamp: new Date().toISOString(),
+      stackTrace: new Error().stack?.split("\n").slice(1, 4),
     });
 
     if (organizationId && !loading) {
@@ -713,6 +749,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Proactive token refresh mechanism with user activity detection
   useEffect(() => {
+    console.log("🔄 Proactive refresh effect triggered:", {
+      hasToken: !!session?.access_token,
+      tokenPreview: session?.access_token?.substring(0, 20) + "...",
+      timestamp: new Date().toISOString(),
+    });
+
     if (!session?.access_token) return;
 
     let refreshTimer: NodeJS.Timeout;
@@ -777,11 +819,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       document.addEventListener(event, updateLastActivity, true);
     });
 
-    scheduleTokenRefresh();
+    // Add a 5-minute delay before starting proactive refresh to prevent immediate refresh of fresh tokens
+    const initialDelay = setTimeout(() => {
+      scheduleTokenRefresh();
+    }, 5 * 60 * 1000); // 5 minutes delay for fresh sessions
 
     return () => {
       if (refreshTimer) {
         clearTimeout(refreshTimer);
+      }
+      if (initialDelay) {
+        clearTimeout(initialDelay);
       }
       // Remove activity listeners
       activityEvents.forEach((event) => {
