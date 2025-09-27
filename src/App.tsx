@@ -82,6 +82,7 @@ function App() {
   const [activeSection, setActiveSection] = useState("appointments");
   const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
   // Form state
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
@@ -180,23 +181,37 @@ function App() {
         organizationData?.clinics
       );
 
+      const isSelected = event.appointmentId === selectedEventId;
+
+      const baseStyle = {
+        backgroundColor,
+        color: "white",
+        borderRadius: "4px",
+        border: "none",
+        padding: "2px 5px",
+        opacity: "0.95",
+        fontSize: "13.5px",
+        fontWeight: "500",
+        outline: `2px solid ${clinicColor}`,
+        outlineOffset: "-1px",
+      };
+
+      if (isSelected) {
+        return {
+          style: {
+            ...baseStyle,
+            backgroundColor: "lightblue",
+            color: "black",
+          },
+          className: "calendar-event-with-clinic-outline rbc-event--selected",
+        };
+      }
       return {
-        style: {
-          backgroundColor,
-          color: "white",
-          borderRadius: "4px",
-          border: "none",
-          padding: "2px 5px",
-          opacity: "0.95",
-          fontSize: "13.5px",
-          fontWeight: "500",
-          outline: `2px solid ${clinicColor}`,
-          outlineOffset: "-1px",
-        },
+        style: baseStyle,
         className: "calendar-event-with-clinic-outline",
       };
     },
-    [doctors, organizationData?.clinics]
+    [doctors, organizationData?.clinics, selectedEventId]
   );
 
   // Stable callback handlers
@@ -244,6 +259,10 @@ function App() {
       );
       if (!appointment) return;
 
+      // Set the selected event ID for visual feedback
+      console.log("🎯 Setting selectedEventId to:", event.appointmentId);
+      setSelectedEventId(event.appointmentId);
+
       const doctor = doctors.find((d) => d.id === appointment.doctorId);
 
       setAppointmentForm({
@@ -265,6 +284,7 @@ function App() {
   );
 
   const handleCloseModal = useCallback(() => {
+    setSelectedEventId(null);
     setShowModal(false);
   }, []);
 
@@ -370,6 +390,11 @@ function App() {
                   style={{ height: isMobile ? 500 : 600, marginTop: "20px" }}
                   onSelectSlot={handleSelectSlot}
                   onSelectEvent={handleSelectEvent}
+                  selected={
+                    selectedEventId
+                      ? events.find((e) => e.appointmentId === selectedEventId)
+                      : null
+                  }
                   selectable
                   popup
                   view={view}
