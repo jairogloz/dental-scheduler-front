@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useMemo } from "react";
 import type { User, AuthError, Session } from "@supabase/supabase-js";
 import { supabase, type UserProfile } from "../lib/supabase";
-import { clearTokenCache } from "../lib/apiClient";
+import { tokenManager } from "../lib/tokenManager";
 
 interface AuthContextType {
   user: User | null;
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
         // Clear API token cache on sign out
         if (event === "SIGNED_OUT") {
-          clearTokenCache();
+          await tokenManager.signOut();
           console.log("🧹 Cleared token cache on sign out");
         }
 

@@ -1,65 +1,12 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
-import { supabase } from './supabase';
+import { tokenManager } from './tokenManager';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
 
-// Token cache to avoid repeated session calls
-let tokenCache: {
-  token: string | null;
-  expiresAt: number;
-} = {
-  token: null,
-  expiresAt: 0
-};
+// Request retry configuration
+const RETRY_DELAY_MS = 200;
 
-// Refresh promise to prevent concurrent refresh attempts
-let refreshPromise: Promise<string | null> | null = null;
-
-// Helper to get cached or fresh token
-const getValidToken = async (): Promise<string | null> => {
-  const now = Date.now();
-  
-  // Return cached token if still valid (with 5-minute buffer before expiry)
-  if (tokenCache.token && tokenCache.expiresAt > now + 5 * 60 * 1000) {
-    return tokenCache.token;
-  }
-  
-  // Prevent concurrent refresh attempts
-  if (refreshPromise) {
-    return refreshPromise;
-  }
-  
-  refreshPromise = (async () => {
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      if (error || !session?.access_token) {
-        console.warn('No valid session found:', error?.message);
-        tokenCache = { token: null, expiresAt: 0 };
-        return null;
-      }
-      
-      // Cache the token with expiration info
-      const expiresAt = session.expires_at ? session.expires_at * 1000 : now + 60 * 60 * 1000;
-      tokenCache = {
-        token: session.access_token,
-        expiresAt
-      };
-      
-      return session.access_token;
-    } catch (error) {
-      console.error('Error getting token:', error);
-      tokenCache = { token: null, expiresAt: 0 };
-      return null;
-    } finally {
-      refreshPromise = null;
-    }
-  })();
-  
-  return refreshPromise;
-};
-
-// Create axios instance
+// Create axios instance with enhanced configuration
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -72,104 +19,90 @@ const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
-      const token = await getValidToken();
+      console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      
+      const token = await tokenManager.getValidToken();
       
       if (token) {
         if (!config.headers) {
           config.headers = {} as any;
         }
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('🔐 Token attached to request (preview):', token.substring(0, 20) + '...');
       } else {
         // Remove auth header if no token
         if (config.headers) {
           delete config.headers.Authorization;
         }
-        console.warn('⚠️ No access token available');
+        console.warn('⚠️ No access token available for request');
       }
       
       return config;
     } catch (error) {
-      console.error('Request interceptor error:', error);
+      console.error('❌ Request interceptor error:', error);
       return config;
     }
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('❌ Request interceptor rejection:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor - handle token expiration and refresh
+// Response interceptor - handle token expiration with simplified retry logic
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`📥 API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     
+    console.log(`❌ API Error: ${error.response?.status} ${originalRequest?.method?.toUpperCase()} ${originalRequest?.url}`);
+    
     // Handle 401 Unauthorized errors (token expired/invalid)
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+    if (error.response?.status === 401 && !originalRequest._authRetryAttempted) {
+      originalRequest._authRetryAttempted = true;
+      
+      console.log('🔄 401 Unauthorized - attempting token refresh and retry...');
       
       try {
-        console.log('🔄 Token expired, attempting refresh...');
+        // Force token refresh through token manager
+        const newToken = await tokenManager.forceRefresh();
         
-        // Clear cached token first
-        tokenCache = { token: null, expiresAt: 0 };
-        
-        // Attempt to refresh the session
-        const { data: { session }, error: refreshError } = await supabase.auth.refreshSession();
-        
-        if (refreshError || !session?.access_token) {
-          // Refresh failed - sign out and redirect to login
-          console.error('❌ Session refresh failed:', refreshError?.message);
-          
-          // Clear any stored auth data
-          tokenCache = { token: null, expiresAt: 0 };
-          
-          await supabase.auth.signOut();
-          
-          // Only redirect if we're not already on login page
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
-          }
+        if (!newToken) {
+          console.error('❌ Token refresh failed - no new token received');
+          await handleAuthFailure();
           return Promise.reject(error);
         }
         
-        console.log('✅ Session refreshed successfully');
+        // Update the original request with the new token
+        if (!originalRequest.headers) {
+          originalRequest.headers = {} as any;
+        }
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
         
-        // Update token cache with new token
-        const now = Date.now();
-        const expiresAt = session.expires_at ? session.expires_at * 1000 : now + 60 * 60 * 1000;
-        tokenCache = {
-          token: session.access_token,
-          expiresAt
-        };
+        // Add small delay to ensure backend session sync
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
         
-        // Update original request with new token
-        originalRequest.headers.Authorization = `Bearer ${session.access_token}`;
-        
-        // Retry the original request
-        console.log('🔄 Retrying original request with new token');
+        console.log('🔄 Retrying original request with refreshed token...');
         return apiClient.request(originalRequest);
         
       } catch (refreshError) {
-        console.error('❌ Token refresh error:', refreshError);
-        
-        // Clear token cache and sign out
-        tokenCache = { token: null, expiresAt: 0 };
-        await supabase.auth.signOut();
-        
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
-        }
+        console.error('❌ Token refresh failed:', refreshError);
+        await handleAuthFailure();
         return Promise.reject(error);
       }
     }
     
-    // Log other errors for debugging (but not auth errors to avoid spam)
-    if (error.response?.status !== 401) {
-      console.error('API Error:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-        url: error.config?.url,
-        method: error.config?.method,
+    // Handle other 4xx/5xx errors
+    if (error.response?.status >= 400) {
+      console.error('❌ API Error Details:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data,
+        url: originalRequest?.url,
+        method: originalRequest?.method
       });
     }
     
@@ -177,50 +110,29 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Legacy interface for backward compatibility
-export const legacyApiClient = {
-  async get<T>(endpoint: string): Promise<{ data: T | null; error: Error | null }> {
-    try {
-      const response = await apiClient.get<T>(endpoint);
-      return { data: response.data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
-
-  async post<T>(endpoint: string, data?: any): Promise<{ data: T | null; error: Error | null }> {
-    try {
-      const response = await apiClient.post<T>(endpoint, data);
-      return { data: response.data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
-
-  async put<T>(endpoint: string, data?: any): Promise<{ data: T | null; error: Error | null }> {
-    try {
-      const response = await apiClient.put<T>(endpoint, data);
-      return { data: response.data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
-  },
-
-  async delete<T>(endpoint: string): Promise<{ data: T | null; error: Error | null }> {
-    try {
-      const response = await apiClient.delete<T>(endpoint);
-      return { data: response.data, error: null };
-    } catch (error) {
-      return { data: null, error: error as Error };
-    }
+// Helper function to handle authentication failures
+async function handleAuthFailure(): Promise<void> {
+  console.log('🚪 Handling auth failure - signing out...');
+  
+  try {
+    await tokenManager.signOut();
+  } catch (signOutError) {
+    console.error('❌ Error during sign out:', signOutError);
   }
-};
+  
+  // Redirect to login if not already there
+  if (!window.location.pathname.includes('/login')) {
+    console.log('🔄 Redirecting to login page...');
+    window.location.href = '/login';
+  }
+}
 
-// Function to clear token cache (call this on sign out)
-export const clearTokenCache = () => {
-  tokenCache = { token: null, expiresAt: 0 };
-  refreshPromise = null;
-};
-
-export default apiClient;
+// Export the configured axios instance
 export { apiClient };
+
+// Export token manager for direct access if needed
+export { tokenManager };
+
+// Legacy exports for backward compatibility
+export { apiClient as legacyApiClient };
+export default apiClient;
