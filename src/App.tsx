@@ -145,7 +145,7 @@ function App() {
       const checkmark = appointment.status === "confirmed" ? "✓ " : "";
 
       return {
-        title: `${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel}`,
+        title: `${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel} \nID: ${appointment.id}`,
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,

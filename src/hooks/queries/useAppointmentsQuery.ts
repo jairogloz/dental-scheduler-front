@@ -189,9 +189,9 @@ export const useUpdateAppointment = () => {
   const { organizationId } = useAuth();
 
   return useMutation({
-    mutationFn: (updatedAppointment: Appointment) => 
+    mutationFn: (params: { id: string; [key: string]: any }) => 
       import("../../api/entities/Appointment").then(module => 
-        module.updateAppointment(updatedAppointment.id, updatedAppointment)
+        module.updateAppointment(params.id, params)
       ),
     
     onSuccess: () => {

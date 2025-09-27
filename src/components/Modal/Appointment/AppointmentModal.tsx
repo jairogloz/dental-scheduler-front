@@ -571,8 +571,8 @@ const AppointmentModal = ({
 
     // Convert dates to ISO strings for the backend
     try {
-      const appointmentData = {
-        appointmentId: validatedForm.appointmentId,
+      const updateData = {
+        id: validatedForm.appointmentId,
         patientId: validatedForm.patientId,
         doctorId: validatedForm.doctorId,
         resourceId: validatedForm.resourceId,
@@ -581,19 +581,13 @@ const AppointmentModal = ({
         end_time: endDate.toISOString(),
       };
 
-      console.log("🔄 Calling updateAppointment with:", appointmentData);
+      console.log("🔄 Calling updateAppointment with:", updateData);
 
       try {
         // Use the mutation hook which handles cache invalidation automatically
-        const updatedAppointment = await updateAppointmentMutation.mutateAsync({
-          id: validatedForm.appointmentId,
-          patientId: validatedForm.patientId,
-          doctorId: validatedForm.doctorId,
-          unitId: validatedForm.resourceId,
-          treatment: validatedForm.treatmentType,
-          start: startDate,
-          end: endDate,
-        });
+        const updatedAppointment = await updateAppointmentMutation.mutateAsync(
+          updateData
+        );
 
         console.log("✅ Appointment updated successfully:", updatedAppointment);
 
