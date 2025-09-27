@@ -313,6 +313,7 @@ function App() {
               <ClinicFilterBar
                 selectedClinics={selectedClinics}
                 onClinicsChange={setSelectedClinics}
+                clinics={organizationData.clinics}
                 getClinicColor={(clinicId) =>
                   getClinicColor(clinicId, organizationData.clinics)
                 }

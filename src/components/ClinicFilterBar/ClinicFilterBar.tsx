@@ -1,19 +1,26 @@
 import React from "react";
-import { useClinics } from "../../hooks/useOrganizationHelpers";
+
+type Clinic = {
+  id: string;
+  name: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+};
 
 interface ClinicFilterBarProps {
   selectedClinics: string[];
   onClinicsChange: (selectedClinicIds: string[]) => void;
+  clinics: Clinic[];
   getClinicColor?: (clinicId: string) => string;
 }
 
 const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
   selectedClinics,
   onClinicsChange,
+  clinics,
   getClinicColor,
 }) => {
-  const { clinics, loading } = useClinics();
-
   const handleClinicToggle = (clinicId: string) => {
     const updatedSelection = selectedClinics.includes(clinicId)
       ? selectedClinics.filter((id) => id !== clinicId)
@@ -21,20 +28,6 @@ const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
 
     onClinicsChange(updatedSelection);
   };
-
-  if (loading) {
-    return (
-      <div
-        style={{
-          padding: "12px 0",
-          borderBottom: "1px solid #e2e8f0",
-          color: "#64748b",
-        }}
-      >
-        Cargando clínicas...
-      </div>
-    );
-  }
 
   if (!clinics || clinics.length === 0) {
     return null;
@@ -61,7 +54,7 @@ const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
         Clínicas:
       </span>
 
-      {clinics.map((clinic) => {
+      {clinics.map((clinic: Clinic) => {
         const clinicColor = getClinicColor
           ? getClinicColor(clinic.id)
           : "#9CA3AF";
