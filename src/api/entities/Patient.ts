@@ -36,21 +36,16 @@ export const searchPatients = async (
 
   try {
     // Call backend API - organization_id will be extracted from JWT token by backend
-    const { data, error } = await apiClient.get<PatientSearchResponse>(
+    const response = await apiClient.get<PatientSearchResponse>(
       `/patients/search?q=${encodeURIComponent(query)}&limit=${limit}`
     );
 
-    if (error) {
-      console.error('Patient search API error:', error);
-      throw error;
-    }
-
-    if (!data) {
+    if (!response.data) {
       console.warn('Patient search returned no data');
       return [];
     }
 
-    return data.data?.patients || [];
+    return response.data.data?.patients || [];
   } catch (error) {
     console.error('Patient search failed:', error);
     throw error;
@@ -63,23 +58,18 @@ export const createPatient = async (
 ): Promise<Patient> => {
   try {
     // Call backend API - organization_id will be extracted from JWT token by backend
-    const { data, error } = await apiClient.post<CreatePatientResponse>(
+    const response = await apiClient.post<CreatePatientResponse>(
       `/patients`, 
       patientData
     );
 
-    if (error) {
-      console.error('Patient creation API error:', error);
-      throw error;
-    }
-
-    if (!data || !data.data) {
-      console.error('Patient creation returned no data:', data);
+    if (!response.data || !response.data.data) {
+      console.error('Patient creation returned no data:', response.data);
       throw new Error('Invalid response format: missing data');
     }
 
     // Backend returns the patient object directly in data.data
-    return data.data;
+    return response.data.data;
   } catch (error) {
     console.error('Patient creation failed:', error);
     throw error;
