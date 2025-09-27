@@ -5,6 +5,23 @@ import { es } from "date-fns/locale";
 import { format } from "date-fns";
 import type { Doctor } from "../../../api/entities/Doctor";
 import type { Patient } from "../../../api/entities/Patient";
+
+type Clinic = {
+  id: string;
+  name: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type Unit = {
+  id: string;
+  name: string;
+  clinic_id: string;
+  organization_id: string;
+  created_at: string;
+  updated_at: string;
+};
 import {
   updateAppointment,
   cancelAppointment,
@@ -18,7 +35,6 @@ import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
 import { useWindowSize } from "../../../hooks/useWindowSize";
-import { useClinics, useUnits } from "../../../hooks/useOrganizationHelpers";
 import "../../../styles/Modal.css";
 
 // Registrar el idioma español
@@ -29,6 +45,8 @@ const AppointmentModal = ({
   mode = "create", // "create", "edit", or "see-only"
   appointmentForm, // Includes appointmentId
   doctors,
+  clinics, // Passed as prop
+  units, // Passed as prop
   handleCloseModal,
   handleAddAppointment,
   addAppointmentToCache, // Cache update function for both create and update
@@ -37,10 +55,6 @@ const AppointmentModal = ({
   appointments, // Receive appointments prop
 }: any) => {
   const { isMobile } = useWindowSize();
-
-  // Get organization data
-  const { clinics } = useClinics();
-  const { units } = useUnits();
 
   const [currentMode, setCurrentMode] = useState(mode); // Internal mode state for switching
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
@@ -106,7 +120,7 @@ const AppointmentModal = ({
 
   // Filter units by selected clinic
   const filteredUnits = selectedClinicId
-    ? units.filter((unit) => unit.clinic_id === selectedClinicId)
+    ? units.filter((unit: any) => unit.clinic_id === selectedClinicId)
     : units;
 
   // Handle clinic change
@@ -339,7 +353,7 @@ const AppointmentModal = ({
   useEffect(() => {
     if (showModal && appointmentForm.resourceId && units.length > 0) {
       const selectedUnit = units.find(
-        (unit) => unit.id === appointmentForm.resourceId
+        (unit: any) => unit.id === appointmentForm.resourceId
       );
       if (selectedUnit && selectedUnit.clinic_id !== selectedClinicId) {
         setSelectedClinicId(selectedUnit.clinic_id);
@@ -769,7 +783,7 @@ const AppointmentModal = ({
               disabled={isReadOnly}
             >
               <option value="">Seleccionar Clínica</option>
-              {clinics.map((clinic) => (
+              {clinics.map((clinic: any) => (
                 <option key={clinic.id} value={clinic.id}>
                   {clinic.name}
                 </option>
@@ -795,7 +809,7 @@ const AppointmentModal = ({
                   ? "Seleccionar Unidad"
                   : "Primero selecciona una clínica"}
               </option>
-              {filteredUnits.map((unit) => (
+              {filteredUnits.map((unit: any) => (
                 <option key={unit.id} value={unit.id}>
                   {unit.name}
                 </option>

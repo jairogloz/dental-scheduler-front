@@ -225,7 +225,7 @@ function App() {
         doctorId: appointment.doctorId,
         doctorName: doctor?.name || appointment.doctorId,
         treatmentType: appointment.treatment || "",
-        resourceId: appointment.doctorId,
+        resourceId: appointment.unitId, // Use unitId instead of doctorId for clinic/unit lookup
         start: appointment.start,
         end: appointment.end,
       });
@@ -380,6 +380,8 @@ function App() {
             mode={modalMode}
             appointmentForm={appointmentForm}
             doctors={doctors}
+            clinics={organizationData?.clinics || []}
+            units={organizationData?.units || []}
             handleCloseModal={handleCloseModal}
             handleAddAppointment={handleAddAppointment}
             addAppointmentToCache={() => {}} // Placeholder - queries handle this
