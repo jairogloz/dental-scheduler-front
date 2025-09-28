@@ -1,10 +1,7 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
-import { tokenManager } from './tokenManager';
+import { supabase } from './supabase';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
-
-// Request retry configuration
-const RETRY_DELAY_MS = 200;
 
 // Create axios instance with enhanced configuration
 const apiClient = axios.create({
@@ -21,14 +18,14 @@ apiClient.interceptors.request.use(
     try {
       console.log(`📤 API Request: ${config.method?.toUpperCase()} ${config.url}`);
       
-      const token = await tokenManager.getValidToken();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (token) {
+      if (session?.access_token) {
         if (!config.headers) {
           config.headers = {} as any;
         }
-        config.headers.Authorization = `Bearer ${token}`;
-        console.log('🔐 Token attached to request (preview):', token.substring(0, 20) + '...');
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+        console.log('🔐 Token attached to request');
       } else {
         // Remove auth header if no token
         if (config.headers) {
@@ -49,7 +46,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle token expiration with simplified retry logic
+// Response interceptor - handle token expiration
 apiClient.interceptors.response.use(
   (response) => {
     console.log(`📥 API Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
@@ -64,14 +61,14 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._authRetryAttempted) {
       originalRequest._authRetryAttempted = true;
       
-      console.log('🔄 401 Unauthorized - attempting token refresh and retry...');
+      console.log('🔄 401 Unauthorized - attempting to refresh session...');
       
       try {
-        // Force token refresh through token manager
-        const newToken = await tokenManager.forceRefresh();
+        // Refresh the session
+        const { data, error: refreshError } = await supabase.auth.refreshSession();
         
-        if (!newToken) {
-          console.error('❌ Token refresh failed - no new token received');
+        if (refreshError || !data.session?.access_token) {
+          console.error('❌ Session refresh failed');
           await handleAuthFailure();
           return Promise.reject(error);
         }
@@ -80,10 +77,7 @@ apiClient.interceptors.response.use(
         if (!originalRequest.headers) {
           originalRequest.headers = {} as any;
         }
-        originalRequest.headers.Authorization = `Bearer ${newToken}`;
-        
-        // Add small delay to ensure backend session sync
-        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY_MS));
+        originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
         
         console.log('🔄 Retrying original request with refreshed token...');
         return apiClient.request(originalRequest);
@@ -115,7 +109,7 @@ async function handleAuthFailure(): Promise<void> {
   console.log('🚪 Handling auth failure - signing out...');
   
   try {
-    await tokenManager.signOut();
+    await supabase.auth.signOut();
   } catch (signOutError) {
     console.error('❌ Error during sign out:', signOutError);
   }
@@ -129,10 +123,4 @@ async function handleAuthFailure(): Promise<void> {
 
 // Export the configured axios instance
 export { apiClient };
-
-// Export token manager for direct access if needed
-export { tokenManager };
-
-// Legacy exports for backward compatibility
-export { apiClient as legacyApiClient };
 export default apiClient;
