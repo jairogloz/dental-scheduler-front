@@ -20,7 +20,7 @@ const LoginPage = () => {
     setError(null);
 
     // Attempting sign in
-    const { error } = await signIn(email, password, rememberMe);
+    const { error } = await signIn(email, password);
 
     // Sign in result processed
 

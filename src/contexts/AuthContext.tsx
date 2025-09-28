@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
@@ -14,11 +14,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   organizationId: string | null;
-  signIn: (
-    email: string,
-    password: string,
-    rememberMe?: boolean
-  ) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (
     email: string,
     password: string,
@@ -63,11 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [navigate]);
 
-  const signIn = async (
-    email: string,
-    password: string,
-    rememberMe?: boolean
-  ) => {
+  const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,

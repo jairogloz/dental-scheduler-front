@@ -10,7 +10,6 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import App from "./App";
-import AuthTest from "./components/AuthTest";
 
 const AppRouter = () => {
   // AppRouter rendered
@@ -33,17 +32,6 @@ const AppRouter = () => {
               </ProtectedRoute>
             }
           />
-
-          {/* Test route for new auth system */}
-          <Route
-            path="/test"
-            element={
-              <ProtectedRoute>
-                <AuthTest />
-              </ProtectedRoute>
-            }
-          />
-
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 

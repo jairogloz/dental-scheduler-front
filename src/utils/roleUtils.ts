@@ -1,4 +1,13 @@
-import type { UserProfile } from '../lib/supabase'
+// If UserProfile is defined elsewhere, import from the correct path:
+// import type { UserProfile } from '../lib/types' 
+
+// Or define the UserProfile type here if not exported anywhere:
+export type UserProfile = {
+  id: string
+  email: string
+  org_id: string
+  roles: ('admin' | 'doctor' | 'receptionist')[]
+}
 
 /**
  * Utility functions for working with user roles
@@ -35,7 +44,7 @@ export const getRoleDisplayText = (userProfile: UserProfile | null): string => {
 
   // Capitalize and join roles
   return userProfile.roles
-    .map(role => role.charAt(0).toUpperCase() + role.slice(1))
+    .map((role: 'admin' | 'doctor' | 'receptionist') => role.charAt(0).toUpperCase() + role.slice(1))
     .join(', ')
 }
 
