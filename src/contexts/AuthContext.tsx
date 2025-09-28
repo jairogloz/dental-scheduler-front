@@ -13,7 +13,19 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  logout: () => Promise<void>;
+  organizationId: string | null;
+  signIn: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<{ error: any }>;
+  signUp: (
+    email: string,
+    password: string,
+    fullName?: string
+  ) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +35,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // Extract organizationId from user metadata
+  const organizationId = user?.user_metadata?.organization_id || null;
 
   useEffect(() => {
     // Al montar, obtener la sesión existente
@@ -48,15 +63,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [navigate]);
 
-  const logout = async () => {
+  const signIn = async (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { error };
+  };
+
+  const signUp = async (email: string, password: string, fullName?: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+    return { error };
+  };
+
+  const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
     navigate("/login");
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
+    return { error };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        loading,
+        organizationId,
+        signIn,
+        signUp,
+        signOut,
+        resetPassword,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

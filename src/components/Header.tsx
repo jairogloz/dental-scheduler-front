@@ -1,10 +1,9 @@
 import { useAuth } from "../contexts/AuthContext";
-import { getRoleDisplayText } from "../utils/roleUtils";
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Header = () => {
-  const { user, userProfile, signOut, loadingProfile } = useAuth();
+  const { user, signOut } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -122,31 +121,16 @@ const Header = () => {
                 }}
               >
                 <span style={{ fontWeight: "500", color: "#374151" }}>
-                  {loadingProfile
-                    ? "..."
-                    : userProfile?.full_name || user?.email}
+                  {user?.user_metadata?.full_name || user?.email}
                 </span>
-                {userProfile?.roles && userProfile.roles.length > 0 ? (
-                  <span
-                    style={{
-                      color: "#64748b",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {getRoleDisplayText(userProfile)}
-                  </span>
-                ) : (
-                  !loadingProfile && (
-                    <span
-                      style={{
-                        color: "#f59e0b",
-                        fontSize: "12px",
-                      }}
-                    >
-                      Setup required
-                    </span>
-                  )
-                )}
+                <span
+                  style={{
+                    color: "#64748b",
+                    fontSize: "12px",
+                  }}
+                >
+                  Dental Staff
+                </span>
               </div>
 
               {/* Dropdown arrow icon */}

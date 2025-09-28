@@ -13,17 +13,21 @@ import { useAuth } from "../../contexts/AuthContext";
  * - Stale-while-revalidate pattern
  */
 export const useOrganizationQuery = () => {
-  const { organizationId } = useAuth();
+  const { organizationId, session } = useAuth();
 
   return useQuery<OrganizationData, Error>({
     // Query key includes organizationId for cache segmentation
     queryKey: ["organization", organizationId],
     
-    // Query function - only runs when organizationId exists
+    // Query function - only runs when organizationId and session exist
     queryFn: async (): Promise<OrganizationData> => {
       if (!organizationId) {
         throw new Error("No organization ID available");
       }
+      if (!session?.access_token) {
+        throw new Error("No access token available");
+      }
+      
       console.log("🔄 Fetching organization data for org ID:", organizationId);
       
       // Get a broad date range to include sufficient appointments
@@ -37,11 +41,11 @@ export const useOrganizationQuery = () => {
         start_date: startDate.toISOString().split("T")[0],
         end_date: endDate.toISOString().split("T")[0],
         limit: 500,
-      });
+      }, session.access_token);
     },
     
-    // Only run query when we have an organizationId
-    enabled: !!organizationId,
+    // Only run query when we have both organizationId and session
+    enabled: !!organizationId && !!session?.access_token,
     
     // Organization data is relatively static - cache for 10 minutes
     staleTime: 10 * 60 * 1000,

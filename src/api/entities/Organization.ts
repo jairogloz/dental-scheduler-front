@@ -1,4 +1,4 @@
-import { apiClient } from "../../lib/apiClient";
+
 
 // Backend response wrapper
 export type OrganizationApiResponse = {
@@ -63,15 +63,20 @@ export type GetOrganizationDataParams = {
 };
 
 /**
- * Fetches consolidated organization startup data including:
- * - Organization info
+ * Fetches comprehensive organization data from the backend API
+ * 
+ * @param params - Optional query parameters
+ * @param accessToken - Access token for authentication
+ * @returns Promise<OrganizationData> - Complete organization data including:
+ * - Organization details  
  * - All clinics
- * - All units  
+ * - All units
  * - All doctors
  * - Appointments within date range
  */
 export const getOrganizationData = async (
-  params: GetOrganizationDataParams = {}
+  params: GetOrganizationDataParams = {},
+  accessToken: string
 ): Promise<OrganizationData> => {
   try {
     const queryParams = new URLSearchParams();
@@ -88,16 +93,38 @@ export const getOrganizationData = async (
       queryParams.append('limit', params.limit.toString());
     }
 
-  const url = `/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-  // Fetching organization data
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+    const url = `${API_BASE_URL}/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
+    console.log(`📤 API Request: GET ${url}`);
+    
+    // Use direct fetch with manual token handling
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+      },
+    });
+
+    console.log(`📥 API Response: ${response.status} GET /organization`);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText,
+        url
+      });
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
     // The API returns { data: OrganizationData, success: boolean }
-    const response = await apiClient.get<OrganizationApiResponse>(url);
-    
-  // Organization API response received
+    const apiResponse: OrganizationApiResponse = await response.json();
     
     // Extract the nested data object
-    const organizationData = response.data.data;
+    const organizationData = apiResponse.data;
     
     // Ensure appointments is an array (convert null to empty array)
     if (organizationData.appointments === null) {
@@ -107,15 +134,6 @@ export const getOrganizationData = async (
     return organizationData;
   } catch (error) {
     console.error('❌ Error fetching organization data:', error);
-    
-    // Log more details about the error
-    if (error && typeof error === 'object' && 'response' in error) {
-      const apiError = error as any;
-      console.error('❌ API Error Status:', apiError.response?.status);
-      console.error('❌ API Error Data:', apiError.response?.data);
-      console.error('❌ API Error Headers:', apiError.response?.headers);
-    }
-    
     throw error;
   }
 };

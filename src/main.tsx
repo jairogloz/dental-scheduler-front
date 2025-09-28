@@ -4,10 +4,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import "./index.css";
 import AppRouter from "./AppRouter";
 
-// Import auth debugging tools in development
-if (import.meta.env.DEV) {
-  import("./lib/authDebug");
-}
+// Auth debugging removed - using simplified auth system
 
 // Create a query client with optimized defaults
 const queryClient = new QueryClient({

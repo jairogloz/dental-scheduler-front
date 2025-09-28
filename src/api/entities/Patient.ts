@@ -1,4 +1,4 @@
-import { legacyApiClient as apiClient } from "../../lib/apiClient";
+import { apiClient } from "../../lib/apiClient";
 
 export type Patient = {
   id: string;

@@ -10,13 +10,14 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import App from "./App";
+import AuthTest from "./components/AuthTest";
 
 const AppRouter = () => {
   // AppRouter rendered
 
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
@@ -33,14 +34,24 @@ const AppRouter = () => {
             }
           />
 
+          {/* Test route for new auth system */}
+          <Route
+            path="/test"
+            element={
+              <ProtectedRoute>
+                <AuthTest />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Redirect root to dashboard */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           {/* Catch all route - redirect to dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 };
 

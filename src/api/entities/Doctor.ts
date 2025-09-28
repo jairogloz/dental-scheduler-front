@@ -1,7 +1,7 @@
 import { delay } from "../utils"
 import type { Appointment } from "./Appointment";
 import { getAppointments } from "./Appointment";
-import { legacyApiClient as apiClient } from "../../lib/apiClient";
+import { apiClient } from "../../lib/apiClient";
 
 export type Doctor = {
   id: string;
