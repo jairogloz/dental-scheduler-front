@@ -166,6 +166,15 @@ function App() {
       );
       const clinicId = unit?.clinic_id;
 
+      // Debug logging for first visit
+      if (appointment.is_first_visit) {
+        console.log("🔍 Found first visit appointment:", {
+          patientName: patientLabel,
+          is_first_visit: appointment.is_first_visit,
+          appointmentId: appointment.id,
+        });
+      }
+
       return {
         title: `${patientLabel} - ${doctorLabel}`, // Fallback for non-custom views
         start: appointment.start,

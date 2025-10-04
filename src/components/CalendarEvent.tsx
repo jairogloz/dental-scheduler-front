@@ -18,6 +18,8 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({ event }) => {
     return <div style={{ fontSize: "inherit" }}>{event.title}</div>;
   }
 
+  console.log("🔍 Rendering event:", event);
+
   return (
     <div
       style={{
@@ -27,16 +29,16 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({ event }) => {
         fontSize: "inherit",
       }}
     >
-      {event.isFirstVisit && (
-        <div style={{ fontSize: "0.9em", marginBottom: "2px" }}>
-          (Primera visita)
-        </div>
-      )}
       <div>
         {event.isConfirmed && "✓ "}
         Px: <strong>{event.patientName}</strong>
       </div>
       <div>Dx: {event.doctorName}</div>
+      {event.isFirstVisit && (
+        <div style={{ fontSize: "0.9em", marginBottom: "2px" }}>
+          (Primera visita)
+        </div>
+      )}
     </div>
   );
 };

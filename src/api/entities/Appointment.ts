@@ -43,7 +43,9 @@ export type AppointmentResponse = {
   id: string;
   patient_id: string;
   patient_name?: string; // Now included in backend response
+  patient_phone?: string;
   doctor_id: string;
+  clinic_id?: string;
   unit_id: string;
   start_time: string;
   end_time: string;
@@ -427,6 +429,13 @@ export const getAppointmentsByDateRange = async (
       const startDate = new Date(appt.start_time);
       const endDate = new Date(appt.end_time);
       
+      // Debug: Log the raw appointment data from backend
+      console.log("🔍 Processing appointment:", {
+        patient_name: appt.patient_name,
+        is_first_visit: appt.is_first_visit,
+        typeof_is_first_visit: typeof appt.is_first_visit,
+      });
+      
       // Validate dates
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         console.warn("Invalid appointment dates:", {
@@ -447,16 +456,29 @@ export const getAppointmentsByDateRange = async (
         end: endDate,
         treatment: appt.treatment_type,
         // Preserve additional fields from API response
-        patient_name: (appt as any).patient_name,
-        patient_phone: (appt as any).patient_phone,
+        patient_name: appt.patient_name,
+        patient_phone: appt.patient_phone,
         doctor_name: (appt as any).doctor_name,
         unit_name: (appt as any).unit_name,
-        clinic_id: (appt as any).clinic_id,
+        clinic_id: appt.clinic_id,
         clinic_name: (appt as any).clinic_name,
-        status: (appt as any).status,
-        is_first_visit: (appt as any).is_first_visit,
+        status: appt.status,
+        is_first_visit: appt.is_first_visit,
       } as Appointment;
     }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
+    
+    // Debug: Log appointments with is_first_visit after transformation
+    const firstVisitAppointments = appointments.filter(apt => apt.is_first_visit);
+    if (firstVisitAppointments.length > 0) {
+      console.log(`✅ Found ${firstVisitAppointments.length} first visit appointments after transformation:`, 
+        firstVisitAppointments.map(apt => ({
+          patient_name: apt.patient_name,
+          is_first_visit: apt.is_first_visit,
+        }))
+      );
+    } else {
+      console.log("⚠️ No first visit appointments found after transformation");
+    }
     
   // Loaded appointments for date range
     return appointments;
