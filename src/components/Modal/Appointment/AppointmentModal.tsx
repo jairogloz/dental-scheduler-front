@@ -18,6 +18,7 @@ import UniversalModal from "../UniversalModal";
 import {
   APPOINTMENT_STATUS,
   getAvailableStatusOptions,
+  type AppointmentStatus,
 } from "../../../utils/appointmentStatus";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
@@ -796,10 +797,12 @@ const AppointmentModal = ({
               <div className="status-dropdown-container">
                 <Select
                   options={getAvailableStatusOptions(
-                    new Date(appointmentForm.start)
+                    new Date(appointmentForm.start),
+                    appointmentForm.status as AppointmentStatus
                   )}
                   value={getAvailableStatusOptions(
-                    new Date(appointmentForm.start)
+                    new Date(appointmentForm.start),
+                    appointmentForm.status as AppointmentStatus
                   ).find(
                     (option) =>
                       option.value ===

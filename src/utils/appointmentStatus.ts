@@ -21,26 +21,39 @@ export interface StatusOption {
 /**
  * Get available status options based on appointment time
  * @param appointmentStart - The appointment start time
+ * @param currentStatus - The current status of the appointment (to include if it's rescheduled)
  * @returns Array of status options available for selection
  */
-export const getAvailableStatusOptions = (appointmentStart: Date): StatusOption[] => {
+export const getAvailableStatusOptions = (
+  appointmentStart: Date,
+  currentStatus?: AppointmentStatus
+): StatusOption[] => {
   const now = new Date();
   const isPastAppointment = appointmentStart < now;
 
+  let options: StatusOption[];
+
   if (isPastAppointment) {
     // For past appointments: scheduled, completed, no-show
-    return [
+    options = [
       { value: APPOINTMENT_STATUS.SCHEDULED, label: 'Programada' },
       { value: APPOINTMENT_STATUS.COMPLETED, label: 'Completada' },
       { value: APPOINTMENT_STATUS.NO_SHOW, label: 'No se presentó' }
     ];
   } else {
     // For future appointments: scheduled, confirmed
-    return [
+    options = [
       { value: APPOINTMENT_STATUS.SCHEDULED, label: 'Programada' },
       { value: APPOINTMENT_STATUS.CONFIRMED, label: 'Confirmada' }
     ];
   }
+
+  // Add "rescheduled" only if it's the current status (not manually selectable)
+  if (currentStatus === APPOINTMENT_STATUS.RESCHEDULED) {
+    options.unshift({ value: APPOINTMENT_STATUS.RESCHEDULED, label: 'Reagendada' });
+  }
+
+  return options;
 };
 
 /**

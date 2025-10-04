@@ -47,6 +47,25 @@
   transition: transform 0.1s ease, box-shadow 0.1s ease !important;
 }
 
+/* Hide the default time label that RBC adds */
+.rbc-event-label {
+  display: none !important;
+}
+
+/* Hide all possible time displays from RBC */
+.rbc-addons-dnd .rbc-event-label,
+.rbc-time-slot .rbc-event-label,
+.rbc-day-slot .rbc-event-label,
+.rbc-time-column .rbc-event-label {
+  display: none !important;
+}
+
+/* Target the actual time content within events */
+.rbc-event .rbc-event-label,
+.rbc-day-slot .rbc-time-slot .rbc-event .rbc-event-label {
+  display: none !important;
+}
+
 .rbc-event:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
