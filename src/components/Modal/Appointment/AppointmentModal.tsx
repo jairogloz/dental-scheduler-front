@@ -15,6 +15,10 @@ import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
 import ConfirmationDialog from "../ConfirmationDialog";
 import UniversalModal from "../UniversalModal";
+import {
+  APPOINTMENT_STATUS,
+  getAvailableStatusOptions,
+} from "../../../utils/appointmentStatus";
 import "react-datepicker/dist/react-datepicker.css";
 import "./AppointmentModal.css";
 import DoctorDayView from "./DoctorDayView";
@@ -305,6 +309,60 @@ const AppointmentModal = ({
     setSelectedPatient(null);
   };
 
+  // Quick status update handler - makes immediate API call
+  const handleQuickStatusUpdate = async (newStatus: string) => {
+    // For create mode, just update the form state (no API call until appointment is created)
+    if (currentMode === "create") {
+      setAppointmentForm((prevForm: any) => ({
+        ...prevForm,
+        status: newStatus,
+      }));
+      return;
+    }
+
+    // For existing appointments, make immediate API call
+    if (!appointmentForm.appointmentId) {
+      console.error("❌ Cannot update status: No appointment ID");
+      showErrorModal(
+        "Error",
+        "No se puede actualizar el estado: ID de cita no encontrado"
+      );
+      return;
+    }
+
+    try {
+      console.log(`🔄 Quick status update to: ${newStatus}`);
+
+      // Use existing updateAppointmentMutation with only status
+      const updateData = {
+        id: appointmentForm.appointmentId,
+        status: newStatus,
+      };
+
+      await updateAppointmentMutation.mutateAsync(updateData);
+
+      // Update local form state
+      setAppointmentForm((prevForm: any) => ({
+        ...prevForm,
+        status: newStatus,
+      }));
+
+      console.log(`✅ Status updated successfully to: ${newStatus}`);
+
+      // Show success feedback (brief message)
+      showSuccessModal(
+        "Estado actualizado",
+        `El estado de la cita se ha actualizado correctamente.`
+      );
+    } catch (error: any) {
+      console.error("❌ Failed to update status:", error);
+      showErrorModal(
+        "Error al actualizar estado",
+        "No se pudo actualizar el estado de la cita. Inténtalo de nuevo."
+      );
+    }
+  };
+
   // Sync selectedPatient when switching to edit mode (only on mode change, not form data change)
   useEffect(() => {
     if (currentMode === "edit") {
@@ -333,6 +391,14 @@ const AppointmentModal = ({
       setCurrentMode(mode);
       // Store the original form data when modal opens (only once)
       setOriginalAppointmentForm({ ...appointmentForm });
+
+      // Initialize status if not present - default to 'scheduled' for new appointments
+      if (!appointmentForm.status) {
+        setAppointmentForm((prevForm: any) => ({
+          ...prevForm,
+          status: APPOINTMENT_STATUS.SCHEDULED,
+        }));
+      }
     }
   }, [showModal, mode]); // Removed appointmentForm dependency to prevent mode reset on form changes
 
@@ -552,6 +618,24 @@ const AppointmentModal = ({
       return;
     }
 
+    // Check if start_time has changed to set rescheduled status
+    let finalStatus = validatedForm.status || APPOINTMENT_STATUS.SCHEDULED;
+
+    if (originalAppointmentForm && originalAppointmentForm.start) {
+      const originalStartTime = new Date(
+        originalAppointmentForm.start
+      ).toISOString();
+      const newStartTime = startDate.toISOString();
+
+      // If start time changed and status is not already cancelled, set as rescheduled
+      if (
+        originalStartTime !== newStartTime &&
+        finalStatus !== APPOINTMENT_STATUS.CANCELLED
+      ) {
+        finalStatus = APPOINTMENT_STATUS.RESCHEDULED;
+      }
+    }
+
     // Convert dates to ISO strings for the backend
     try {
       const updateData = {
@@ -562,6 +646,7 @@ const AppointmentModal = ({
         treatmentType: validatedForm.treatmentType,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
+        status: finalStatus,
       };
 
       console.log("🔄 Calling updateAppointment with:", updateData);
@@ -579,6 +664,7 @@ const AppointmentModal = ({
           ...validatedForm,
           start: updatedAppointment.start,
           end: updatedAppointment.end,
+          status: updatedAppointment.status || finalStatus,
         });
 
         // Switch back to see-only mode
@@ -695,13 +781,57 @@ const AppointmentModal = ({
           className="modal-form appointment-form-compact"
           style={{ flex: isMobile ? "none" : "1" }}
         >
-          <h3>
-            {currentMode === "create"
-              ? "Nueva Cita Dental"
-              : currentMode === "edit"
-              ? "Editar Cita Dental"
-              : "Detalles de la Cita"}
-          </h3>
+          {/* Header with title and status dropdown */}
+          <div className="appointment-header">
+            <h3>
+              {currentMode === "create"
+                ? "Nueva Cita Dental"
+                : currentMode === "edit"
+                ? "Editar Cita Dental"
+                : "Detalles de la Cita"}
+            </h3>
+
+            {/* Status dropdown - show in all modes when appointment has start time */}
+            {appointmentForm.start && (
+              <div className="status-dropdown-container">
+                <Select
+                  options={getAvailableStatusOptions(
+                    new Date(appointmentForm.start)
+                  )}
+                  value={getAvailableStatusOptions(
+                    new Date(appointmentForm.start)
+                  ).find(
+                    (option) =>
+                      option.value ===
+                      (appointmentForm.status || APPOINTMENT_STATUS.SCHEDULED)
+                  )}
+                  onChange={(selectedOption) => {
+                    if (selectedOption) {
+                      handleQuickStatusUpdate(selectedOption.value);
+                    }
+                  }}
+                  placeholder="Estado..."
+                  isClearable={false}
+                  isDisabled={false} // Always enabled
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      minHeight: "32px",
+                      fontSize: "12px",
+                    }),
+                    valueContainer: (base) => ({
+                      ...base,
+                      padding: "2px 8px",
+                    }),
+                    option: (base) => ({
+                      ...base,
+                      fontSize: "12px",
+                    }),
+                  }}
+                />
+              </div>
+            )}
+          </div>
 
           <div className="form-field">
             <label>Nombre del Doctor:</label>
