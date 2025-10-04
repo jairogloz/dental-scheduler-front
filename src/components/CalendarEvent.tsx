@@ -1,4 +1,5 @@
 import React from "react";
+import { format } from "date-fns";
 
 interface CalendarEventProps {
   event: {
@@ -9,6 +10,8 @@ interface CalendarEventProps {
     isConfirmed?: boolean;
     isFirstVisit?: boolean;
     backgroundColor?: string; // For special events like "Seleccionado"
+    start?: Date;
+    end?: Date;
   };
 }
 
@@ -18,26 +21,48 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({ event }) => {
     return <div style={{ fontSize: "inherit" }}>{event.title}</div>;
   }
 
-  console.log("🔍 Rendering event:", event);
+  // Calculate duration in minutes
+  const durationMinutes =
+    event.start && event.end
+      ? (event.end.getTime() - event.start.getTime()) / (1000 * 60)
+      : 0;
+
+  const isShortAppointment = durationMinutes < 30;
+
+  // Common text style for overflow handling
+  const textStyle: React.CSSProperties = {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
 
   return (
     <div
       style={{
-        whiteSpace: "normal",
-        overflow: "visible",
+        overflow: "hidden",
         lineHeight: "1.3",
         fontSize: "inherit",
       }}
     >
-      <div>
+      {/* Show time only for appointments >= 30 min */}
+      {!isShortAppointment && event.start && event.end && (
+        <div style={{ ...textStyle, fontSize: "0.85em", opacity: 0.9 }}>
+          {format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}
+        </div>
+      )}
+
+      {/* Patient line with checkmark */}
+      <div style={textStyle}>
         {event.isConfirmed && "✓ "}
         Px: <strong>{event.patientName}</strong>
       </div>
-      <div>Dx: {event.doctorName}</div>
+
+      {/* Doctor line */}
+      <div style={textStyle}>Dx: {event.doctorName}</div>
+
+      {/* Primera visita always at the bottom */}
       {event.isFirstVisit && (
-        <div style={{ fontSize: "0.9em", marginBottom: "2px" }}>
-          (Primera visita)
-        </div>
+        <div style={{ ...textStyle, fontSize: "0.9em" }}>(Primera visita)</div>
       )}
     </div>
   );
