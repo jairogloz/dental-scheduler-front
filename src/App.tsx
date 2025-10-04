@@ -15,6 +15,7 @@ import Header from "./components/Header";
 import Sidebar from "./components/Sidebar";
 import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
 import DoctorFilterBar from "./components/DoctorFilterBar/DoctorFilterBar";
+import CalendarEvent from "./components/CalendarEvent";
 
 // Hooks
 import { useWindowSize } from "./hooks/useWindowSize";
@@ -52,6 +53,10 @@ type Event = {
   end: Date;
   resourceId: string;
   clinicId?: string;
+  patientName?: string;
+  doctorName?: string;
+  isConfirmed?: boolean;
+  isFirstVisit?: boolean;
 };
 
 type AppointmentForm = {
@@ -66,6 +71,7 @@ type AppointmentForm = {
   start: Date;
   end: Date;
   status?: string;
+  is_first_visit?: boolean;
 };
 
 function App() {
@@ -160,16 +166,17 @@ function App() {
       );
       const clinicId = unit?.clinic_id;
 
-      // Add checkmark for confirmed appointments
-      const checkmark = appointment.status === "confirmed" ? "✓ " : "";
-
       return {
-        title: `${checkmark}Px: ${patientLabel}\nDr: ${doctorLabel} \nID: ${appointment.id}`,
+        title: `${patientLabel} - ${doctorLabel}`, // Fallback for non-custom views
         start: appointment.start,
         end: appointment.end,
         resourceId: appointment.doctorId,
         appointmentId: appointment.id,
         clinicId,
+        patientName: patientLabel,
+        doctorName: doctorLabel,
+        isConfirmed: appointment.status === "confirmed",
+        isFirstVisit: appointment.is_first_visit,
       };
     });
   }, [filteredAppointments, organizationData, doctors]);
@@ -192,7 +199,7 @@ function App() {
         border: "none",
         padding: "2px 5px",
         opacity: "0.95",
-        fontSize: "13.5px",
+        fontSize: "11.7px",
         fontWeight: "500",
         outline: `2px solid ${clinicColor}`,
         outlineOffset: "-1px",
@@ -280,6 +287,7 @@ function App() {
         start: appointment.start,
         end: appointment.end,
         status: appointment.status, // Include the appointment status
+        is_first_visit: appointment.is_first_visit, // Include the first visit flag
       });
       setModalMode("see-only");
       setShowModal(true);
@@ -406,6 +414,9 @@ function App() {
                   date={date}
                   onNavigate={setDate}
                   eventPropGetter={eventPropGetter}
+                  components={{
+                    event: CalendarEvent,
+                  }}
                   step={15}
                   timeslots={1}
                   showMultiDayTimes

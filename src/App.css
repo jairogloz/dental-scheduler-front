@@ -132,3 +132,29 @@
 .rbc-time-slot {
   border-bottom: 1px solid #ddd !important;
 }
+
+/* Calendar event patient name styling - ensure line breaks work */
+.calendar-event-content {
+  line-height: 1.2 !important;
+  white-space: pre-line !important;
+}
+
+/* Apply white-space to all event content for line breaks */
+.rbc-event,
+.rbc-event-content,
+.rbc-event-label {
+  white-space: pre-line !important;
+  line-height: 1.3 !important;
+}
+
+/* Since we can't directly bold parts of text in react-big-calendar titles, 
+   we increase the font-weight of the entire event to emphasize patient names */
+.rbc-event-content {
+  font-weight: 600 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Make patient lines stand out more */
+.calendar-event-with-clinic-outline .rbc-event-content {
+  font-weight: 700 !important;
+}

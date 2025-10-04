@@ -33,30 +33,40 @@ export const getCalendarDateRangeUtil = (date: Date, view: View) => {
 // Color arrays for doctors and clinics
 // Doctor colors: Dark, professional colors with good white text contrast and psychological comfort
 const doctorColors = [
-  "#2C3E50", // Deep blue-gray: professional, trustworthy, calming
-  "#27AE60", // Forest green: natural, balanced, soothing
-  "#8E44AD", // Deep purple: sophisticated, creative, calm
-  "#16A085", // Dark teal: refreshing, modern, stable
-  "#D35400", // Warm orange-brown: energetic but grounded, approachable
-  "#7F8C8D", // Slate gray: neutral, professional, easy on eyes
-  "#2980B9", // Deep blue: trustworthy, reliable, calming
-  "#A0522D", // Saddle brown: warm, stable, earthy
-  "#5D4E75", // Muted purple: calming, sophisticated
-  "#2F4F4F", // Dark slate gray: professional, timeless
+  "#264653", // Deep teal-blue: professional, calming, modern
+  "#2A9D8F", // Muted emerald: balanced, natural, fresh
+  "#1D3557", // Navy blue: trustworthy, steady, serene
+  "#4E342E", // Coffee brown: warm, stable, grounded
+  "#6D597A", // Muted violet: creative, soothing, not overwhelming
+  "#1B4965", // Steel blue: intellectual, trustworthy
+  "#3A6351", // Forest green: natural, restorative, calm
+  "#5E548E", // Lavender gray: balanced, sophisticated
+  "#495057", // Charcoal gray: professional, neutral, timeless
+  "#7B8CDE", // Muted periwinkle: calm, friendly, soft accent
+  "#8B5E3C", // Chestnut brown: earthy, grounded, reassuring
+  "#457B9D", // Ocean blue: fresh, clean, clear focus
+  "#6B705C", // Olive-gray: natural, subtle, warm
+  "#9C6644", // Terracotta brown: warm, inviting
+  "#5B4B8A", // Indigo gray: creative, calm
+  "#1E6091", // Deep cyan-blue: clear, professional
+  "#335C67", // Deep forest teal: serious, stable
+  "#5E548E", // Dusty purple: introspective, elegant
+  "#283618", // Dark olive: earthy, calm
+  "#7B2CBF", // Deep violet: confident, distinctive
 ];
 
 // Clinic colors: Medium-bright colors for borders that stand out against white background
 const clinicColors = [
-  "#3498DB", // Bright blue: trustworthy, professional, highly visible
-  "#E74C3C", // Coral red: energetic, attention-grabbing, warm
-  "#2ECC71", // Emerald green: fresh, positive, natural
-  "#F39C12", // Golden orange: optimistic, friendly, vibrant
-  "#9B59B6", // Rich purple: sophisticated, creative, distinctive
-  "#1ABC9C", // Turquoise: modern, calm, refreshing
-  "#E67E22", // Burnt orange: warm, energetic, professional
-  "#34495E", // Steel blue: stable, trustworthy, modern
-  "#E91E63", // Rose pink: caring, warm, distinctive
-  "#00BCD4", // Cyan: fresh, modern, tech-forward
+  "#2A9D8F", // Teal green: modern, refreshing
+  "#E76F51", // Terracotta orange: warm, friendly
+  "#F4A261", // Golden amber: optimistic, inviting
+  "#E9C46A", // Soft yellow: energetic but not harsh
+  "#8AB17D", // Soft green: restorative, natural
+  "#669BBC", // Clear blue: trustworthy, professional
+  "#FF6B6B", // Coral red: visible, energetic
+  "#9C89B8", // Lavender: creative, distinctive
+  "#F28482", // Light coral: warm, approachable
+  "#3D5A80", // Cool blue: stable, clean
 ];
 
 export const getDoctorColor = (

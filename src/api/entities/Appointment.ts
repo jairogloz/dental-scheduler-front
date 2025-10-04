@@ -16,6 +16,7 @@ export type Appointment = {
   clinic_id?: string;
   clinic_name?: string;
   status?: string;
+  is_first_visit?: boolean;
 };
 
 // Backend API request/response types
@@ -50,6 +51,7 @@ export type AppointmentResponse = {
   status: string;
   created_at: string;
   updated_at: string;
+  is_first_visit?: boolean;
 };
 
 // Backend API wrapper response
@@ -134,6 +136,7 @@ export const createAppointment = async (
       // Preserve patient_name from backend response for display
       patient_name: appointmentData.patient_name,
       status: appointmentData.status,
+      is_first_visit: appointmentData.is_first_visit,
     };
   } catch (error: any) {
     // Log detailed error information for debugging
@@ -254,6 +257,7 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       // Preserve patient_name from backend response for display
       patient_name: updatedAppointment.patient_name,
       status: updatedAppointment.status,
+      is_first_visit: updatedAppointment.is_first_visit,
     };
   } catch (error: any) {
     console.error("❌ Error updating appointment:", error);
@@ -340,6 +344,7 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
       // Preserve patient_name from backend response for display
       patient_name: cancelledAppointment.patient_name,
       status: cancelledAppointment.status, // Should be "cancelled"
+      is_first_visit: cancelledAppointment.is_first_visit,
     };
   } catch (error: any) {
     console.error("❌ Error cancelling appointment:", error);
@@ -449,6 +454,7 @@ export const getAppointmentsByDateRange = async (
         clinic_id: (appt as any).clinic_id,
         clinic_name: (appt as any).clinic_name,
         status: (appt as any).status,
+        is_first_visit: (appt as any).is_first_visit,
       } as Appointment;
     }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
     

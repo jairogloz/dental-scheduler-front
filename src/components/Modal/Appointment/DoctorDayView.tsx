@@ -4,6 +4,7 @@ import { getDoctorAvailability } from "../../../api/entities/Doctor";
 import type { Appointment } from "../../../api/entities/Appointment";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
+import CalendarEvent from "../../CalendarEvent";
 
 interface DoctorDayViewProps {
   doctorId: string;
@@ -105,9 +106,14 @@ const DoctorDayView = ({
         views={[Views.DAY]}
         events={[
           ...appointments.map((apt) => ({
-            title: `${apt.patient_name || apt.patientId} - ${apt.treatment}`, // Show patient name (fallback to ID) and treatment
+            title: `${apt.patient_name || apt.patientId} - ${apt.treatment}`, // Fallback title
             start: new Date(apt.start),
             end: new Date(apt.end),
+            appointmentId: apt.id,
+            patientName: apt.patient_name || apt.patientId,
+            doctorName: apt.treatment,
+            isConfirmed: apt.status === "confirmed",
+            isFirstVisit: apt.is_first_visit,
           })),
           {
             title: "Seleccionado",
@@ -116,6 +122,9 @@ const DoctorDayView = ({
             backgroundColor: "#28a745",
           },
         ]}
+        components={{
+          event: CalendarEvent,
+        }}
         step={15}
         timeslots={1}
         min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
