@@ -65,6 +65,7 @@ type AppointmentForm = {
   resourceId: string;
   start: Date;
   end: Date;
+  status?: string;
 };
 
 function App() {
@@ -95,6 +96,7 @@ function App() {
     resourceId: "",
     start: new Date(),
     end: new Date(),
+    status: undefined,
   });
 
   // Data queries - only call useOrganizationQuery once
@@ -241,6 +243,7 @@ function App() {
         resourceId: firstUnitOfFirstClinic?.id || "", // Use first unit ID as resourceId
         start: slotInfo.start,
         end: slotInfo.end,
+        status: undefined, // Will be set to 'scheduled' by AppointmentModal
       });
       setModalMode("create");
       setShowModal(true);
@@ -276,6 +279,7 @@ function App() {
         resourceId: appointment.unitId, // Use unitId instead of doctorId for clinic/unit lookup
         start: appointment.start,
         end: appointment.end,
+        status: appointment.status, // Include the appointment status
       });
       setModalMode("see-only");
       setShowModal(true);

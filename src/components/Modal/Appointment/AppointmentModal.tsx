@@ -791,8 +791,8 @@ const AppointmentModal = ({
                 : "Detalles de la Cita"}
             </h3>
 
-            {/* Status dropdown - show in all modes when appointment has start time */}
-            {appointmentForm.start && (
+            {/* Status dropdown - show only for existing appointments (edit and see-only modes) */}
+            {currentMode !== "create" && appointmentForm.start && (
               <div className="status-dropdown-container">
                 <Select
                   options={getAvailableStatusOptions(
