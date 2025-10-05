@@ -4,7 +4,8 @@ export type Appointment = {
   id: string;
   patientId: string;
   doctorId: string;
-  treatment: string;
+  serviceId: string;
+  serviceName?: string; // For display purposes
   unitId: string;
   start: Date;
   end: Date;
@@ -26,7 +27,7 @@ export type CreateAppointmentRequest = {
   unit_id: string;
   start_time: string; // ISO string format
   end_time: string;   // ISO string format
-  treatment_type: string; // Changed from treatment to treatment_type
+  service_id: string;
 };
 
 export type UpdateAppointmentRequest = {
@@ -35,7 +36,7 @@ export type UpdateAppointmentRequest = {
   unit_id?: string;
   start_time?: string; // ISO string format
   end_time?: string;   // ISO string format
-  treatment_type?: string;
+  service_id?: string;
   status?: string;
 };
 
@@ -49,7 +50,8 @@ export type AppointmentResponse = {
   unit_id: string;
   start_time: string;
   end_time: string;
-  treatment_type: string;
+  service_id: string;
+  service_name?: string;
   status: string;
   created_at: string;
   updated_at: string;
@@ -89,7 +91,7 @@ export const createAppointment = async (
       unit_id: appointment.unitId,
       start_time: appointment.start.toISOString(),
       end_time: appointment.end.toISOString(),
-      treatment_type: appointment.treatment, // Map treatment to treatment_type
+      service_id: appointment.serviceId,
     };
 
     // Log transformed data for debugging
@@ -134,7 +136,8 @@ export const createAppointment = async (
       unitId: appointmentData.unit_id,
       start: startDate,
       end: endDate,
-      treatment: appointmentData.treatment_type, // Map treatment_type back to treatment
+      serviceId: appointmentData.service_id,
+      serviceName: appointmentData.service_name,
       // Preserve patient_name from backend response for display
       patient_name: appointmentData.patient_name,
       status: appointmentData.status,
@@ -193,10 +196,10 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
     const requestData: UpdateAppointmentRequest = {
       patient_id: appointmentData.patientId,
       doctor_id: appointmentData.doctorId,
-      unit_id: appointmentData.resourceId,
+      unit_id: appointmentData.unitId,
       start_time: appointmentData.start_time,
       end_time: appointmentData.end_time,
-      treatment_type: appointmentData.treatmentType,
+      service_id: appointmentData.serviceId,
       status: appointmentData.status,
     };
 
@@ -255,7 +258,8 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       unitId: updatedAppointment.unit_id,
       start: startDate,
       end: endDate,
-      treatment: updatedAppointment.treatment_type,
+      serviceId: updatedAppointment.service_id,
+      serviceName: updatedAppointment.service_name,
       // Preserve patient_name from backend response for display
       patient_name: updatedAppointment.patient_name,
       status: updatedAppointment.status,
@@ -342,7 +346,8 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
       unitId: cancelledAppointment.unit_id,
       start: startDate,
       end: endDate,
-      treatment: cancelledAppointment.treatment_type,
+      serviceId: cancelledAppointment.service_id,
+      serviceName: cancelledAppointment.service_name,
       // Preserve patient_name from backend response for display
       patient_name: cancelledAppointment.patient_name,
       status: cancelledAppointment.status, // Should be "cancelled"
@@ -454,7 +459,8 @@ export const getAppointmentsByDateRange = async (
         unitId: appt.unit_id,
         start: startDate,
         end: endDate,
-        treatment: appt.treatment_type,
+        serviceId: appt.service_id,
+        serviceName: appt.service_name,
         // Preserve additional fields from API response
         patient_name: appt.patient_name,
         patient_phone: appt.patient_phone,

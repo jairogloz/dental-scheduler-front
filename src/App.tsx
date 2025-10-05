@@ -73,7 +73,8 @@ type AppointmentForm = {
   patientPhone?: string;
   doctorId: string;
   doctorName: string;
-  treatmentType: string;
+  serviceId: string;
+  serviceName?: string;
   resourceId: string;
   start: Date;
   end: Date;
@@ -114,7 +115,8 @@ function App() {
     patientId: "",
     doctorId: "",
     doctorName: "",
-    treatmentType: "",
+    serviceId: "",
+    serviceName: "",
     resourceId: "",
     start: new Date(),
     end: new Date(),
@@ -271,7 +273,8 @@ function App() {
         patientId: "",
         doctorId: defaultDoctor.id,
         doctorName: defaultDoctor.name || defaultDoctor.id,
-        treatmentType: "",
+        serviceId: "",
+        serviceName: "",
         resourceId: firstUnitOfFirstClinic?.id || "", // Use first unit ID as resourceId
         start: slotInfo.start,
         end: slotInfo.end,
@@ -307,7 +310,8 @@ function App() {
         patientPhone: appointment.patient_phone || "",
         doctorId: appointment.doctorId,
         doctorName: doctor?.name || appointment.doctorId,
-        treatmentType: appointment.treatment || "",
+        serviceId: appointment.serviceId,
+        serviceName: appointment.serviceName,
         resourceId: appointment.unitId, // Use unitId instead of doctorId for clinic/unit lookup
         start: appointment.start,
         end: appointment.end,
@@ -575,6 +579,7 @@ function App() {
             doctors={doctors}
             clinics={organizationData?.clinics || []}
             units={organizationData?.units || []}
+            services={organizationData?.services || []}
             handleCloseModal={handleCloseModal}
             handleAddAppointment={handleAddAppointment}
             setAppointmentForm={setAppointmentForm}

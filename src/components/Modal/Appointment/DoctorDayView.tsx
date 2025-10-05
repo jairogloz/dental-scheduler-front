@@ -106,12 +106,14 @@ const DoctorDayView = ({
         views={[Views.DAY]}
         events={[
           ...appointments.map((apt) => ({
-            title: `${apt.patient_name || apt.patientId} - ${apt.treatment}`, // Fallback title
+            title: `${apt.patient_name || apt.patientId} - ${
+              apt.serviceName || apt.serviceId
+            }`, // Fallback title
             start: new Date(apt.start),
             end: new Date(apt.end),
             appointmentId: apt.id,
             patientName: apt.patient_name || apt.patientId,
-            doctorName: apt.treatment,
+            doctorName: apt.serviceName || apt.serviceId,
             isConfirmed: apt.status === "confirmed",
             isFirstVisit: apt.is_first_visit,
           })),

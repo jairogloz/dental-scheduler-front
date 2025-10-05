@@ -40,6 +40,11 @@ export type OrganizationData = {
     created_at: string;
     updated_at: string;
   }>;
+  services: Array<{
+    id: string;
+    name: string;
+    base_price?: number;
+  }>;
   appointments: Array<{
     id: string;
     patient_id: string;

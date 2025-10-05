@@ -36,6 +36,7 @@ const AppointmentModal = ({
   doctors,
   clinics, // Passed as prop
   units, // Passed as prop
+  services, // Services array from organization
   handleCloseModal,
   handleAddAppointment,
 
@@ -107,6 +108,16 @@ const AppointmentModal = ({
     ? doctors.map((doctor: Doctor) => ({
         value: doctor.id,
         label: `${doctor.name} - ${doctor.specialty}`,
+      }))
+    : [];
+
+  // Type guard to ensure services is an array before mapping
+  const serviceOptions = Array.isArray(services)
+    ? services.map((service: any) => ({
+        value: service.id,
+        label: service.base_price
+          ? `${service.name} ($${service.base_price})`
+          : service.name,
       }))
     : [];
 
@@ -487,8 +498,8 @@ const AppointmentModal = ({
       alert("Por favor selecciona una unidad");
       return;
     }
-    if (!appointmentForm.treatmentType) {
-      alert("Por favor ingresa el tipo de tratamiento");
+    if (!appointmentForm.serviceId) {
+      alert("Por favor selecciona un servicio");
       return;
     }
 
@@ -530,7 +541,7 @@ const AppointmentModal = ({
         patientId: validatedForm.patientId,
         doctorId: validatedForm.doctorId,
         unitId: validatedForm.resourceId, // Map resourceId to unitId
-        treatment: validatedForm.treatmentType, // Map treatmentType to treatment
+        serviceId: validatedForm.serviceId,
       };
 
       try {
@@ -582,11 +593,8 @@ const AppointmentModal = ({
       showErrorModal("Campo requerido", "Por favor selecciona una unidad");
       return;
     }
-    if (!validatedForm.treatmentType) {
-      showErrorModal(
-        "Campo requerido",
-        "Por favor ingresa el tipo de tratamiento"
-      );
+    if (!validatedForm.serviceId) {
+      showErrorModal("Campo requerido", "Por favor selecciona un servicio");
       return;
     }
 
@@ -644,7 +652,7 @@ const AppointmentModal = ({
         patientId: validatedForm.patientId,
         doctorId: validatedForm.doctorId,
         resourceId: validatedForm.resourceId,
-        treatmentType: validatedForm.treatmentType,
+        serviceId: validatedForm.serviceId,
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
         status: finalStatus,
@@ -892,18 +900,37 @@ const AppointmentModal = ({
           )}
 
           <div className="form-field">
-            <label>Tipo de Tratamiento:</label>
-            <input
-              type="text"
-              value={appointmentForm.treatmentType}
-              onChange={(e) =>
+            <label>Servicio:</label>
+            <Select
+              options={serviceOptions}
+              value={
+                appointmentForm.serviceId
+                  ? serviceOptions.find(
+                      (option) => option.value === appointmentForm.serviceId
+                    )
+                  : null
+              }
+              onChange={(selectedOption) => {
+                const service = services.find(
+                  (s: any) => s.id === selectedOption?.value
+                );
                 setAppointmentForm((prevForm: any) => ({
                   ...prevForm,
-                  treatmentType: e.target.value,
-                }))
-              }
-              className="custom-text-input"
-              disabled={isReadOnly}
+                  serviceId: selectedOption?.value || "",
+                  serviceName: service?.name || "",
+                }));
+              }}
+              placeholder="Seleccionar Servicio"
+              className="react-select-container"
+              classNamePrefix="react-select"
+              isDisabled={isReadOnly}
+              styles={{
+                control: (provided) => ({
+                  ...provided,
+                  minHeight: "42px",
+                  borderColor: "#ccc",
+                }),
+              }}
             />
           </div>
 
