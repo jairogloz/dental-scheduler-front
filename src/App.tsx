@@ -583,29 +583,35 @@ function App() {
         )}
 
         {/* Drag and Drop Confirmation Dialog */}
-        {showDragConfirmation && pendingEventChange && (() => {
-          const { start, end, isResize } = pendingEventChange;
-          const durationMinutes = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
-          const dateStr = format(start, "d 'de' MMMM 'de' yyyy", { locale: es });
-          const startTimeStr = format(start, "h:mm a", { locale: es });
-          const endTimeStr = format(end, "h:mm a", { locale: es });
-          
-          const message = isResize 
-            ? `¿Desea cambiar la duración de esta cita al día ${dateStr}, de ${startTimeStr} a ${endTimeStr} (${durationMinutes} min)?`
-            : `¿Desea mover esta cita al día ${dateStr}, de ${startTimeStr} a ${endTimeStr} (${durationMinutes} min)?`;
-          
-          return (
-            <ConfirmationDialog
-              isOpen={showDragConfirmation}
-              title="Confirmar cambio de cita"
-              message={message}
-              onConfirm={handleConfirmEventChange}
-              onCancel={handleCancelEventChange}
-              confirmText="Confirmar"
-              cancelText="Cancelar"
-            />
-          );
-        })()}
+        {showDragConfirmation &&
+          pendingEventChange &&
+          (() => {
+            const { start, end, isResize } = pendingEventChange;
+            const durationMinutes = Math.round(
+              (end.getTime() - start.getTime()) / (1000 * 60)
+            );
+            const dateStr = format(start, "d 'de' MMMM 'de' yyyy", {
+              locale: es,
+            });
+            const startTimeStr = format(start, "h:mm a", { locale: es });
+            const endTimeStr = format(end, "h:mm a", { locale: es });
+
+            const message = isResize
+              ? `¿Desea cambiar la duración de esta cita al día ${dateStr}, de ${startTimeStr} a ${endTimeStr} (${durationMinutes} min)?`
+              : `¿Desea mover esta cita al día ${dateStr}, de ${startTimeStr} a ${endTimeStr} (${durationMinutes} min)?`;
+
+            return (
+              <ConfirmationDialog
+                isOpen={showDragConfirmation}
+                title="Confirmar cambio de cita"
+                message={message}
+                onConfirm={handleConfirmEventChange}
+                onCancel={handleCancelEventChange}
+                confirmText="Confirmar"
+                cancelText="Cancelar"
+              />
+            );
+          })()}
       </div>
     </>
   );
