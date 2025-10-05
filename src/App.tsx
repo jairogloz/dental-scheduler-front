@@ -132,7 +132,16 @@ function App() {
 
   // Calculate date range for appointments query
   const dateRange = useMemo(() => {
-    return getCalendarDateRangeUtil(date, view);
+    const range = getCalendarDateRangeUtil(date, view);
+    console.log("📅 Date range for query:", {
+      view,
+      currentDate: date,
+      start: range.start,
+      end: range.end,
+      startFormatted: format(range.start, "yyyy-MM-dd HH:mm:ss"),
+      endFormatted: format(range.end, "yyyy-MM-dd HH:mm:ss"),
+    });
+    return range;
   }, [date, view]);
 
   // Get filtered appointments for the current view
@@ -183,15 +192,6 @@ function App() {
         (u) => u.id === appointment.unitId
       );
       const clinicId = unit?.clinic_id;
-
-      // Debug logging for first visit
-      if (appointment.is_first_visit) {
-        console.log("🔍 Found first visit appointment:", {
-          patientName: patientLabel,
-          is_first_visit: appointment.is_first_visit,
-          appointmentId: appointment.id,
-        });
-      }
 
       return {
         title: `${patientLabel} - ${doctorLabel}`, // Fallback for non-custom views
@@ -336,6 +336,15 @@ function App() {
   const handleAddAppointment = useCallback(
     async (appointmentData: any) => {
       try {
+        console.log("➕ Creating appointment with dates:", {
+          start: appointmentData.start,
+          end: appointmentData.end,
+          startFormatted: format(
+            appointmentData.start,
+            "yyyy-MM-dd HH:mm:ss EEEE"
+          ),
+          endFormatted: format(appointmentData.end, "yyyy-MM-dd HH:mm:ss EEEE"),
+        });
         await createAppointmentMutation.mutateAsync(appointmentData);
         // Don't close modal here - let the success modal handle it
       } catch (error) {
@@ -357,8 +366,22 @@ function App() {
       start: string | Date;
       end: string | Date;
     }) => {
+      console.log("🎯 RBC provided drag dates:", {
+        startType: typeof start,
+        endType: typeof end,
+        startRaw: start,
+        endRaw: end,
+        startString: start.toString(),
+        endString: end.toString(),
+      });
       const startDate = typeof start === "string" ? new Date(start) : start;
       const endDate = typeof end === "string" ? new Date(end) : end;
+      console.log("🎯 After conversion:", {
+        startDate,
+        endDate,
+        startISO: startDate.toISOString(),
+        endISO: endDate.toISOString(),
+      });
       setPendingEventChange({
         event,
         start: startDate,
@@ -411,10 +434,36 @@ function App() {
     }
 
     try {
+      console.log("🔄 Updating appointment to new dates:", {
+        appointmentId: appointment.id,
+        newStart: start,
+        newEnd: end,
+        startFormatted: format(start, "yyyy-MM-dd HH:mm:ss EEEE"),
+        endFormatted: format(end, "yyyy-MM-dd HH:mm:ss EEEE"),
+        currentDateRange: {
+          start: dateRange.start,
+          end: dateRange.end,
+          startFormatted: format(dateRange.start, "yyyy-MM-dd HH:mm:ss EEEE"),
+          endFormatted: format(dateRange.end, "yyyy-MM-dd HH:mm:ss EEEE"),
+        },
+      });
+
+      // Format dates to ISO string in LOCAL timezone to avoid date shifts
+      // Using date-fns format instead of toISOString() to preserve local date/time
+      const startTimeLocal = format(start, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+      const endTimeLocal = format(end, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+
+      console.log("📤 Sending update with local times:", {
+        startTimeLocal,
+        endTimeLocal,
+        startUTC: start.toISOString(),
+        endUTC: end.toISOString(),
+      });
+
       await updateAppointmentMutation.mutateAsync({
         id: appointment.id,
-        start_time: start.toISOString(),
-        end_time: end.toISOString(),
+        start_time: startTimeLocal,
+        end_time: endTimeLocal,
       });
 
       setShowDragConfirmation(false);
@@ -425,7 +474,12 @@ function App() {
       setShowDragConfirmation(false);
       setPendingEventChange(null);
     }
-  }, [pendingEventChange, filteredAppointments, updateAppointmentMutation]);
+  }, [
+    pendingEventChange,
+    filteredAppointments,
+    updateAppointmentMutation,
+    dateRange,
+  ]);
 
   // Cancel the drag/resize change
   const handleCancelEventChange = useCallback(() => {
@@ -513,6 +567,7 @@ function App() {
               ) : (
                 <DnDCalendar
                   localizer={localizer}
+                  culture="es-MX"
                   events={events}
                   startAccessor="start"
                   endAccessor="end"

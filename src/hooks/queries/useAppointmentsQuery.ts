@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { useMemo } from "react";
 import { 
   getAppointmentsByDateRange, 
@@ -39,8 +39,22 @@ export const useAppointmentsQuery = (startDate: Date, endDate: Date) => {
       }
       // Convert dates to strings as expected by the API
       const startStr = format(startDate, "yyyy-MM-dd");
-      const endStr = format(endDate, "yyyy-MM-dd");
-      return await getAppointmentsByDateRange(startStr, endStr);
+      // Add 1 day to endDate to ensure we capture all appointments on the last day
+      // Backend interprets "2025-10-05" as midnight start of that day, not end
+      const endDatePlusOne = addDays(endDate, 1);
+      const endStr = format(endDatePlusOne, "yyyy-MM-dd");
+      console.log('🔍 Fetching appointments:', { 
+        startStr, 
+        endStr, 
+        cacheKey,
+        originalEndDate: endDate,
+        endDatePlusOne,
+        endDateOriginalFormatted: format(endDate, "yyyy-MM-dd HH:mm:ss"),
+        note: 'Added 1 day to end date to ensure full last day is included'
+      });
+      const appointments = await getAppointmentsByDateRange(startStr, endStr);
+      console.log(`✅ Fetched ${appointments.length} appointments for range ${startStr} to ${endStr}`);
+      return appointments;
     },
     
     // Only run when we have organizationId and valid dates
@@ -108,8 +122,10 @@ export const useCreateAppointment = () => {
     
     // On success, invalidate and refetch
     onSuccess: () => {
+      console.log('✅ Create mutation success - invalidating all appointment queries');
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
+        refetchType: 'all', // Refetch both active and inactive queries
       });
     },
     
@@ -195,9 +211,11 @@ export const useUpdateAppointment = () => {
       ),
     
     onSuccess: () => {
+      console.log('✅ Update mutation success - invalidating all appointment queries');
       // Invalidate appointments queries to refetch fresh data
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
+        refetchType: 'all', // Refetch both active and inactive queries
       });
     },
     
@@ -221,9 +239,11 @@ export const useCancelAppointmentMutation = () => {
       ),
     
     onSuccess: () => {
+      console.log('✅ Cancel mutation success - invalidating all appointment queries');
       // Invalidate appointments queries to refetch fresh data
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
+        refetchType: 'all', // Refetch both active and inactive queries
       });
     },
     
@@ -251,7 +271,7 @@ export const useFilteredAppointments = (
   const filteredAppointments = useMemo(() => {
     if (!appointments || !organizationData) return [];
 
-    return appointments.filter((appointment) => {
+    const filtered = appointments.filter((appointment) => {
       // Exclude cancelled appointments if requested
       if (excludeCancelled && appointment.status === "cancelled") {
         return false;
@@ -274,6 +294,14 @@ export const useFilteredAppointments = (
 
       return true;
     });
+
+    console.log(`🎯 Filtered appointments: ${filtered.length} out of ${appointments.length} total`, {
+      excludeCancelled,
+      selectedClinicIds: selectedClinicIds.length,
+      selectedDoctorIds: selectedDoctorIds.length,
+    });
+
+    return filtered;
   }, [appointments, organizationData, selectedClinicIds, selectedDoctorIds, excludeCancelled]);
 
   return {

@@ -434,13 +434,6 @@ export const getAppointmentsByDateRange = async (
       const startDate = new Date(appt.start_time);
       const endDate = new Date(appt.end_time);
       
-      // Debug: Log the raw appointment data from backend
-      console.log("🔍 Processing appointment:", {
-        patient_name: appt.patient_name,
-        is_first_visit: appt.is_first_visit,
-        typeof_is_first_visit: typeof appt.is_first_visit,
-      });
-      
       // Validate dates
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         console.warn("Invalid appointment dates:", {

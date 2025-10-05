@@ -12,7 +12,9 @@ export const getCalendarDateRangeUtil = (date: Date, view: View) => {
       break;
     case "week":
       start = startOfWeek(date, { weekStartsOn: 1 }); // Monday start
-      end = endOfWeek(date, { weekStartsOn: 1 });
+      end = endOfWeek(date, { weekStartsOn: 1 }); // Sunday end at 23:59:59.999
+      // Ensure we capture the full Sunday by extending to end of day
+      end = endOfDay(end);
       break;
     case "month":
       // For month view, we need a wider range to include partial weeks
@@ -20,6 +22,8 @@ export const getCalendarDateRangeUtil = (date: Date, view: View) => {
       const monthEnd = endOfMonth(date);
       start = startOfWeek(monthStart, { weekStartsOn: 1 });
       end = endOfWeek(monthEnd, { weekStartsOn: 1 });
+      // Ensure we capture the full last day
+      end = endOfDay(end);
       break;
     default:
       // Default to day view range
