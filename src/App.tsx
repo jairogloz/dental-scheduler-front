@@ -1,4 +1,6 @@
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
+import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
 import { format } from "date-fns";
 import { parse } from "date-fns/parse";
 import { startOfWeek } from "date-fns/startOfWeek";
@@ -16,6 +18,7 @@ import Sidebar from "./components/Sidebar";
 import ClinicFilterBar from "./components/ClinicFilterBar/ClinicFilterBar";
 import DoctorFilterBar from "./components/DoctorFilterBar/DoctorFilterBar";
 import CalendarEvent from "./components/CalendarEvent";
+import ConfirmationDialog from "./components/Modal/ConfirmationDialog";
 
 // Hooks
 import { useWindowSize } from "./hooks/useWindowSize";
@@ -24,6 +27,7 @@ import { useOrganizationQuery } from "./hooks/queries/useOrganizationQuery";
 import {
   useFilteredAppointments,
   useCreateAppointment,
+  useUpdateAppointment,
 } from "./hooks/queries/useAppointmentsQuery";
 
 // Utils
@@ -45,6 +49,9 @@ const localizer = dateFnsLocalizer({
   getDay,
   locales,
 });
+
+// Create DnD Calendar component with proper typing
+const DnDCalendar = withDragAndDrop<Event>(Calendar);
 
 type Event = {
   appointmentId: string;
@@ -90,6 +97,15 @@ function App() {
   const [selectedClinics, setSelectedClinics] = useState<string[]>([]);
   const [selectedDoctors, setSelectedDoctors] = useState<string[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+
+  // Drag and drop state
+  const [showDragConfirmation, setShowDragConfirmation] = useState(false);
+  const [pendingEventChange, setPendingEventChange] = useState<{
+    event: Event;
+    start: Date;
+    end: Date;
+    isResize?: boolean;
+  } | null>(null);
 
   // Form state
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
@@ -311,6 +327,7 @@ function App() {
 
   // Mutation for creating appointments
   const createAppointmentMutation = useCreateAppointment();
+  const updateAppointmentMutation = useUpdateAppointment();
 
   const handleAddAppointment = useCallback(
     async (appointmentData: any) => {
@@ -324,6 +341,93 @@ function App() {
     },
     [createAppointmentMutation]
   );
+
+  // Handle event drop (drag and move)
+  const handleEventDrop = useCallback(
+    ({
+      event,
+      start,
+      end,
+    }: {
+      event: Event;
+      start: string | Date;
+      end: string | Date;
+    }) => {
+      const startDate = typeof start === "string" ? new Date(start) : start;
+      const endDate = typeof end === "string" ? new Date(end) : end;
+      setPendingEventChange({
+        event,
+        start: startDate,
+        end: endDate,
+        isResize: false,
+      });
+      setShowDragConfirmation(true);
+    },
+    []
+  );
+
+  // Handle event resize
+  const handleEventResize = useCallback(
+    ({
+      event,
+      start,
+      end,
+    }: {
+      event: Event;
+      start: string | Date;
+      end: string | Date;
+    }) => {
+      const startDate = typeof start === "string" ? new Date(start) : start;
+      const endDate = typeof end === "string" ? new Date(end) : end;
+      setPendingEventChange({
+        event,
+        start: startDate,
+        end: endDate,
+        isResize: true,
+      });
+      setShowDragConfirmation(true);
+    },
+    []
+  );
+
+  // Confirm the drag/resize change
+  const handleConfirmEventChange = useCallback(async () => {
+    if (!pendingEventChange) return;
+
+    const { event, start, end } = pendingEventChange;
+    const appointment = filteredAppointments.find(
+      (apt) => apt.id === event.appointmentId
+    );
+
+    if (!appointment) {
+      alert("Appointment not found");
+      setShowDragConfirmation(false);
+      setPendingEventChange(null);
+      return;
+    }
+
+    try {
+      await updateAppointmentMutation.mutateAsync({
+        id: appointment.id,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      });
+
+      setShowDragConfirmation(false);
+      setPendingEventChange(null);
+    } catch (error) {
+      console.error("❌ Failed to update appointment:", error);
+      alert("Failed to update appointment. Please try again.");
+      setShowDragConfirmation(false);
+      setPendingEventChange(null);
+    }
+  }, [pendingEventChange, filteredAppointments, updateAppointmentMutation]);
+
+  // Cancel the drag/resize change
+  const handleCancelEventChange = useCallback(() => {
+    setShowDragConfirmation(false);
+    setPendingEventChange(null);
+  }, []);
 
   // Show loading state
   if (organizationLoading && !organizationData) {
@@ -403,7 +507,7 @@ function App() {
                   Loading appointments...
                 </div>
               ) : (
-                <Calendar
+                <DnDCalendar
                   localizer={localizer}
                   events={events}
                   startAccessor="start"
@@ -411,12 +515,15 @@ function App() {
                   style={{ height: isMobile ? 500 : 600, marginTop: "20px" }}
                   onSelectSlot={handleSelectSlot}
                   onSelectEvent={handleSelectEvent}
+                  onEventDrop={handleEventDrop}
+                  onEventResize={handleEventResize}
                   selected={
                     selectedEventId
                       ? events.find((e) => e.appointmentId === selectedEventId)
                       : null
                   }
                   selectable
+                  resizable
                   popup
                   view={view}
                   onView={setView}
@@ -472,6 +579,23 @@ function App() {
             handleAddAppointment={handleAddAppointment}
             setAppointmentForm={setAppointmentForm}
             appointments={filteredAppointments}
+          />
+        )}
+
+        {/* Drag and Drop Confirmation Dialog */}
+        {showDragConfirmation && pendingEventChange && (
+          <ConfirmationDialog
+            isOpen={showDragConfirmation}
+            title="Confirmar cambio de cita"
+            message={`¿Desea ${
+              pendingEventChange.isResize ? "cambiar la duración" : "mover"
+            } esta cita a ${format(pendingEventChange.start, "PPp", {
+              locale: es,
+            })}?`}
+            onConfirm={handleConfirmEventChange}
+            onCancel={handleCancelEventChange}
+            confirmText="Confirmar"
+            cancelText="Cancelar"
           />
         )}
       </div>
