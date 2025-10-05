@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import "../../styles/Modal.css";
 
 interface ConfirmationDialogProps {
@@ -22,6 +22,22 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onCancel,
   confirmButtonStyle = "primary",
 }) => {
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Focus on appropriate button when dialog opens
+      // Destructive actions (danger) -> focus Cancel
+      // Creative actions (primary) -> focus Confirm
+      if (confirmButtonStyle === "danger") {
+        cancelButtonRef.current?.focus();
+      } else {
+        confirmButtonRef.current?.focus();
+      }
+    }
+  }, [isOpen, confirmButtonStyle]);
+
   if (!isOpen) return null;
 
   const confirmButtonColor =
@@ -46,6 +62,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
 
         <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
           <button
+            ref={cancelButtonRef}
             onClick={onCancel}
             style={{
               padding: "10px 20px",
@@ -60,6 +77,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
             {cancelText}
           </button>
           <button
+            ref={confirmButtonRef}
             onClick={onConfirm}
             style={{
               padding: "10px 20px",

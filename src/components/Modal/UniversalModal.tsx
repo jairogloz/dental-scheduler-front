@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import "../../styles/Modal.css";
 
 interface UniversalModalProps {
@@ -24,6 +24,30 @@ const UniversalModal: React.FC<UniversalModalProps> = ({
   onCancel,
   confirmButtonStyle = "primary",
 }) => {
+  const confirmButtonRef = useRef<HTMLButtonElement>(null);
+  const cancelButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      // Determine which button to focus based on dialog type and style
+      const showCancelButton = type === "confirmation" && onCancel;
+
+      if (showCancelButton) {
+        // Two-button dialogs: focus based on action type
+        // Destructive actions (danger) -> focus Cancel
+        // Creative actions (primary/success) -> focus Confirm
+        if (confirmButtonStyle === "danger") {
+          cancelButtonRef.current?.focus();
+        } else {
+          confirmButtonRef.current?.focus();
+        }
+      } else {
+        // Single-button dialogs (success/error) -> focus the only button
+        confirmButtonRef.current?.focus();
+      }
+    }
+  }, [isOpen, type, confirmButtonStyle, onCancel]);
+
   if (!isOpen) return null;
 
   // Determine button colors based on type and style
@@ -75,6 +99,7 @@ const UniversalModal: React.FC<UniversalModalProps> = ({
         <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
           {showCancelButton && (
             <button
+              ref={cancelButtonRef}
               onClick={onCancel}
               style={{
                 padding: "10px 20px",
@@ -91,6 +116,7 @@ const UniversalModal: React.FC<UniversalModalProps> = ({
           )}
 
           <button
+            ref={confirmButtonRef}
             onClick={onConfirm}
             style={{
               padding: "10px 20px",

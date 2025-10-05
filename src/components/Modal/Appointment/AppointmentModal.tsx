@@ -750,6 +750,9 @@ const AppointmentModal = ({
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div
         className="modal-content"
+        {...(showCancelConfirmation || universalModal.isOpen
+          ? { inert: true as any }
+          : {})}
         style={{
           maxWidth:
             appointmentForm.doctorId && currentMode === "create"
