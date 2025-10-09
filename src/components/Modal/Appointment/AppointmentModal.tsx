@@ -13,6 +13,7 @@ import {
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
 import AddPatientModal from "../../PatientSearch/AddPatientModal";
+import EditPatientModal from "../Patient/EditPatientModal";
 import ConfirmationDialog from "../ConfirmationDialog";
 import UniversalModal from "../UniversalModal";
 import {
@@ -55,6 +56,7 @@ const AppointmentModal = ({
   const [originalAppointmentForm, setOriginalAppointmentForm] =
     useState<any>(null); // Store original form data
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+  const [showEditPatientModal, setShowEditPatientModal] = useState(false);
   const [initialPatientName, setInitialPatientName] = useState<string>("");
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -301,6 +303,47 @@ const AppointmentModal = ({
 
   const handleCloseAddPatientModal = () => {
     setShowAddPatientModal(false);
+  };
+
+  // Handle edit patient
+  const handleEditPatient = () => {
+    if (selectedPatient) {
+      setShowEditPatientModal(true);
+    }
+  };
+
+  // Handle patient updated
+  const handlePatientUpdated = (updatedPatient: Patient) => {
+    // Update selected patient state
+    setSelectedPatient(updatedPatient);
+
+    // Update appointment form with updated patient details
+    const updatedForm = {
+      ...appointmentForm,
+      patientName: updatedPatient.name,
+      patientPhone: updatedPatient.phone,
+    };
+
+    setAppointmentForm(updatedForm);
+
+    // Close the edit patient modal
+    setShowEditPatientModal(false);
+  };
+
+  const handleCloseEditPatientModal = () => {
+    setShowEditPatientModal(false);
+  };
+
+  // Handle remove patient
+  const handleRemovePatient = () => {
+    setSelectedPatient(null);
+    const updatedForm = {
+      ...appointmentForm,
+      patientName: "",
+      patientId: "",
+      patientPhone: "",
+    };
+    setAppointmentForm(updatedForm);
   };
 
   // Mode switching functions
@@ -750,7 +793,9 @@ const AppointmentModal = ({
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div
         className="modal-content"
-        {...(showCancelConfirmation || universalModal.isOpen
+        {...(showCancelConfirmation ||
+        universalModal.isOpen ||
+        showEditPatientModal
           ? { inert: true as any }
           : {})}
         style={{
@@ -884,12 +929,16 @@ const AppointmentModal = ({
                 patientName={appointmentForm.patientName}
                 patientId={appointmentForm.patientId}
                 placeholder="Sin paciente asignado"
+                showActions={true}
+                onEdit={handleEditPatient}
+                onRemove={handleRemovePatient}
               />
             ) : (
               <PatientSearchAutocomplete
                 selectedPatient={selectedPatient}
                 onPatientSelect={handlePatientSelect}
                 onAddNewPatient={handleAddNewPatient}
+                onEditPatient={handleEditPatient}
                 disabled={false}
                 placeholder="Buscar paciente por nombre..."
               />
@@ -1213,6 +1262,16 @@ const AppointmentModal = ({
         onPatientCreated={handlePatientCreated}
         initialName={initialPatientName}
       />
+
+      {/* Edit Patient Modal */}
+      {selectedPatient && (
+        <EditPatientModal
+          isOpen={showEditPatientModal}
+          patient={selectedPatient}
+          onClose={handleCloseEditPatientModal}
+          onPatientUpdated={handlePatientUpdated}
+        />
+      )}
 
       {/* Cancel Confirmation Dialog */}
       <ConfirmationDialog

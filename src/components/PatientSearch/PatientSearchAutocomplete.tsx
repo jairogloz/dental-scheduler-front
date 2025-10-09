@@ -7,6 +7,7 @@ export interface PatientSearchAutocompleteProps {
   selectedPatient: Patient | null;
   onPatientSelect: (patient: Patient | null) => void;
   onAddNewPatient: (searchQuery?: string) => void;
+  onEditPatient?: () => void;
   disabled?: boolean;
   placeholder?: string;
 }
@@ -15,6 +16,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
   selectedPatient,
   onPatientSelect,
   onAddNewPatient,
+  onEditPatient,
   disabled = false,
   placeholder = "Buscar paciente...",
 }) => {
@@ -317,14 +319,48 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
         />
 
         {selectedPatient && !disabled && (
-          <button
-            type="button"
-            onClick={handleClearSelection}
-            className="patient-search-clear"
-            aria-label="Clear selection"
-          >
-            ×
-          </button>
+          <>
+            {onEditPatient && (
+              <button
+                type="button"
+                onClick={onEditPatient}
+                className="patient-search-edit"
+                aria-label="Edit patient"
+                title="Editar paciente"
+                style={{
+                  position: "absolute",
+                  right: "35px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: "4px 8px",
+                  color: "#007bff",
+                  fontSize: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  transition: "color 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = "#0056b3";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "#007bff";
+                }}
+              >
+                ✏️
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleClearSelection}
+              className="patient-search-clear"
+              aria-label="Clear selection"
+            >
+              ×
+            </button>
+          </>
         )}
 
         {isLoading && (
