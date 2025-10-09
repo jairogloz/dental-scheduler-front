@@ -8,6 +8,7 @@ export interface PatientDisplayProps {
   onEdit?: () => void;
   onRemove?: () => void;
   showActions?: boolean;
+  disableRemove?: boolean; // Disable the remove button in view-only mode
 }
 
 const PatientDisplay: React.FC<PatientDisplayProps> = ({
@@ -17,6 +18,7 @@ const PatientDisplay: React.FC<PatientDisplayProps> = ({
   onEdit,
   onRemove,
   showActions = false,
+  disableRemove = false,
 }) => {
   // Show patient name if available, fallback to patient ID, then placeholder
   const displayValue = patientName || patientId || placeholder;
@@ -81,24 +83,34 @@ const PatientDisplay: React.FC<PatientDisplayProps> = ({
             {onRemove && (
               <button
                 onClick={onRemove}
-                title="Quitar paciente"
+                disabled={disableRemove}
+                title={
+                  disableRemove
+                    ? "Solo se puede quitar en modo edición"
+                    : "Quitar paciente"
+                }
                 style={{
                   background: "none",
                   border: "none",
-                  cursor: "pointer",
+                  cursor: disableRemove ? "not-allowed" : "pointer",
                   padding: "4px 8px",
-                  color: "#dc3545",
+                  color: disableRemove ? "#6c757d" : "#dc3545",
                   fontSize: "18px",
                   fontWeight: "bold",
                   display: "flex",
                   alignItems: "center",
                   transition: "color 0.2s",
+                  opacity: disableRemove ? 0.5 : 1,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.color = "#c82333";
+                  if (!disableRemove) {
+                    e.currentTarget.style.color = "#c82333";
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.color = "#dc3545";
+                  if (!disableRemove) {
+                    e.currentTarget.style.color = "#dc3545";
+                  }
                 }}
               >
                 ×

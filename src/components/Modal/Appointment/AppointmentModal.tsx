@@ -307,7 +307,23 @@ const AppointmentModal = ({
 
   // Handle edit patient
   const handleEditPatient = () => {
-    if (selectedPatient) {
+    // In see-only mode, we might not have selectedPatient set yet
+    // So we construct it from appointmentForm if needed
+    let patientToEdit = selectedPatient;
+
+    if (!patientToEdit && appointmentForm.patientId) {
+      // Construct patient object from form data
+      patientToEdit = {
+        id: appointmentForm.patientId,
+        name: appointmentForm.patientName,
+        phone: appointmentForm.patientPhone,
+        email: undefined, // We don't store email in appointmentForm
+      };
+      // Update selectedPatient state for the modal
+      setSelectedPatient(patientToEdit);
+    }
+
+    if (patientToEdit) {
       setShowEditPatientModal(true);
     }
   };
@@ -932,6 +948,7 @@ const AppointmentModal = ({
                 showActions={true}
                 onEdit={handleEditPatient}
                 onRemove={handleRemovePatient}
+                disableRemove={true} // Disable remove in view-only mode
               />
             ) : (
               <PatientSearchAutocomplete
