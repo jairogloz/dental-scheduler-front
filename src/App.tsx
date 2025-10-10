@@ -620,8 +620,8 @@ function App() {
                     agendaTimeFormat: (date) => format(date, "hh:mm a"),
                     eventTimeRangeFormat: () => "", // Hide default time display
                   }}
-                  min={new Date(0, 0, 0, 7, 0, 0)}
-                  max={new Date(0, 0, 0, 23, 0, 0)}
+                  min={new Date(0, 0, 0, 8, 0, 0)}
+                  max={new Date(0, 0, 0, 20, 30, 0)}
                 />
               )}
             </>

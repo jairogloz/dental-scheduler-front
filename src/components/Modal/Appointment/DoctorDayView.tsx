@@ -129,8 +129,8 @@ const DoctorDayView = ({
         }}
         step={15}
         timeslots={1}
-        min={new Date(0, 0, 0, 7, 0, 0)} // Start at 7:00 AM
-        max={new Date(0, 0, 0, 23, 0, 0)} // End at 11:00 PM
+        min={new Date(0, 0, 0, 8, 0, 0)} // Start at 8:00 AM
+        max={new Date(0, 0, 0, 20, 30, 0)} // End at 8:30 PM
         selectable
         onSelectSlot={handleSelectSlot}
         date={selectedDate}
