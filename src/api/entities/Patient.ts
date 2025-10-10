@@ -61,16 +61,30 @@ export const searchPatients = async (
 
     const patients = response.data.data?.patients || [];
     
-    // Ensure each patient has a combined name field
-    return patients.map(patient => {
+    console.log('🔍 PATIENT SEARCH - Raw patients from backend:', patients);
+    console.log('🔍 PATIENT SEARCH - First patient structure:', JSON.stringify(patients[0], null, 2));
+    
+    // Ensure each patient has a combined name field for display
+    const processedPatients = patients.map(patient => {
+      console.log('🔄 Processing patient:', patient.id);
+      console.log('  - Has first_name?', !!patient.first_name, patient.first_name);
+      console.log('  - Has last_name?', !!patient.last_name, patient.last_name);
+      console.log('  - Has name?', !!patient.name, patient.name);
+      
       if (!patient.name && (patient.first_name || patient.last_name)) {
+        const combinedName = `${patient.first_name || ''} ${patient.last_name || ''}`.trim();
+        console.log('✅ PATIENT SEARCH - Creating combined name:', combinedName);
         return {
           ...patient,
-          name: `${patient.first_name || ''} ${patient.last_name || ''}`.trim()
+          name: combinedName
         };
       }
+      console.log('⚠️ PATIENT SEARCH - Patient already has name or missing first/last names');
       return patient;
     });
+    
+    console.log('🎯 PATIENT SEARCH - Final processed patients:', processedPatients);
+    return processedPatients;
   } catch (error) {
     console.error('Patient search failed:', error);
     throw error;

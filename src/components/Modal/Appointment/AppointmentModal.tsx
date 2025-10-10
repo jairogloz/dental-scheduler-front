@@ -257,6 +257,17 @@ const AppointmentModal = ({
 
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
+    console.log("👤 handlePatientSelect - Selected patient:", patient);
+    console.log(
+      "👤 handlePatientSelect - patient.first_name:",
+      patient?.first_name
+    );
+    console.log(
+      "👤 handlePatientSelect - patient.last_name:",
+      patient?.last_name
+    );
+    console.log("👤 handlePatientSelect - patient.name:", patient?.name);
+
     setSelectedPatient(patient);
 
     // Only update form data when actually selecting a patient (not when clearing)
