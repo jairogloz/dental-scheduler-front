@@ -54,6 +54,25 @@ const localizer = dateFnsLocalizer({
 // Create DnD Calendar component with proper typing
 const DnDCalendar = withDragAndDrop<Event>(Calendar);
 
+// Spanish messages for calendar toolbar
+const messages = {
+  today: "Hoy",
+  previous: "Atrás",
+  next: "Siguiente",
+  month: "Mes",
+  week: "Semana",
+  day: "Día",
+  agenda: "Agenda",
+  date: "Fecha",
+  time: "Hora",
+  event: "Evento",
+  allDay: "Todo el día",
+  yesterday: "Ayer",
+  tomorrow: "Mañana",
+  noEventsInRange: "No hay eventos en este rango.",
+  showMore: (total: number) => `+ Ver más (${total})`,
+};
+
 type Event = {
   appointmentId: string;
   title: string;
@@ -585,6 +604,7 @@ function App() {
                 <DnDCalendar
                   localizer={localizer}
                   culture="es-MX"
+                  messages={messages}
                   events={events}
                   startAccessor="start"
                   endAccessor="end"
