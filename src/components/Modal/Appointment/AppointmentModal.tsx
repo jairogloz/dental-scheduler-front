@@ -307,21 +307,36 @@ const AppointmentModal = ({
 
   // Handle edit patient
   const handleEditPatient = () => {
+    console.log("🔍 handleEditPatient called");
+    console.log("📋 appointmentForm:", appointmentForm);
+    console.log("👤 selectedPatient:", selectedPatient);
+    console.log("👤 appointmentForm.patient:", appointmentForm.patient);
+
     // In see-only mode, we might not have selectedPatient set yet
-    // So we construct it from appointmentForm if needed
+    // So we get it from appointmentForm if needed
     let patientToEdit = selectedPatient;
 
-    if (!patientToEdit && appointmentForm.patientId) {
-      // Construct patient object from form data
+    if (!patientToEdit && appointmentForm.patient) {
+      console.log(
+        "✅ Using appointmentForm.patient (full object from backend)"
+      );
+      // Use the full patient object from the appointment (includes first_name and last_name separately)
+      patientToEdit = appointmentForm.patient;
+      setSelectedPatient(patientToEdit);
+    } else if (!patientToEdit && appointmentForm.patientId) {
+      console.log("⚠️ Fallback: Constructing patient from form fields");
+      // Fallback: construct patient object from form data (for backwards compatibility)
+      // This should rarely happen now that backend returns full patient object
       patientToEdit = {
         id: appointmentForm.patientId,
         name: appointmentForm.patientName,
         phone: appointmentForm.patientPhone,
-        email: undefined, // We don't store email in appointmentForm
+        email: undefined,
       };
-      // Update selectedPatient state for the modal
       setSelectedPatient(patientToEdit);
     }
+
+    console.log("🎯 Final patientToEdit object:", patientToEdit);
 
     if (patientToEdit) {
       setShowEditPatientModal(true);

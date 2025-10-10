@@ -10,6 +10,7 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { enUS } from "date-fns/locale/en-US";
 import { es } from "date-fns/locale/es";
 import type { View } from "react-big-calendar";
+import type { Patient } from "./api/entities/Patient";
 
 // Components
 import AppointmentModal from "./components/Modal/Appointment/AppointmentModal";
@@ -68,6 +69,7 @@ type Event = {
 
 type AppointmentForm = {
   appointmentId: string;
+  patient?: Patient; // Full patient object from backend
   patientName: string;
   patientId: string;
   patientPhone?: string;
@@ -297,17 +299,29 @@ function App() {
       );
       if (!appointment) return;
 
+      console.log("🎯 handleSelectEvent - Appointment clicked:", appointment);
+      console.log(
+        "👤 handleSelectEvent - appointment.patient:",
+        appointment.patient
+      );
+
       // Set the selected event ID for visual feedback
       console.log("🎯 Setting selectedEventId to:", event.appointmentId);
       setSelectedEventId(event.appointmentId);
 
       const doctor = doctors.find((d) => d.id === appointment.doctorId);
 
-      setAppointmentForm({
+      const formData = {
         appointmentId: appointment.id,
-        patientName: appointment.patient_name || "",
-        patientId: appointment.patientId,
-        patientPhone: appointment.patient_phone || "",
+        patient: appointment.patient, // Pass the full patient object from backend
+        patientName: appointment.patient
+          ? `${appointment.patient.first_name || ""} ${
+              appointment.patient.last_name || ""
+            }`.trim()
+          : appointment.patient_name || "",
+        patientId: appointment.patient?.id || appointment.patientId,
+        patientPhone:
+          appointment.patient?.phone || appointment.patient_phone || "",
         doctorId: appointment.doctorId,
         doctorName: doctor?.name || appointment.doctorId,
         serviceId: appointment.serviceId,
@@ -317,7 +331,10 @@ function App() {
         end: appointment.end,
         status: appointment.status, // Include the appointment status
         is_first_visit: appointment.is_first_visit, // Include the first visit flag
-      });
+      };
+
+      console.log("📋 handleSelectEvent - Setting appointmentForm:", formData);
+      setAppointmentForm(formData);
       setModalMode("see-only");
       setShowModal(true);
     },

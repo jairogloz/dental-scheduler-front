@@ -1,8 +1,10 @@
 import { apiClient } from "../../lib/apiClient";
+import type { Patient } from "./Patient";
 
 export type Appointment = {
   id: string;
-  patientId: string;
+  patient?: Patient; // Full patient object from backend
+  patientId: string; // Keep for backwards compatibility during transition
   doctorId: string;
   serviceId: string;
   serviceName?: string; // For display purposes
@@ -10,8 +12,8 @@ export type Appointment = {
   start: Date;
   end: Date;
   // Additional fields from API responses
-  patient_name?: string;
-  patient_phone?: string;
+  patient_name?: string; // Deprecated - use patient.first_name + patient.last_name
+  patient_phone?: string; // Deprecated - use patient.phone
   doctor_name?: string;
   unit_name?: string;
   clinic_id?: string;
@@ -42,9 +44,10 @@ export type UpdateAppointmentRequest = {
 
 export type AppointmentResponse = {
   id: string;
-  patient_id: string;
-  patient_name?: string; // Now included in backend response
-  patient_phone?: string;
+  patient?: Patient; // Full patient object from backend
+  patient_id?: string; // Deprecated - use patient.id
+  patient_name?: string; // Deprecated - use patient.first_name + patient.last_name
+  patient_phone?: string; // Deprecated - use patient.phone
   doctor_id: string;
   clinic_id?: string;
   unit_id: string;
@@ -115,6 +118,10 @@ export const createAppointment = async (
     // Access the nested appointment data
     const appointmentData = response.data.data;
 
+    console.log('🔍 CREATE - Backend appointmentData:', appointmentData);
+    console.log('🔍 CREATE - appointmentData.patient:', appointmentData.patient);
+    console.log('🔍 CREATE - appointmentData.patient_id:', appointmentData.patient_id);
+
     // Validate date strings before creating Date objects
     const startDate = new Date(appointmentData.start_time);
     const endDate = new Date(appointmentData.end_time);
@@ -131,15 +138,19 @@ export const createAppointment = async (
     // Transform backend response to frontend format
     return {
       id: appointmentData.id,
-      patientId: appointmentData.patient_id,
+      patient: appointmentData.patient, // Full patient object from backend
+      patientId: appointmentData.patient?.id || appointmentData.patient_id || "", // Fallback for backwards compatibility
       doctorId: appointmentData.doctor_id,
       unitId: appointmentData.unit_id,
       start: startDate,
       end: endDate,
       serviceId: appointmentData.service_id,
       serviceName: appointmentData.service_name,
-      // Preserve patient_name from backend response for display
-      patient_name: appointmentData.patient_name,
+      // Keep deprecated fields for backwards compatibility during transition
+      patient_name: appointmentData.patient 
+        ? `${appointmentData.patient.first_name || ''} ${appointmentData.patient.last_name || ''}`.trim()
+        : appointmentData.patient_name,
+      patient_phone: appointmentData.patient?.phone || appointmentData.patient_phone,
       status: appointmentData.status,
       is_first_visit: appointmentData.is_first_visit,
     };
@@ -253,15 +264,19 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
     // Transform backend response to frontend format
     return {
       id: updatedAppointment.id,
-      patientId: updatedAppointment.patient_id,
+      patient: updatedAppointment.patient, // Full patient object from backend
+      patientId: updatedAppointment.patient?.id || updatedAppointment.patient_id || "", // Fallback for backwards compatibility
       doctorId: updatedAppointment.doctor_id,
       unitId: updatedAppointment.unit_id,
       start: startDate,
       end: endDate,
       serviceId: updatedAppointment.service_id,
       serviceName: updatedAppointment.service_name,
-      // Preserve patient_name from backend response for display
-      patient_name: updatedAppointment.patient_name,
+      // Keep deprecated fields for backwards compatibility
+      patient_name: updatedAppointment.patient 
+        ? `${updatedAppointment.patient.first_name || ''} ${updatedAppointment.patient.last_name || ''}`.trim()
+        : updatedAppointment.patient_name,
+      patient_phone: updatedAppointment.patient?.phone || updatedAppointment.patient_phone,
       status: updatedAppointment.status,
       is_first_visit: updatedAppointment.is_first_visit,
     };
@@ -341,15 +356,19 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
     // Transform backend response to frontend format
     return {
       id: cancelledAppointment.id,
-      patientId: cancelledAppointment.patient_id,
+      patient: cancelledAppointment.patient, // Full patient object from backend
+      patientId: cancelledAppointment.patient?.id || cancelledAppointment.patient_id || "", // Fallback for backwards compatibility
       doctorId: cancelledAppointment.doctor_id,
       unitId: cancelledAppointment.unit_id,
       start: startDate,
       end: endDate,
       serviceId: cancelledAppointment.service_id,
       serviceName: cancelledAppointment.service_name,
-      // Preserve patient_name from backend response for display
-      patient_name: cancelledAppointment.patient_name,
+      // Keep deprecated fields for backwards compatibility
+      patient_name: cancelledAppointment.patient 
+        ? `${cancelledAppointment.patient.first_name || ''} ${cancelledAppointment.patient.last_name || ''}`.trim()
+        : cancelledAppointment.patient_name,
+      patient_phone: cancelledAppointment.patient?.phone || cancelledAppointment.patient_phone,
       status: cancelledAppointment.status, // Should be "cancelled"
       is_first_visit: cancelledAppointment.is_first_visit,
     };
@@ -445,9 +464,17 @@ export const getAppointmentsByDateRange = async (
         return null;
       }
       
+      // Log first appointment to check structure
+      if (appt.id === appointmentsData[0].id) {
+        console.log('🔍 FETCH - First appointment from backend:', appt);
+        console.log('🔍 FETCH - appt.patient:', appt.patient);
+        console.log('🔍 FETCH - appt.patient_id:', appt.patient_id);
+      }
+      
       return {
         id: appt.id,
-        patientId: appt.patient_id,
+        patient: appt.patient, // Full patient object from backend
+        patientId: appt.patient?.id || appt.patient_id || "", // Fallback for backwards compatibility
         doctorId: appt.doctor_id,
         unitId: appt.unit_id,
         start: startDate,
@@ -455,8 +482,10 @@ export const getAppointmentsByDateRange = async (
         serviceId: appt.service_id,
         serviceName: appt.service_name,
         // Preserve additional fields from API response
-        patient_name: appt.patient_name,
-        patient_phone: appt.patient_phone,
+        patient_name: appt.patient 
+          ? `${appt.patient.first_name || ''} ${appt.patient.last_name || ''}`.trim()
+          : appt.patient_name,
+        patient_phone: appt.patient?.phone || appt.patient_phone,
         doctor_name: (appt as any).doctor_name,
         unit_name: (appt as any).unit_name,
         clinic_id: appt.clinic_id,

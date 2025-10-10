@@ -21,22 +21,52 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
   onClose,
   onPatientUpdated,
 }) => {
-  // Parse patient name into first and last name
-  const parsePatientName = (name?: string) => {
-    if (!name) {
-      return { firstName: "", lastName: "" };
+  console.log("📝 EditPatientModal - Received patient object:", patient);
+  console.log("📝 EditPatientModal - patient.first_name:", patient.first_name);
+  console.log("📝 EditPatientModal - patient.last_name:", patient.last_name);
+  console.log("📝 EditPatientModal - patient.name:", patient.name);
+
+  // Get initial first and last name from patient data
+  // Prefer the separate first_name/last_name fields from backend over parsing combined name
+  const getInitialNames = () => {
+    console.log("🔍 getInitialNames - Checking patient fields");
+    console.log("  - first_name:", patient.first_name);
+    console.log("  - last_name:", patient.last_name);
+    console.log("  - name:", patient.name);
+
+    // If we have separate first_name and last_name from backend, use them directly
+    if (patient.first_name !== undefined || patient.last_name !== undefined) {
+      console.log("✅ Using first_name and last_name from backend");
+      return {
+        firstName: patient.first_name || "",
+        lastName: patient.last_name || "",
+      };
     }
-    const parts = name.trim().split(" ");
-    if (parts.length === 1) {
-      return { firstName: parts[0], lastName: "" };
+
+    // Otherwise, parse the combined name (fallback for old data or constructed patient objects)
+    if (patient.name) {
+      console.log("⚠️ Parsing combined name field");
+      const parts = patient.name.trim().split(" ");
+      if (parts.length === 1) {
+        return { firstName: parts[0], lastName: "" };
+      }
+      return {
+        firstName: parts[0],
+        lastName: parts.slice(1).join(" "),
+      };
     }
-    const firstName = parts[0];
-    const lastName = parts.slice(1).join(" ");
-    return { firstName, lastName };
+
+    console.log("❌ No name data available");
+    return { firstName: "", lastName: "" };
   };
 
   const { firstName: initialFirstName, lastName: initialLastName } =
-    parsePatientName(patient.name);
+    getInitialNames();
+
+  console.log("🎯 EditPatientModal - Initial names:", {
+    initialFirstName,
+    initialLastName,
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -72,7 +102,26 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
   // Update form when patient changes
   useEffect(() => {
     if (isOpen) {
-      const { firstName, lastName } = parsePatientName(patient.name);
+      // Get first and last name, preferring backend fields over parsing
+      let firstName = "";
+      let lastName = "";
+
+      if (patient.first_name !== undefined || patient.last_name !== undefined) {
+        // Use backend fields directly
+        firstName = patient.first_name || "";
+        lastName = patient.last_name || "";
+      } else if (patient.name) {
+        // Parse combined name as fallback
+        const parts = patient.name.trim().split(" ");
+        if (parts.length === 1) {
+          firstName = parts[0];
+          lastName = "";
+        } else {
+          firstName = parts[0];
+          lastName = parts.slice(1).join(" ");
+        }
+      }
+
       const newData = {
         firstName,
         lastName,
