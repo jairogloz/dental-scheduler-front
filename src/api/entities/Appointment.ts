@@ -1,6 +1,26 @@
 import { apiClient } from "../../lib/apiClient";
 import type { Patient } from "./Patient";
 
+/**
+ * TIMEZONE HANDLING STRATEGY:
+ * 
+ * The backend stores all times in UTC. The frontend must:
+ * 1. SEND to backend: Use .toISOString() to convert local Date objects to UTC
+ * 2. RECEIVE from backend: Use new Date(utc_string) which automatically converts to local time
+ * 
+ * Example flow:
+ * - User in Mexico City (UTC-6) creates appointment for 2:00 PM local
+ * - Frontend: new Date() + setHours(14, 0) creates "2:00 PM local" Date object
+ * - Frontend sends: .toISOString() → "2025-10-12T20:00:00.000Z" (8:00 PM UTC)
+ * - Backend stores: "2025-10-12T20:00:00.000Z"
+ * - Frontend receives: new Date("2025-10-12T20:00:00.000Z")
+ * - JavaScript converts: "2:00 PM local" (automatically subtracts 6 hours)
+ * - Calendar displays: 2:00 PM ✓
+ * 
+ * This ensures appointments appear at the correct local time for all users,
+ * regardless of their timezone.
+ */
+
 export type Appointment = {
   id: string;
   patient?: Patient; // Full patient object from backend
@@ -88,12 +108,13 @@ export const createAppointment = async (
   // Input data for creating appointment
 
     // Transform frontend format to backend format
+    // TIMEZONE: Convert local Date objects to UTC using .toISOString()
     const requestData: CreateAppointmentRequest = {
       patient_id: appointment.patientId,
       doctor_id: appointment.doctorId,
       unit_id: appointment.unitId,
-      start_time: appointment.start.toISOString(),
-      end_time: appointment.end.toISOString(),
+      start_time: appointment.start.toISOString(), // Converts local time to UTC
+      end_time: appointment.end.toISOString(),     // Converts local time to UTC
       service_id: appointment.serviceId,
     };
 
@@ -122,7 +143,9 @@ export const createAppointment = async (
     console.log('🔍 CREATE - appointmentData.patient:', appointmentData.patient);
     console.log('🔍 CREATE - appointmentData.patient_id:', appointmentData.patient_id);
 
-    // Validate date strings before creating Date objects
+    // TIMEZONE: Parse UTC strings from backend - JavaScript automatically converts to local time
+    // Backend sends: "2025-10-12T20:00:00Z" (UTC)
+    // new Date() converts to: local time based on browser timezone
     const startDate = new Date(appointmentData.start_time);
     const endDate = new Date(appointmentData.end_time);
     
@@ -450,6 +473,7 @@ export const getAppointmentsByDateRange = async (
     
     // Transform backend format to frontend format
     const appointments = appointmentsData.map((appt) => {
+      // TIMEZONE: Parse UTC strings from backend - JavaScript automatically converts to local time
       const startDate = new Date(appt.start_time);
       const endDate = new Date(appt.end_time);
       

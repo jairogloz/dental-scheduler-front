@@ -229,6 +229,11 @@ const AppointmentModal = ({
       return;
     }
 
+    // TIMEZONE HANDLING:
+    // Create a Date object in LOCAL timezone using setHours()
+    // When sent to backend via .toISOString(), it will be converted to UTC
+    // Example: User selects 2:00 PM → setHours(14, 0) → creates local 2:00 PM
+    //          .toISOString() sends as UTC (e.g., 20:00 UTC if user is UTC-6)
     const startDateTime = new Date(date);
     startDateTime.setHours(hours, minutes, 0, 0);
 

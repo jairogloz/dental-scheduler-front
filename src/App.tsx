@@ -484,22 +484,26 @@ function App() {
         },
       });
 
-      // Format dates to ISO string in LOCAL timezone to avoid date shifts
-      // Using date-fns format instead of toISOString() to preserve local date/time
-      const startTimeLocal = format(start, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
-      const endTimeLocal = format(end, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx");
+      // TIMEZONE HANDLING:
+      // - User drags event to new local time (e.g., 2:00 PM in their timezone)
+      // - We send to backend using .toISOString() which converts to UTC
+      // - Backend stores UTC time
+      // - When reading back, new Date(utc_string) converts back to local time
+      // This ensures appointments appear at the correct local time regardless of user's timezone
+      const startTimeUTC = start.toISOString();
+      const endTimeUTC = end.toISOString();
 
-      console.log("📤 Sending update with local times:", {
-        startTimeLocal,
-        endTimeLocal,
-        startUTC: start.toISOString(),
-        endUTC: end.toISOString(),
+      console.log("📤 Sending update with UTC times:", {
+        localStart: format(start, "yyyy-MM-dd HH:mm:ss"),
+        localEnd: format(end, "yyyy-MM-dd HH:mm:ss"),
+        utcStart: startTimeUTC,
+        utcEnd: endTimeUTC,
       });
 
       await updateAppointmentMutation.mutateAsync({
         id: appointment.id,
-        start_time: startTimeLocal,
-        end_time: endTimeLocal,
+        start_time: startTimeUTC,
+        end_time: endTimeUTC,
       });
 
       setShowDragConfirmation(false);
