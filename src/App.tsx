@@ -155,7 +155,7 @@ function App() {
     if (orgDoctors.length === 0) {
       return [];
     }
-    
+
     // Add virtual "Sin Doctor" entry for unassigned appointments
     const virtualSinDoctor = {
       id: "sin-doctor",
