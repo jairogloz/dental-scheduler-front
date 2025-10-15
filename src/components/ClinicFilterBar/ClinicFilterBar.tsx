@@ -65,13 +65,11 @@ const ClinicFilterBar: React.FC<ClinicFilterBarProps> = ({
     <div
       ref={containerRef}
       style={{
-        position: "relative",
-        padding: "12px 0",
-        borderBottom: "1px solid #e2e8f0",
         display: "flex",
         alignItems: "center",
         gap: "8px",
         fontSize: "14px",
+        position: "relative",
       }}
     >
       <span

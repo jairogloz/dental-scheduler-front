@@ -599,21 +599,40 @@ function App() {
         <div style={{ padding: isMobile ? "10px" : "20px" }}>
           {organizationData ? (
             <>
-              <ClinicFilterBar
-                selectedClinics={selectedClinics}
-                onClinicsChange={setSelectedClinics}
-                clinics={organizationData.clinics}
-                getClinicColor={(clinicId) =>
-                  getClinicColor(clinicId, organizationData.clinics)
-                }
-              />
+              <div
+                style={{
+                  borderBottom: "1px solid #e2e8f0",
+                  padding: "12px 0",
+                  marginBottom: "8px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "20px",
+                    alignItems: "center",
+                  }}
+                >
+                  <ClinicFilterBar
+                    selectedClinics={selectedClinics}
+                    onClinicsChange={setSelectedClinics}
+                    clinics={organizationData.clinics}
+                    getClinicColor={(clinicId) =>
+                      getClinicColor(clinicId, organizationData.clinics)
+                    }
+                  />
 
-              <DoctorFilterBar
-                selectedDoctors={selectedDoctors}
-                onDoctorsChange={setSelectedDoctors}
-                doctors={doctors}
-                getDoctorColor={(doctorId) => getDoctorColor(doctorId, doctors)}
-              />
+                  <DoctorFilterBar
+                    selectedDoctors={selectedDoctors}
+                    onDoctorsChange={setSelectedDoctors}
+                    doctors={doctors}
+                    getDoctorColor={(doctorId) =>
+                      getDoctorColor(doctorId, doctors)
+                    }
+                  />
+                </div>
+              </div>
 
               {appointmentsLoading ? (
                 <div style={{ textAlign: "center", padding: "20px" }}>
