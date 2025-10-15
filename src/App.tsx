@@ -101,6 +101,7 @@ type AppointmentForm = {
   end: Date;
   status?: string;
   is_first_visit?: boolean;
+  notes?: string;
 };
 
 function App() {
@@ -142,6 +143,7 @@ function App() {
     start: new Date(),
     end: new Date(),
     status: undefined,
+    notes: "",
   });
 
   // Data queries - only call useOrganizationQuery once
@@ -367,6 +369,7 @@ function App() {
         end: appointment.end,
         status: appointment.status, // Include the appointment status
         is_first_visit: appointment.is_first_visit, // Include the first visit flag
+        notes: appointment.notes || "",
       };
 
       console.log("📋 handleSelectEvent - Setting appointmentForm:", formData);

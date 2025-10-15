@@ -660,6 +660,7 @@ const AppointmentModal = ({
         doctorId: validatedForm.doctorId,
         unitId: validatedForm.resourceId, // Map resourceId to unitId
         serviceId: validatedForm.serviceId,
+        notes: validatedForm.notes || "",
       };
 
       try {
@@ -774,6 +775,7 @@ const AppointmentModal = ({
         start_time: startDate.toISOString(),
         end_time: endDate.toISOString(),
         status: finalStatus,
+        notes: validatedForm.notes || "",
       };
 
       console.log("🔄 Calling updateAppointment with:", updateData);
@@ -792,6 +794,7 @@ const AppointmentModal = ({
           start: updatedAppointment.start,
           end: updatedAppointment.end,
           status: updatedAppointment.status || finalStatus,
+          notes: updatedAppointment.notes || validatedForm.notes || "",
         });
 
         // Switch back to see-only mode
@@ -1147,6 +1150,39 @@ const AppointmentModal = ({
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="form-field">
+            <label>Notas:</label>
+            {currentMode === "see-only" ? (
+              <div
+                style={{
+                  whiteSpace: "pre-wrap",
+                  border: "1px solid #ddd",
+                  borderRadius: 4,
+                  padding: 10,
+                  minHeight: 60,
+                  background: "#fafafa",
+                }}
+              >
+                {appointmentForm.notes && appointmentForm.notes.trim()
+                  ? appointmentForm.notes
+                  : "(sin notas)"}
+              </div>
+            ) : (
+              <textarea
+                value={appointmentForm.notes || ""}
+                onChange={(e) =>
+                  setAppointmentForm((prev: any) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
+                placeholder="Agregar notas de la cita (opcional)"
+                rows={3}
+                style={{ width: "100%" }}
+              />
+            )}
           </div>
 
           <div className="form-field">

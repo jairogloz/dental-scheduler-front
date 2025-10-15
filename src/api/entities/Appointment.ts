@@ -31,6 +31,7 @@ export type Appointment = {
   unitId: string;
   start: Date;
   end: Date;
+  notes?: string; // Free-form notes
   // Additional fields from API responses
   patient_name?: string; // Deprecated - use patient.first_name + patient.last_name
   patient_phone?: string; // Deprecated - use patient.phone
@@ -50,6 +51,7 @@ export type CreateAppointmentRequest = {
   start_time: string; // ISO string format
   end_time: string;   // ISO string format
   service_id: string;
+  notes?: string;
 };
 
 export type UpdateAppointmentRequest = {
@@ -60,6 +62,7 @@ export type UpdateAppointmentRequest = {
   end_time?: string;   // ISO string format
   service_id?: string;
   status?: string;
+  notes?: string;
 };
 
 export type AppointmentResponse = {
@@ -79,6 +82,7 @@ export type AppointmentResponse = {
   created_at: string;
   updated_at: string;
   is_first_visit?: boolean;
+  notes?: string | null;
 };
 
 // Backend API wrapper response
@@ -116,6 +120,7 @@ export const createAppointment = async (
       start_time: appointment.start.toISOString(), // Converts local time to UTC
       end_time: appointment.end.toISOString(),     // Converts local time to UTC
       service_id: appointment.serviceId,
+      notes: appointment.notes || undefined,
     };
 
     // Log transformed data for debugging
@@ -169,6 +174,7 @@ export const createAppointment = async (
       end: endDate,
       serviceId: appointmentData.service_id,
       serviceName: appointmentData.service_name,
+      notes: appointmentData.notes ?? undefined,
       // Keep deprecated fields for backwards compatibility during transition
       patient_name: appointmentData.patient 
         ? `${appointmentData.patient.first_name || ''} ${appointmentData.patient.last_name || ''}`.trim()
@@ -235,6 +241,7 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       end_time: appointmentData.end_time,
       service_id: appointmentData.serviceId,
       status: appointmentData.status,
+      notes: appointmentData.notes,
     };
 
     // Remove undefined or empty fields
@@ -295,6 +302,7 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       end: endDate,
       serviceId: updatedAppointment.service_id,
       serviceName: updatedAppointment.service_name,
+      notes: updatedAppointment.notes ?? undefined,
       // Keep deprecated fields for backwards compatibility
       patient_name: updatedAppointment.patient 
         ? `${updatedAppointment.patient.first_name || ''} ${updatedAppointment.patient.last_name || ''}`.trim()
@@ -394,6 +402,7 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
       patient_phone: cancelledAppointment.patient?.phone || cancelledAppointment.patient_phone,
       status: cancelledAppointment.status, // Should be "cancelled"
       is_first_visit: cancelledAppointment.is_first_visit,
+      notes: cancelledAppointment.notes ?? undefined,
     };
   } catch (error: any) {
     console.error("❌ Error cancelling appointment:", error);
@@ -505,6 +514,7 @@ export const getAppointmentsByDateRange = async (
         end: endDate,
         serviceId: appt.service_id,
         serviceName: appt.service_name,
+        notes: (appt as any).notes ?? undefined,
         // Preserve additional fields from API response
         patient_name: appt.patient 
           ? `${appt.patient.first_name || ''} ${appt.patient.last_name || ''}`.trim()
