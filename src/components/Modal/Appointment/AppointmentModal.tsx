@@ -140,11 +140,11 @@ const AppointmentModal = ({
 
   const isReadOnly = currentMode === "see-only";
 
-  // Generate time options with 15-minute intervals
+  // Generate time options with 5-minute intervals for finer control
   const generateTimeOptions = () => {
     const options = [];
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += 5) {
         const timeString = `${hour.toString().padStart(2, "0")}:${minute
           .toString()
           .padStart(2, "0")}`;
@@ -162,18 +162,38 @@ const AppointmentModal = ({
     return options;
   };
 
-  // Generate duration options - specific durations only
+  // Generate duration options in 5-minute increments up to 3 hours
   const generateDurationOptions = () => {
-    const durations = [
-      { value: 15, label: "15 min" },
-      { value: 30, label: "30 min" },
-      { value: 45, label: "45 min" },
-      { value: 60, label: "1 hr" },
-      { value: 90, label: "1.5 hr" },
-      { value: 120, label: "2 hr" },
-      { value: 180, label: "3 hr" },
-      { value: 240, label: "4 hr" },
-    ];
+    const formatLabel = (minutes: number) => {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      const parts: string[] = [];
+
+      if (hours > 0) {
+        parts.push(`${hours} ${hours === 1 ? "hora" : "horas"}`);
+      }
+      if (remainingMinutes > 0 || hours === 0) {
+        parts.push(`${remainingMinutes} min`);
+      }
+
+      return parts.join(" ");
+    };
+
+    const durations: { value: number; label: string }[] = [];
+    for (let minutes = 5; minutes <= 180; minutes += 5) {
+      durations.push({ value: minutes, label: formatLabel(minutes) });
+    }
+
+    if (
+      selectedDuration &&
+      !durations.some((option) => option.value === selectedDuration)
+    ) {
+      durations.push({
+        value: selectedDuration,
+        label: formatLabel(selectedDuration),
+      });
+    }
+
     return durations;
   };
 
