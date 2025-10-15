@@ -141,7 +141,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
 
   // Handle patient selection
   const handlePatientSelect = (patient: Patient) => {
-    setQuery(patient.name);
+    setQuery(patient.name || "");
     setShowDropdown(false);
     setFocusedIndex(-1);
     onPatientSelect(patient);
@@ -284,7 +284,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
     }
 
     if (selectedPatient) {
-      setQuery(selectedPatient.name);
+      setQuery(selectedPatient.name || "");
       // Clear all search-related state when a patient is selected
       setIsLoading(false);
       setShowDropdown(false);
@@ -386,7 +386,7 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
                   onMouseEnter={() => setFocusedIndex(index)}
                 >
                   <div className="patient-name">
-                    {highlightMatch(patient.name, query)}
+                    {highlightMatch(patient.name || "", query)}
                   </div>
                   {patient.phone && (
                     <div className="patient-phone">{patient.phone}</div>
