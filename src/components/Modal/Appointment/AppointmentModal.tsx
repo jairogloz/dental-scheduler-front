@@ -30,6 +30,10 @@ import "../../../styles/Modal.css";
 // Registrar el idioma español
 registerLocale("es", es);
 
+const MIN_START_MINUTES = 8 * 60; // 8:00 a.m.
+const MAX_START_MINUTES = 20 * 60 + 25; // 8:25 p.m.
+const TIME_INTERVAL_MINUTES = 5;
+
 const AppointmentModal = ({
   showModal,
   mode = "create", // "create", "edit", or "see-only"
@@ -143,21 +147,25 @@ const AppointmentModal = ({
   // Generate time options with 5-minute intervals for finer control
   const generateTimeOptions = () => {
     const options = [];
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 5) {
-        const timeString = `${hour.toString().padStart(2, "0")}:${minute
-          .toString()
-          .padStart(2, "0")}`;
-        const time12 = new Date(`2000-01-01T${timeString}`).toLocaleTimeString(
-          "en-US",
-          {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-          }
-        );
-        options.push({ value: timeString, label: time12 });
-      }
+    for (
+      let totalMinutes = MIN_START_MINUTES;
+      totalMinutes <= MAX_START_MINUTES;
+      totalMinutes += TIME_INTERVAL_MINUTES
+    ) {
+      const hour = Math.floor(totalMinutes / 60);
+      const minute = totalMinutes % 60;
+      const timeString = `${hour.toString().padStart(2, "0")}:${minute
+        .toString()
+        .padStart(2, "0")}`;
+      const time12 = new Date(`2000-01-01T${timeString}`).toLocaleTimeString(
+        "en-US",
+        {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }
+      );
+      options.push({ value: timeString, label: time12 });
     }
     return options;
   };
