@@ -163,7 +163,7 @@ export const createAppointment = async (
       id: appointmentData.id,
       patient: appointmentData.patient, // Full patient object from backend
       patientId: appointmentData.patient?.id || appointmentData.patient_id || "", // Fallback for backwards compatibility
-      doctorId: appointmentData.doctor_id,
+      doctorId: appointmentData.doctor_id && appointmentData.doctor_id !== "unassigned" ? appointmentData.doctor_id : "sin-doctor", // Normalize null/unassigned doctor_id
       unitId: appointmentData.unit_id,
       start: startDate,
       end: endDate,
@@ -289,7 +289,7 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       id: updatedAppointment.id,
       patient: updatedAppointment.patient, // Full patient object from backend
       patientId: updatedAppointment.patient?.id || updatedAppointment.patient_id || "", // Fallback for backwards compatibility
-      doctorId: updatedAppointment.doctor_id,
+      doctorId: updatedAppointment.doctor_id && updatedAppointment.doctor_id !== "unassigned" ? updatedAppointment.doctor_id : "sin-doctor", // Normalize null/unassigned doctor_id
       unitId: updatedAppointment.unit_id,
       start: startDate,
       end: endDate,
@@ -381,7 +381,7 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
       id: cancelledAppointment.id,
       patient: cancelledAppointment.patient, // Full patient object from backend
       patientId: cancelledAppointment.patient?.id || cancelledAppointment.patient_id || "", // Fallback for backwards compatibility
-      doctorId: cancelledAppointment.doctor_id,
+      doctorId: cancelledAppointment.doctor_id && cancelledAppointment.doctor_id !== "unassigned" ? cancelledAppointment.doctor_id : "sin-doctor", // Normalize null/unassigned doctor_id
       unitId: cancelledAppointment.unit_id,
       start: startDate,
       end: endDate,
@@ -499,7 +499,7 @@ export const getAppointmentsByDateRange = async (
         id: appt.id,
         patient: appt.patient, // Full patient object from backend
         patientId: appt.patient?.id || appt.patient_id || "", // Fallback for backwards compatibility
-        doctorId: appt.doctor_id,
+        doctorId: appt.doctor_id && appt.doctor_id !== "unassigned" ? appt.doctor_id : "sin-doctor", // Normalize null/unassigned doctor_id
         unitId: appt.unit_id,
         start: startDate,
         end: endDate,

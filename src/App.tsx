@@ -148,8 +148,25 @@ function App() {
   const { data: organizationData, isLoading: organizationLoading } =
     useOrganizationQuery();
 
-  // Extract doctors from organization data to avoid multiple API calls
-  const doctors = organizationData?.doctors || [];
+  // Extract doctors from organization data and add virtual "Sin Doctor" for unassigned appointments
+  const doctors = useMemo(() => {
+    const orgDoctors = organizationData?.doctors || [];
+    // Only add virtual "Sin Doctor" if we have organization data
+    if (orgDoctors.length === 0) {
+      return [];
+    }
+    
+    // Add virtual "Sin Doctor" entry for unassigned appointments
+    const virtualSinDoctor = {
+      id: "sin-doctor",
+      name: "Sin Doctor",
+      // Add other properties that might be expected
+      clinic_id: "",
+      specialization: "",
+      schedule: null,
+    };
+    return [...orgDoctors, virtualSinDoctor];
+  }, [organizationData?.doctors]);
 
   // Calculate date range for appointments query
   const dateRange = useMemo(() => {
@@ -180,10 +197,10 @@ function App() {
     return organizationData?.clinics?.map((clinic) => clinic.id) || [];
   }, [organizationData?.clinics]);
 
-  // Initialize selected doctors when organization data loads
+  // Initialize selected doctors when organization data loads (including virtual "Sin Doctor")
   const allDoctorIds = useMemo(() => {
-    return organizationData?.doctors?.map((doctor) => doctor.id) || [];
-  }, [organizationData?.doctors]);
+    return doctors.map((doctor) => doctor.id);
+  }, [doctors]);
 
   // Set initial clinic selection
   useEffect(() => {
@@ -594,10 +611,8 @@ function App() {
               <DoctorFilterBar
                 selectedDoctors={selectedDoctors}
                 onDoctorsChange={setSelectedDoctors}
-                doctors={organizationData.doctors}
-                getDoctorColor={(doctorId) =>
-                  getDoctorColor(doctorId, organizationData.doctors)
-                }
+                doctors={doctors}
+                getDoctorColor={(doctorId) => getDoctorColor(doctorId, doctors)}
               />
 
               {appointmentsLoading ? (
