@@ -71,7 +71,7 @@ const LoginPage = () => {
               fontWeight: "600",
             }}
           >
-            Bienvenido!
+            ¡Bienvenido!
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
             Inicia sesión en tu cuenta
