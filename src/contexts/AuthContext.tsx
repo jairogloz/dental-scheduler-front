@@ -48,9 +48,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        if (!newSession) {
-          navigate("/login");
-        }
       }
     );
 
