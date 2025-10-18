@@ -61,6 +61,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       password,
     });
+    if (error?.message === "Email not confirmed") {
+      // Translate Supabase unconfirmed email error to Spanish for better UX
+      return {
+        error: {
+          ...error,
+          message:
+            "Correo electrónico no confirmado. Revisa tu bandeja de entrada para activarlo.",
+        },
+      };
+    }
     return { error };
   };
 
