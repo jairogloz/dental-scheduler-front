@@ -574,7 +574,7 @@ function App() {
           height: "100vh",
         }}
       >
-        <div>No organization access. Please contact support.</div>
+        <div>No tienes acceso a una organización. Contacta a soporte.</div>
       </div>
     );
   }
