@@ -10,6 +10,7 @@ interface ConfirmationDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   confirmButtonStyle?: "danger" | "primary";
+  hideCancelButton?: boolean;
 }
 
 const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
@@ -21,6 +22,7 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
   onConfirm,
   onCancel,
   confirmButtonStyle = "primary",
+  hideCancelButton = false,
 }) => {
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
@@ -30,13 +32,13 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
       // Focus on appropriate button when dialog opens
       // Destructive actions (danger) -> focus Cancel
       // Creative actions (primary) -> focus Confirm
-      if (confirmButtonStyle === "danger") {
+      if (confirmButtonStyle === "danger" && !hideCancelButton) {
         cancelButtonRef.current?.focus();
       } else {
         confirmButtonRef.current?.focus();
       }
     }
-  }, [isOpen, confirmButtonStyle]);
+  }, [isOpen, confirmButtonStyle, hideCancelButton]);
 
   if (!isOpen) return null;
 
@@ -61,21 +63,23 @@ const ConfirmationDialog: React.FC<ConfirmationDialogProps> = ({
         </p>
 
         <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
-          <button
-            ref={cancelButtonRef}
-            onClick={onCancel}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            {cancelText}
-          </button>
+          {!hideCancelButton && (
+            <button
+              ref={cancelButtonRef}
+              onClick={onCancel}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#6c757d",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "14px",
+              }}
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             ref={confirmButtonRef}
             onClick={onConfirm}

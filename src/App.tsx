@@ -106,7 +106,7 @@ type AppointmentForm = {
 
 function App() {
   const { isMobile } = useWindowSize();
-  const { organizationId } = useAuth();
+  const { organizationId, signOut } = useAuth();
 
   // UI State
   const [view, setView] = useState<View>(isMobile ? "day" : "week");
@@ -129,6 +129,8 @@ function App() {
     end: Date;
     isResize?: boolean;
   } | null>(null);
+  const [showNoOrganizationDialog, setShowNoOrganizationDialog] =
+    useState(false);
 
   // Form state
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
@@ -149,6 +151,18 @@ function App() {
   // Data queries - only call useOrganizationQuery once
   const { data: organizationData, isLoading: organizationLoading } =
     useOrganizationQuery();
+
+  useEffect(() => {
+    if (!organizationLoading && !organizationId) {
+      setShowNoOrganizationDialog(true);
+    } else {
+      setShowNoOrganizationDialog(false);
+    }
+  }, [organizationId, organizationLoading]);
+
+  const handleNoOrganizationAcknowledge = useCallback(() => {
+    void signOut();
+  }, [signOut]);
 
   // Extract doctors from organization data and add virtual "Sin Doctor" for unassigned appointments
   const doctors = useMemo(() => {
@@ -563,19 +577,26 @@ function App() {
     );
   }
 
-  // Show error state
-  if (!organizationId) {
+  if (showNoOrganizationDialog) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "100vh",
-        }}
-      >
-        <div>No tienes acceso a una organización. Contacta a soporte.</div>
-      </div>
+      <>
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundColor: "#f8fafc",
+          }}
+        />
+        <ConfirmationDialog
+          isOpen
+          title="Sin acceso a organización"
+          message="No encontramos una organización asociada a tu cuenta. Comunícate con soporte para que te asignen una."
+          confirmText="Ok, contactaré al soporte"
+          onConfirm={handleNoOrganizationAcknowledge}
+          onCancel={() => {}}
+          confirmButtonStyle="primary"
+          hideCancelButton
+        />
+      </>
     );
   }
 
