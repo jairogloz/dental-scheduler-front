@@ -1129,27 +1129,60 @@ const AppointmentModal = ({
             />
           </div>
 
-          <div className="form-field">
-            <label>Hora:</label>
-            <select
-              value={selectedTime}
-              onChange={(e) => {
-                setSelectedTime(e.target.value);
-                updateAppointmentDateTime(
-                  selectedDate,
-                  e.target.value,
-                  selectedDuration
-                );
-              }}
-              className="custom-selector"
-              disabled={isReadOnly}
-            >
-              {generateTimeOptions().map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Hora:</label>
+              <select
+                value={selectedTime}
+                onChange={(e) => {
+                  setSelectedTime(e.target.value);
+                  updateAppointmentDateTime(
+                    selectedDate,
+                    e.target.value,
+                    selectedDuration
+                  );
+                }}
+                className="custom-selector"
+                disabled={isReadOnly}
+              >
+                {generateTimeOptions().map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Duración:</label>
+              <select
+                value={selectedDuration}
+                onChange={(e) => {
+                  const duration = parseInt(e.target.value);
+                  setSelectedDuration(duration);
+                  updateAppointmentDateTime(
+                    selectedDate,
+                    selectedTime,
+                    duration
+                  );
+                }}
+                className="custom-selector"
+                disabled={isReadOnly}
+              >
+                {generateDurationOptions().map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "20px" }}>
+            <p>
+              <strong>Resumen:</strong>{" "}
+              {formatAppointmentSummary(appointmentForm.start)}
+            </p>
           </div>
 
           <div className="form-field">
@@ -1183,33 +1216,6 @@ const AppointmentModal = ({
                 style={{ width: "100%" }}
               />
             )}
-          </div>
-
-          <div className="form-field">
-            <label>Duración:</label>
-            <select
-              value={selectedDuration}
-              onChange={(e) => {
-                const duration = parseInt(e.target.value);
-                setSelectedDuration(duration);
-                updateAppointmentDateTime(selectedDate, selectedTime, duration);
-              }}
-              className="custom-selector"
-              disabled={isReadOnly}
-            >
-              {generateDurationOptions().map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div style={{ marginBottom: "20px" }}>
-            <p>
-              <strong>Resumen:</strong>{" "}
-              {formatAppointmentSummary(appointmentForm.start)}
-            </p>
           </div>
           <div
             style={{

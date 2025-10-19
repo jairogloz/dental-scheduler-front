@@ -12,6 +12,17 @@
   border-radius: 4px;
 }
 
+.form-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.form-row .form-field {
+  flex: 1;
+  min-width: 160px;
+}
+
 /* Compact form styling */
 .appointment-form-compact {
   display: flex;
