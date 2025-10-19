@@ -104,6 +104,12 @@ type AppointmentForm = {
   notes?: string;
 };
 
+type BlockingDialogState = {
+  title: string;
+  message: string;
+  confirmText?: string;
+};
+
 function App() {
   const { isMobile } = useWindowSize();
   const { organizationId, signOut } = useAuth();
@@ -129,8 +135,8 @@ function App() {
     end: Date;
     isResize?: boolean;
   } | null>(null);
-  const [showNoOrganizationDialog, setShowNoOrganizationDialog] =
-    useState(false);
+  const [blockingDialog, setBlockingDialog] =
+    useState<BlockingDialogState | null>(null);
 
   // Form state
   const [appointmentForm, setAppointmentForm] = useState<AppointmentForm>({
@@ -152,21 +158,89 @@ function App() {
   const { data: organizationData, isLoading: organizationLoading } =
     useOrganizationQuery();
 
-  useEffect(() => {
-    if (!organizationLoading && !organizationId) {
-      setShowNoOrganizationDialog(true);
-    } else {
-      setShowNoOrganizationDialog(false);
-    }
-  }, [organizationId, organizationLoading]);
+  const clinics = organizationData?.clinics ?? [];
+  const units = organizationData?.units ?? [];
+  const organizationDoctors = organizationData?.doctors ?? [];
+  const services = organizationData?.services ?? [];
 
-  const handleNoOrganizationAcknowledge = useCallback(() => {
+  useEffect(() => {
+    if (organizationLoading) {
+      return;
+    }
+
+    if (!organizationId) {
+      setBlockingDialog({
+        title: "Sin acceso a organización",
+        message:
+          "No encontramos una organización asociada a tu cuenta. Comunícate con soporte para que te asignen una.",
+        confirmText: "Ok, contactaré al soporte",
+      });
+      return;
+    }
+
+    if (!organizationData) {
+      setBlockingDialog(null);
+      return;
+    }
+
+    if (clinics.length === 0) {
+      setBlockingDialog({
+        title: "Clínicas no configuradas",
+        message:
+          "Tu organización aún no tiene clínicas registradas. Comunícate con soporte para configurarlas antes de continuar.",
+        confirmText: "Ok, contactaré al soporte",
+      });
+      return;
+    }
+
+    if (units.length === 0) {
+      setBlockingDialog({
+        title: "Unidades no configuradas",
+        message:
+          "Tu organización no tiene unidades registradas. Comunícate con soporte para crear al menos una unidad.",
+        confirmText: "Ok, contactaré al soporte",
+      });
+      return;
+    }
+
+    if (organizationDoctors.length === 0) {
+      setBlockingDialog({
+        title: "Doctores no configurados",
+        message:
+          "No se han registrado doctores en tu organización. Comunícate con soporte para agregarlos antes de continuar.",
+        confirmText: "Ok, contactaré al soporte",
+      });
+      return;
+    }
+
+    if (services.length === 0) {
+      setBlockingDialog({
+        title: "Servicios no configurados",
+        message:
+          "Tu organización aún no tiene servicios configurados. Comunícate con soporte para darlos de alta.",
+        confirmText: "Ok, contactaré al soporte",
+      });
+      return;
+    }
+
+    setBlockingDialog(null);
+  }, [
+    organizationLoading,
+    organizationId,
+    organizationData,
+    clinics,
+    units,
+    organizationDoctors,
+    services,
+  ]);
+
+  const handleBlockingDialogConfirm = useCallback(() => {
     void signOut();
   }, [signOut]);
 
   // Extract doctors from organization data and add virtual "Sin Doctor" for unassigned appointments
   const doctors = useMemo(() => {
-    const orgDoctors = organizationData?.doctors || [];
+    const orgDoctors = organizationDoctors;
     // Only add virtual "Sin Doctor" if we have organization data
     if (orgDoctors.length === 0) {
       return [];
@@ -182,7 +256,7 @@ function App() {
       schedule: null,
     };
     return [...orgDoctors, virtualSinDoctor];
-  }, [organizationData?.doctors]);
+  }, [organizationDoctors]);
 
   // Calculate date range for appointments query
   const dateRange = useMemo(() => {
@@ -210,8 +284,8 @@ function App() {
 
   // Initialize selected clinics when organization data loads
   const allClinicIds = useMemo(() => {
-    return organizationData?.clinics?.map((clinic) => clinic.id) || [];
-  }, [organizationData?.clinics]);
+    return clinics.map((clinic) => clinic.id);
+  }, [clinics]);
 
   // Initialize selected doctors when organization data loads (including virtual "Sin Doctor")
   const allDoctorIds = useMemo(() => {
@@ -234,7 +308,7 @@ function App() {
 
   // Transform appointments to calendar events (memoized)
   const events = useMemo((): Event[] => {
-    if (!filteredAppointments.length || !organizationData) return [];
+    if (!filteredAppointments.length) return [];
 
     return filteredAppointments.map((appointment) => {
       const doctor = doctors.find((d) => d.id === appointment.doctorId);
@@ -242,9 +316,7 @@ function App() {
       const patientLabel = appointment.patient_name || appointment.patientId;
 
       // Find unit and clinic for styling
-      const unit = organizationData.units.find(
-        (u) => u.id === appointment.unitId
-      );
+      const unit = units.find((u) => u.id === appointment.unitId);
       const clinicId = unit?.clinic_id;
 
       return {
@@ -260,16 +332,13 @@ function App() {
         isFirstVisit: appointment.is_first_visit,
       };
     });
-  }, [filteredAppointments, organizationData, doctors]);
+  }, [filteredAppointments, doctors, units]);
 
   // Stable event styling function
   const eventPropGetter = useCallback(
     (event: Event) => {
       const backgroundColor = getDoctorColor(event.resourceId, doctors);
-      const clinicColor = getClinicColor(
-        event.clinicId,
-        organizationData?.clinics
-      );
+      const clinicColor = getClinicColor(event.clinicId, clinics);
 
       const isSelected = event.appointmentId === selectedEventId;
 
@@ -301,26 +370,24 @@ function App() {
         className: "calendar-event-with-clinic-outline",
       };
     },
-    [doctors, organizationData?.clinics, selectedEventId]
+    [doctors, clinics, selectedEventId]
   );
 
   // Stable callback handlers
   const handleSelectSlot = useCallback(
     (slotInfo: any) => {
-      if (!organizationData?.doctors?.length) {
+      if (!organizationDoctors.length) {
         alert("No doctors available. Please add doctors first.");
         return;
       }
 
       // Get first clinic and its first unit as defaults
-      const firstClinic = organizationData.clinics?.[0];
+      const firstClinic = clinics[0];
       const firstUnitOfFirstClinic = firstClinic
-        ? organizationData.units?.find(
-            (unit) => unit.clinic_id === firstClinic.id
-          )
+        ? units.find((unit) => unit.clinic_id === firstClinic.id)
         : null;
 
-      const defaultDoctor = organizationData.doctors[0];
+      const defaultDoctor = organizationDoctors[0];
       setAppointmentForm({
         appointmentId: "",
         patientName: "",
@@ -337,11 +404,7 @@ function App() {
       setModalMode("create");
       setShowModal(true);
     },
-    [
-      organizationData?.doctors,
-      organizationData?.clinics,
-      organizationData?.units,
-    ]
+    [organizationDoctors, clinics, units]
   );
 
   const handleSelectEvent = useCallback(
@@ -577,7 +640,7 @@ function App() {
     );
   }
 
-  if (showNoOrganizationDialog) {
+  if (blockingDialog) {
     return (
       <>
         <div
@@ -588,10 +651,12 @@ function App() {
         />
         <ConfirmationDialog
           isOpen
-          title="Sin acceso a organización"
-          message="No encontramos una organización asociada a tu cuenta. Comunícate con soporte para que te asignen una."
-          confirmText="Ok, contactaré al soporte"
-          onConfirm={handleNoOrganizationAcknowledge}
+          title={blockingDialog.title}
+          message={blockingDialog.message}
+          confirmText={
+            blockingDialog.confirmText ?? "Ok, contactaré al soporte"
+          }
+          onConfirm={handleBlockingDialogConfirm}
           onCancel={() => {}}
           confirmButtonStyle="primary"
           hideCancelButton
@@ -641,9 +706,9 @@ function App() {
                   <ClinicFilterBar
                     selectedClinics={selectedClinics}
                     onClinicsChange={setSelectedClinics}
-                    clinics={organizationData.clinics}
+                    clinics={clinics}
                     getClinicColor={(clinicId) =>
-                      getClinicColor(clinicId, organizationData.clinics)
+                      getClinicColor(clinicId, clinics)
                     }
                   />
 
@@ -731,9 +796,9 @@ function App() {
             mode={modalMode}
             appointmentForm={appointmentForm}
             doctors={doctors}
-            clinics={organizationData?.clinics || []}
-            units={organizationData?.units || []}
-            services={organizationData?.services || []}
+            clinics={clinics}
+            units={units}
+            services={services}
             handleCloseModal={handleCloseModal}
             handleAddAppointment={handleAddAppointment}
             setAppointmentForm={setAppointmentForm}

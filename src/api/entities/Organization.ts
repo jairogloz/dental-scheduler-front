@@ -1,12 +1,4 @@
-
-
-// Backend response wrapper
-export type OrganizationApiResponse = {
-  data: OrganizationData;
-  success: boolean;
-};
-
-// Organization consolidated data types matching the backend response
+// Organization data shape used across the app (sanitized: arrays never null)
 export type OrganizationData = {
   organization: {
     id: string;
@@ -57,7 +49,23 @@ export type OrganizationData = {
     patient_name: string;
     doctor_name: string;
     unit_name: string;
-  }> | null; // appointments can be null
+  }>;
+};
+
+// Raw backend payload shape (collections can be null when empty)
+type OrganizationApiData = {
+  organization: OrganizationData["organization"];
+  clinics: OrganizationData["clinics"] | null;
+  units: OrganizationData["units"] | null;
+  doctors: OrganizationData["doctors"] | null;
+  services: OrganizationData["services"] | null;
+  appointments: OrganizationData["appointments"] | null;
+};
+
+// Backend response wrapper
+export type OrganizationApiResponse = {
+  data: OrganizationApiData;
+  success: boolean;
 };
 
 // Request parameters for the organization endpoint
@@ -125,17 +133,20 @@ export const getOrganizationData = async (
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
-    // The API returns { data: OrganizationData, success: boolean }
+    // The API returns { data: OrganizationApiData, success: boolean }
     const apiResponse: OrganizationApiResponse = await response.json();
-    
-    // Extract the nested data object
-    const organizationData = apiResponse.data;
-    
-    // Ensure appointments is an array (convert null to empty array)
-    if (organizationData.appointments === null) {
-      organizationData.appointments = [];
-    }
-    
+
+    // Normalize nullable collections into arrays for frontend consumption
+    const rawData = apiResponse.data;
+    const organizationData: OrganizationData = {
+      organization: rawData.organization,
+      clinics: rawData.clinics ?? [],
+      units: rawData.units ?? [],
+      doctors: rawData.doctors ?? [],
+      services: rawData.services ?? [],
+      appointments: rawData.appointments ?? [],
+    };
+
     return organizationData;
   } catch (error) {
     console.error('❌ Error fetching organization data:', error);
