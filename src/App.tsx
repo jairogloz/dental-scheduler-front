@@ -37,6 +37,11 @@ import {
   getDoctorColor,
   getClinicColor,
 } from "./utils/calendarUtils";
+import {
+  APPOINTMENT_STATUS,
+  getStatusLabel,
+  type AppointmentStatus,
+} from "./utils/appointmentStatus";
 
 const locales = {
   "en-US": enUS,
@@ -772,6 +777,18 @@ function App() {
                       locale: es,
                     });
 
+                    const validStatuses = Object.values(
+                      APPOINTMENT_STATUS
+                    ) as AppointmentStatus[];
+                    const normalizedStatus = event.status?.toLowerCase() as
+                      | AppointmentStatus
+                      | undefined;
+                    const statusLabel =
+                      normalizedStatus &&
+                      validStatuses.includes(normalizedStatus)
+                        ? getStatusLabel(normalizedStatus)
+                        : event.status || undefined;
+
                     const lines = [
                       event.patientName,
                       event.patientPhone
@@ -784,7 +801,7 @@ function App() {
                       event.serviceName
                         ? `Servicio: ${event.serviceName}`
                         : undefined,
-                      event.status ? `Estado: ${event.status}` : undefined,
+                      statusLabel ? `Estado: ${statusLabel}` : undefined,
                     ].filter(Boolean) as string[];
 
                     return lines.join("\n");
