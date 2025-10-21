@@ -1,4 +1,6 @@
 import { apiClient } from "../../lib/apiClient";
+import { APPOINTMENT_STATUS } from "../../utils/appointmentStatus";
+import type { AppointmentStatus } from "../../utils/appointmentStatus";
 import type { Patient } from "./Patient";
 
 /**
@@ -233,6 +235,11 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
     console.log('🔄 Updating appointment:', { id, appointmentData });
 
     // Transform frontend format to backend format
+    const normalizedStatus: AppointmentStatus =
+      typeof appointmentData.status === "string" && appointmentData.status.trim() !== ""
+        ? (appointmentData.status.trim() as AppointmentStatus)
+        : APPOINTMENT_STATUS.SCHEDULED;
+
     const requestData: UpdateAppointmentRequest = {
       patient_id: appointmentData.patientId,
       doctor_id: appointmentData.doctorId,
@@ -240,7 +247,7 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       start_time: appointmentData.start_time,
       end_time: appointmentData.end_time,
       service_id: appointmentData.serviceId,
-      status: appointmentData.status,
+      status: normalizedStatus,
       notes: appointmentData.notes,
     };
 
