@@ -32,7 +32,7 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({ event }) => {
   // Common text style for overflow handling
   const textStyle: React.CSSProperties = {
     overflow: "hidden",
-    textOverflow: "ellipsis",
+    textOverflow: "clip",
     whiteSpace: "nowrap",
   };
 
@@ -54,11 +54,8 @@ const CalendarEvent: React.FC<CalendarEventProps> = ({ event }) => {
       {/* Patient line with checkmark */}
       <div style={textStyle}>
         {event.isConfirmed && "✓ "}
-        Px: <strong>{event.patientName}</strong>
+        <strong>{event.patientName}</strong>
       </div>
-
-      {/* Doctor line */}
-      <div style={textStyle}>Dx: {event.doctorName}</div>
 
       {/* Primera visita always at the bottom */}
       {event.isFirstVisit && (
