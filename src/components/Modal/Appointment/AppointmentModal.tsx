@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Select from "react-select";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale";
@@ -48,6 +49,7 @@ const AppointmentModal = ({
   setAppointmentForm,
   appointments, // Receive appointments prop
 }: any) => {
+  const queryClient = useQueryClient();
   const { isMobile } = useWindowSize();
 
   // Mutation hooks for appointments
@@ -389,17 +391,32 @@ const AppointmentModal = ({
 
   // Handle patient updated
   const handlePatientUpdated = (updatedPatient: Patient) => {
+    const combinedName =
+      updatedPatient.name ||
+      `${updatedPatient.first_name || ""} ${
+        updatedPatient.last_name || ""
+      }`.trim();
+
+    const normalizedPatient = {
+      ...updatedPatient,
+      name: combinedName,
+    };
+
     // Update selected patient state
-    setSelectedPatient(updatedPatient);
+    setSelectedPatient(normalizedPatient);
 
     // Update appointment form with updated patient details
     const updatedForm = {
       ...appointmentForm,
-      patientName: updatedPatient.name,
+      patientName: combinedName,
       patientPhone: updatedPatient.phone,
+      patient: normalizedPatient,
     };
 
     setAppointmentForm(updatedForm);
+
+    // Refresh related appointment queries so calendar data stays in sync
+    queryClient.invalidateQueries({ queryKey: ["appointments"], exact: false });
   };
 
   const handleCloseEditPatientModal = () => {
