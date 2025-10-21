@@ -400,9 +400,6 @@ const AppointmentModal = ({
     };
 
     setAppointmentForm(updatedForm);
-
-    // Close the edit patient modal
-    setShowEditPatientModal(false);
   };
 
   const handleCloseEditPatientModal = () => {

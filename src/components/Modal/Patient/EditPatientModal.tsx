@@ -99,6 +99,25 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
     message: "",
   });
 
+  // Reset transient UI state whenever the modal opens or closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowConfirmation(false);
+      setIsSubmitting(false);
+      setUniversalModal({
+        isOpen: false,
+        type: "success",
+        title: "",
+        message: "",
+      });
+      return;
+    }
+
+    // For a fresh open, only reset when starting from closed state
+    setShowConfirmation(false);
+    setIsSubmitting(false);
+  }, [isOpen]);
+
   // Update form when patient changes
   useEffect(() => {
     if (isOpen) {
@@ -253,6 +272,10 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
   };
 
   const handleOverlayClick = (e: React.MouseEvent) => {
+    if (showConfirmation || universalModal.isOpen) {
+      return;
+    }
+
     if (e.target === e.currentTarget) {
       onClose();
     }
