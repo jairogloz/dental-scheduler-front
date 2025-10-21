@@ -21,7 +21,8 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   initialName = "",
 }) => {
   const [formData, setFormData] = useState<CreatePatientRequest>({
-    name: "",
+    first_name: "",
+    last_name: "",
     phone: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,8 +33,13 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
   // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
+      const trimmedInitial = initialName.trim();
+      const [firstName, ...rest] = trimmedInitial.split(" ");
+      const lastName = rest.join(" ").trim();
+
       setFormData({
-        name: initialName || "",
+        first_name: firstName || "",
+        last_name: lastName || "",
         phone: "",
       });
       setError(null);
@@ -60,7 +66,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
     e.preventDefault();
 
     // Validate required fields
-    if (!formData.name.trim()) {
+    if (!formData.first_name.trim()) {
       setError("El nombre del paciente es requerido");
       nameInputRef.current?.focus();
       return;
@@ -71,7 +77,8 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
 
     try {
       const newPatient = await createPatient({
-        name: formData.name.trim(),
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name?.trim() || undefined,
         phone: formData.phone?.trim() || undefined,
       });
 
@@ -138,22 +145,37 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
 
           {/* Name field */}
           <div className="form-group">
-            <label htmlFor="patient-name">
-              Nombre del Paciente <span className="required">*</span>
+            <label htmlFor="patient-first-name">
+              Nombre(s) <span className="required">*</span>
             </label>
             <input
               ref={nameInputRef}
               type="text"
-              id="patient-name"
-              name="name"
-              value={formData.name}
+              id="patient-first-name"
+              name="first_name"
+              value={formData.first_name}
               onChange={handleInputChange}
               disabled={isSubmitting}
               className="form-input"
-              placeholder="Ingresa el nombre completo"
+              placeholder="Ingresa el nombre"
               maxLength={100}
               required
               aria-describedby={error ? "error-message" : undefined}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="patient-last-name">Apellido(s)</label>
+            <input
+              type="text"
+              id="patient-last-name"
+              name="last_name"
+              value={formData.last_name || ""}
+              onChange={handleInputChange}
+              disabled={isSubmitting}
+              className="form-input"
+              placeholder="Ingresa los apellidos"
+              maxLength={100}
             />
           </div>
 
@@ -185,7 +207,7 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !formData.name.trim()}
+              disabled={isSubmitting || !formData.first_name.trim()}
               className="btn-primary"
             >
               {isSubmitting ? (

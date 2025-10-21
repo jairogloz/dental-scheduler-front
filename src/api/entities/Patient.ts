@@ -18,7 +18,8 @@ export type PatientSearchResponse = {
 };
 
 export type CreatePatientRequest = {
-  name: string;
+  first_name: string;
+  last_name?: string;
   phone?: string;
 };
 
@@ -96,10 +97,22 @@ export const createPatient = async (
   patientData: CreatePatientRequest
 ): Promise<Patient> => {
   try {
+    const payload: Record<string, string> = {
+      first_name: patientData.first_name.trim(),
+    };
+
+    if (patientData.last_name && patientData.last_name.trim()) {
+      payload.last_name = patientData.last_name.trim();
+    }
+
+    if (patientData.phone && patientData.phone.trim()) {
+      payload.phone = patientData.phone.trim();
+    }
+
     // Call backend API - organization_id will be extracted from JWT token by backend
     const response = await apiClient.post<CreatePatientResponse>(
       `/patients`, 
-      patientData
+      payload
     );
 
     if (!response.data || !response.data.data) {
