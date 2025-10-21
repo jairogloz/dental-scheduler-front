@@ -784,6 +784,8 @@ const AppointmentModal = ({
         id: validatedForm.appointmentId,
         patientId: validatedForm.patientId,
         doctorId: validatedForm.doctorId,
+        unitId: validatedForm.resourceId,
+        clinicId: selectedClinicId || undefined,
         resourceId: validatedForm.resourceId,
         serviceId: validatedForm.serviceId,
         start_time: startDate.toISOString(),
