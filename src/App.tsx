@@ -759,6 +759,7 @@ function App() {
                   step={15}
                   timeslots={1}
                   showMultiDayTimes
+                  dayLayoutAlgorithm="no-overlap"
                   formats={{
                     timeGutterFormat: (date) => {
                       // Show time label for every 15-minute increment
