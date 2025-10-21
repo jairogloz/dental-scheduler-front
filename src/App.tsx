@@ -82,6 +82,9 @@ type Event = {
   clinicId?: string;
   patientName?: string;
   doctorName?: string;
+  patientPhone?: string;
+  serviceName?: string;
+  status?: string;
   isConfirmed?: boolean;
   isFirstVisit?: boolean;
 };
@@ -328,6 +331,10 @@ function App() {
         clinicId,
         patientName: patientLabel,
         doctorName: doctorLabel,
+        patientPhone:
+          appointment.patient?.phone || appointment.patient_phone || undefined,
+        serviceName: appointment.serviceName || appointment.serviceId,
+        status: appointment.status,
         isConfirmed: appointment.status === "confirmed",
         isFirstVisit: appointment.is_first_visit,
       };
@@ -753,6 +760,35 @@ function App() {
                   date={date}
                   onNavigate={setDate}
                   eventPropGetter={eventPropGetter}
+                  tooltipAccessor={(event) => {
+                    if (!event.patientName) {
+                      return event.title;
+                    }
+
+                    const weekday = format(event.start, "EEEE", { locale: es });
+                    const formattedWeekday =
+                      weekday.charAt(0).toUpperCase() + weekday.slice(1);
+                    const formattedDate = format(event.start, "dd/LLL/yyyy", {
+                      locale: es,
+                    });
+
+                    const lines = [
+                      event.patientName,
+                      event.patientPhone
+                        ? `Teléfono: ${event.patientPhone}`
+                        : undefined,
+                      `${formattedWeekday}, ${formattedDate}`,
+                      event.doctorName
+                        ? `Doctor(a): ${event.doctorName}`
+                        : undefined,
+                      event.serviceName
+                        ? `Servicio: ${event.serviceName}`
+                        : undefined,
+                      event.status ? `Estado: ${event.status}` : undefined,
+                    ].filter(Boolean) as string[];
+
+                    return lines.join("\n");
+                  }}
                   components={{
                     event: CalendarEvent,
                   }}
