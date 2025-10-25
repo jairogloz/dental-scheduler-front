@@ -4,24 +4,38 @@ import type { AppointmentStatus } from "../../utils/appointmentStatus";
 import type { Patient } from "./Patient";
 
 /**
- * TIMEZONE HANDLING STRATEGY:
+ * TIMEZONE HANDLING STRATEGY (Updated):
  * 
- * The backend stores all times in UTC. The frontend must:
- * 1. SEND to backend: Use .toISOString() to convert local Date objects to UTC
- * 2. RECEIVE from backend: Use new Date(utc_string) which automatically converts to local time
+ * The backend now handles timezone conversions. The frontend must:
+ * 1. SEND to backend: ISO string in UTC with 'Z' suffix (e.g., "2025-10-25T14:30:00Z")
+ * 2. RECEIVE from backend: Dates in UTC format with 'Z' suffix
  * 
  * Example flow:
  * - User in Mexico City (UTC-6) creates appointment for 2:00 PM local
- * - Frontend: new Date() + setHours(14, 0) creates "2:00 PM local" Date object
- * - Frontend sends: .toISOString() → "2025-10-12T20:00:00.000Z" (8:00 PM UTC)
- * - Backend stores: "2025-10-12T20:00:00.000Z"
- * - Frontend receives: new Date("2025-10-12T20:00:00.000Z")
- * - JavaScript converts: "2:00 PM local" (automatically subtracts 6 hours)
+ * - Frontend converts to UTC: "2025-10-12T20:00:00Z" (8:00 PM UTC)
+ * - Backend stores: "2025-10-12T20:00:00Z"
+ * - Backend retrieves and returns: "2025-10-12T20:00:00Z"
+ * - Frontend receives and converts back to local: 2:00 PM
  * - Calendar displays: 2:00 PM ✓
  * 
- * This ensures appointments appear at the correct local time for all users,
- * regardless of their timezone.
+ * This ensures consistent timezone handling across the system.
  */
+
+/**
+ * Convert Date to ISO string in UTC with 'Z' suffix
+ * Example: "2025-08-28T15:04:05Z"
+ */
+const toUTCISOString = (date: Date): string => {
+  const pad = (num: number) => String(num).padStart(2, '0');
+
+  return date.getUTCFullYear() +
+    '-' + pad(date.getUTCMonth() + 1) +
+    '-' + pad(date.getUTCDate()) +
+    'T' + pad(date.getUTCHours()) +
+    ':' + pad(date.getUTCMinutes()) +
+    ':' + pad(date.getUTCSeconds()) +
+    'Z';
+};
 
 export type Appointment = {
   id: string;
@@ -114,13 +128,13 @@ export const createAppointment = async (
   // Input data for creating appointment
 
     // Transform frontend format to backend format
-    // TIMEZONE: Convert local Date objects to UTC using .toISOString()
+    // TIMEZONE: Convert local time to UTC with 'Z' suffix
     const requestData: CreateAppointmentRequest = {
       patient_id: appointment.patientId,
       doctor_id: appointment.doctorId,
       unit_id: appointment.unitId,
-      start_time: appointment.start.toISOString(), // Converts local time to UTC
-      end_time: appointment.end.toISOString(),     // Converts local time to UTC
+      start_time: toUTCISOString(appointment.start), // Format: "2025-08-28T15:04:05Z"
+      end_time: toUTCISOString(appointment.end),     // Format: "2025-08-28T15:04:05Z"
       service_id: appointment.serviceId,
       notes: appointment.notes || undefined,
     };
@@ -150,9 +164,8 @@ export const createAppointment = async (
     console.log('🔍 CREATE - appointmentData.patient:', appointmentData.patient);
     console.log('🔍 CREATE - appointmentData.patient_id:', appointmentData.patient_id);
 
-    // TIMEZONE: Parse UTC strings from backend - JavaScript automatically converts to local time
-    // Backend sends: "2025-10-12T20:00:00Z" (UTC)
-    // new Date() converts to: local time based on browser timezone
+    // TIMEZONE: Backend sends dates in UTC format with 'Z' suffix: "2025-08-28T15:04:05Z"
+    // JavaScript automatically converts to local timezone when creating Date object
     const startDate = new Date(appointmentData.start_time);
     const endDate = new Date(appointmentData.end_time);
     
@@ -287,7 +300,8 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
     // Access the nested appointment data
     const updatedAppointment = response.data.data;
 
-    // Validate date strings before creating Date objects
+    // TIMEZONE: Backend sends dates in UTC format with 'Z' suffix: "2025-08-28T15:04:05Z"
+    // JavaScript automatically converts to local timezone when creating Date object
     const startDate = new Date(updatedAppointment.start_time);
     const endDate = new Date(updatedAppointment.end_time);
     
@@ -380,7 +394,8 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
     // Access the nested appointment data
     const cancelledAppointment = response.data.data;
 
-    // Validate date strings before creating Date objects
+    // TIMEZONE: Backend sends dates in UTC format with 'Z' suffix: "2025-08-28T15:04:05Z"
+    // JavaScript automatically converts to local timezone when creating Date object
     const startDate = new Date(cancelledAppointment.start_time);
     const endDate = new Date(cancelledAppointment.end_time);
     
@@ -489,7 +504,8 @@ export const getAppointmentsByDateRange = async (
     
     // Transform backend format to frontend format
     const appointments = appointmentsData.map((appt) => {
-      // TIMEZONE: Parse UTC strings from backend - JavaScript automatically converts to local time
+      // TIMEZONE: Backend sends dates in UTC format with 'Z' suffix: "2025-08-28T15:04:05Z"
+      // JavaScript automatically converts to local timezone when creating Date object
       const startDate = new Date(appt.start_time);
       const endDate = new Date(appt.end_time);
       

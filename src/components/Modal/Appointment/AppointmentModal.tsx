@@ -31,6 +31,29 @@ import "../../../styles/Modal.css";
 // Registrar el idioma español
 registerLocale("es", es);
 
+/**
+ * Convert Date to ISO string in UTC with 'Z' suffix
+ * Example: "2025-08-28T15:04:05Z"
+ */
+const toUTCISOString = (date: Date): string => {
+  const pad = (num: number) => String(num).padStart(2, "0");
+
+  return (
+    date.getUTCFullYear() +
+    "-" +
+    pad(date.getUTCMonth() + 1) +
+    "-" +
+    pad(date.getUTCDate()) +
+    "T" +
+    pad(date.getUTCHours()) +
+    ":" +
+    pad(date.getUTCMinutes()) +
+    ":" +
+    pad(date.getUTCSeconds()) +
+    "Z"
+  );
+};
+
 const MIN_START_MINUTES = 8 * 60; // 8:00 a.m.
 const MAX_START_MINUTES = 20 * 60 + 25; // 8:25 p.m.
 const TIME_INTERVAL_MINUTES = 5;
@@ -261,9 +284,12 @@ const AppointmentModal = ({
 
     // TIMEZONE HANDLING:
     // Create a Date object in LOCAL timezone using setHours()
-    // When sent to backend via .toISOString(), it will be converted to UTC
-    // Example: User selects 2:00 PM → setHours(14, 0) → creates local 2:00 PM
-    //          .toISOString() sends as UTC (e.g., 20:00 UTC if user is UTC-6)
+    // When sent to backend, toUTCISOString() converts to UTC with 'Z' suffix
+    // Example: User selects 2:00 PM local (UTC-6)
+    //          → setHours(14, 0) creates local 2:00 PM Date object
+    //          → toUTCISOString() converts to "2025-08-28T20:00:00Z" (8:00 PM UTC)
+    //          → Backend stores in UTC and returns same format
+    //          → Frontend receives "2025-08-28T20:00:00Z" and converts back to 2:00 PM local
     const startDateTime = new Date(date);
     startDateTime.setHours(hours, minutes, 0, 0);
 
@@ -778,7 +804,7 @@ const AppointmentModal = ({
       }
     }
 
-    // Convert dates to ISO strings for the backend
+    // Convert dates to UTC ISO strings with 'Z' suffix for the backend
     try {
       const updateData = {
         id: validatedForm.appointmentId,
@@ -788,8 +814,8 @@ const AppointmentModal = ({
         clinicId: selectedClinicId || undefined,
         resourceId: validatedForm.resourceId,
         serviceId: validatedForm.serviceId,
-        start_time: startDate.toISOString(),
-        end_time: endDate.toISOString(),
+        start_time: toUTCISOString(startDate),
+        end_time: toUTCISOString(endDate),
         status: finalStatus,
         notes: validatedForm.notes || "",
       };
