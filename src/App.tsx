@@ -54,15 +54,22 @@ const locales = {
  * Example: User selects 19:00 → "2025-08-28T19:00:00Z"
  */
 const toLocalTimeWithZ = (date: Date): string => {
-  const pad = (num: number) => String(num).padStart(2, '0');
+  const pad = (num: number) => String(num).padStart(2, "0");
 
-  return date.getFullYear() +
-    '-' + pad(date.getMonth() + 1) +
-    '-' + pad(date.getDate()) +
-    'T' + pad(date.getHours()) +
-    ':' + pad(date.getMinutes()) +
-    ':' + pad(date.getSeconds()) +
-    'Z';
+  return (
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate()) +
+    "T" +
+    pad(date.getHours()) +
+    ":" +
+    pad(date.getMinutes()) +
+    ":" +
+    pad(date.getSeconds()) +
+    "Z"
+  );
 };
 
 const localizer = dateFnsLocalizer({

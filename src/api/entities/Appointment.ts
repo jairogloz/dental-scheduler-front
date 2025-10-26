@@ -586,8 +586,8 @@ export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date
   try {
     // TODO: Implement real backend API call for blocking doctor time
     await apiClient.post(`/doctors/${doctorId}/blocked-times`, {
-      start_time: dateRange.start.toISOString(),
-      end_time: dateRange.end.toISOString(),
+      start_time: toLocalTimeWithZ(dateRange.start),
+      end_time: toLocalTimeWithZ(dateRange.end),
     });
   } catch (error) {
     console.error("Error bloqueando tiempo del doctor:", error);

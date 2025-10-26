@@ -791,10 +791,11 @@ const AppointmentModal = ({
     let finalStatus = validatedForm.status || APPOINTMENT_STATUS.SCHEDULED;
 
     if (originalAppointmentForm && originalAppointmentForm.start) {
+      // Compare times using getTime() to avoid UTC conversion issues
       const originalStartTime = new Date(
         originalAppointmentForm.start
-      ).toISOString();
-      const newStartTime = startDate.toISOString();
+      ).getTime();
+      const newStartTime = startDate.getTime();
 
       // If start time changed and status is not already cancelled, set as rescheduled
       if (
