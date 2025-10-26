@@ -36,6 +36,7 @@ import {
   getCalendarDateRangeUtil,
   getDoctorColor,
   getClinicColor,
+  darkenColor,
 } from "./utils/calendarUtils";
 import {
   APPOINTMENT_STATUS,
@@ -375,12 +376,13 @@ function App() {
     (event: Event) => {
       const backgroundColor = getDoctorColor(event.resourceId, doctors);
       const clinicColor = getClinicColor(event.clinicId, clinics);
+      const textColor = darkenColor(backgroundColor, 60); // Darken by 60% for stronger contrast
 
       const isSelected = event.appointmentId === selectedEventId;
 
       const baseStyle = {
         backgroundColor,
-        color: "white",
+        color: textColor,
         borderRadius: "4px",
         border: "none",
         padding: "2px 5px",

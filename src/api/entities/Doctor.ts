@@ -12,6 +12,7 @@ export type Doctor = {
   default_clinic_name: string;
   org_id: string;
   org_name: string;
+  color: string; // Hex color code for calendar events
 };
 
 export const getDoctors = async (): Promise<Doctor[]> => {
