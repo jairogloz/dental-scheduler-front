@@ -139,6 +139,8 @@ export const createAppointment = async (
       notes: appointment.notes || undefined,
     };
 
+    console.log('📤 Sending POST request to create appointment:', requestData);
+
     // Log transformed data for debugging
   // Transformed request data ready to send to backend
 
@@ -153,9 +155,6 @@ export const createAppointment = async (
   // Request URL prepared
 
     const response = await apiClient.post<AppointmentApiResponse>(url, requestData);
-
-    // Debug: Log the backend response to see the exact format
-  // Backend response received for created appointment
 
     // Access the nested appointment data
     const appointmentData = response.data.data;
