@@ -6,34 +6,36 @@ import type { Patient } from "./Patient";
 /**
  * TIMEZONE HANDLING STRATEGY (Updated):
  * 
- * The backend now handles timezone conversions. The frontend must:
- * 1. SEND to backend: ISO string in UTC with 'Z' suffix (e.g., "2025-10-25T14:30:00Z")
+ * The backend handles timezone conversions based on clinic configuration.
+ * The frontend must:
+ * 1. SEND to backend: Local time as-is with 'Z' suffix (e.g., "2025-10-25T19:00:00Z")
  * 2. RECEIVE from backend: Dates in UTC format with 'Z' suffix
  * 
  * Example flow:
- * - User in Mexico City (UTC-6) creates appointment for 2:00 PM local
- * - Frontend converts to UTC: "2025-10-12T20:00:00Z" (8:00 PM UTC)
- * - Backend stores: "2025-10-12T20:00:00Z"
- * - Backend retrieves and returns: "2025-10-12T20:00:00Z"
- * - Frontend receives and converts back to local: 2:00 PM
- * - Calendar displays: 2:00 PM ✓
+ * - User selects 7:00 PM (19:00) for appointment
+ * - Frontend sends: "2025-10-25T19:00:00Z" (exact time from UI)
+ * - Backend knows clinic timezone and converts to UTC for storage
+ * - Backend retrieves and returns: "2025-10-26T01:00:00Z" (UTC)
+ * - Frontend receives and converts back to local: 7:00 PM
+ * - Calendar displays: 7:00 PM ✓
  * 
- * This ensures consistent timezone handling across the system.
+ * This ensures the backend controls timezone handling based on clinic configuration.
  */
 
 /**
- * Convert Date to ISO string in UTC with 'Z' suffix
- * Example: "2025-08-28T15:04:05Z"
+ * Convert Date to ISO string using LOCAL time with 'Z' suffix
+ * Sends the exact time the user selected without timezone conversion
+ * Example: User selects 19:00 → "2025-08-28T19:00:00Z"
  */
-const toUTCISOString = (date: Date): string => {
+const toLocalTimeWithZ = (date: Date): string => {
   const pad = (num: number) => String(num).padStart(2, '0');
 
-  return date.getUTCFullYear() +
-    '-' + pad(date.getUTCMonth() + 1) +
-    '-' + pad(date.getUTCDate()) +
-    'T' + pad(date.getUTCHours()) +
-    ':' + pad(date.getUTCMinutes()) +
-    ':' + pad(date.getUTCSeconds()) +
+  return date.getFullYear() +
+    '-' + pad(date.getMonth() + 1) +
+    '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) +
+    ':' + pad(date.getMinutes()) +
+    ':' + pad(date.getSeconds()) +
     'Z';
 };
 
@@ -128,13 +130,13 @@ export const createAppointment = async (
   // Input data for creating appointment
 
     // Transform frontend format to backend format
-    // TIMEZONE: Convert local time to UTC with 'Z' suffix
+    // TIMEZONE: Send exact local time selected by user - backend handles UTC conversion
     const requestData: CreateAppointmentRequest = {
       patient_id: appointment.patientId,
       doctor_id: appointment.doctorId,
       unit_id: appointment.unitId,
-      start_time: toUTCISOString(appointment.start), // Format: "2025-08-28T15:04:05Z"
-      end_time: toUTCISOString(appointment.end),     // Format: "2025-08-28T15:04:05Z"
+      start_time: toLocalTimeWithZ(appointment.start), // Format: "2025-08-28T19:00:00Z" (user's selected time)
+      end_time: toLocalTimeWithZ(appointment.end),     // Format: "2025-08-28T19:00:00Z" (user's selected time)
       service_id: appointment.serviceId,
       notes: appointment.notes || undefined,
     };

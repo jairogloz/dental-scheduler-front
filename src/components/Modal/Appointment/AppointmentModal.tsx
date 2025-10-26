@@ -32,24 +32,25 @@ import "../../../styles/Modal.css";
 registerLocale("es", es);
 
 /**
- * Convert Date to ISO string in UTC with 'Z' suffix
- * Example: "2025-08-28T15:04:05Z"
+ * Convert Date to ISO string using LOCAL time with 'Z' suffix
+ * Sends the exact time the user selected without timezone conversion
+ * Example: User selects 19:00 → "2025-08-28T19:00:00Z"
  */
-const toUTCISOString = (date: Date): string => {
+const toLocalTimeWithZ = (date: Date): string => {
   const pad = (num: number) => String(num).padStart(2, "0");
 
   return (
-    date.getUTCFullYear() +
+    date.getFullYear() +
     "-" +
-    pad(date.getUTCMonth() + 1) +
+    pad(date.getMonth() + 1) +
     "-" +
-    pad(date.getUTCDate()) +
+    pad(date.getDate()) +
     "T" +
-    pad(date.getUTCHours()) +
+    pad(date.getHours()) +
     ":" +
-    pad(date.getUTCMinutes()) +
+    pad(date.getMinutes()) +
     ":" +
-    pad(date.getUTCSeconds()) +
+    pad(date.getSeconds()) +
     "Z"
   );
 };
@@ -284,12 +285,12 @@ const AppointmentModal = ({
 
     // TIMEZONE HANDLING:
     // Create a Date object in LOCAL timezone using setHours()
-    // When sent to backend, toUTCISOString() converts to UTC with 'Z' suffix
-    // Example: User selects 2:00 PM local (UTC-6)
-    //          → setHours(14, 0) creates local 2:00 PM Date object
-    //          → toUTCISOString() converts to "2025-08-28T20:00:00Z" (8:00 PM UTC)
-    //          → Backend stores in UTC and returns same format
-    //          → Frontend receives "2025-08-28T20:00:00Z" and converts back to 2:00 PM local
+    // When sent to backend, toLocalTimeWithZ() sends the exact time without conversion
+    // Example: User selects 7:00 PM (19:00)
+    //          → setHours(19, 0) creates local 7:00 PM Date object
+    //          → toLocalTimeWithZ() sends "2025-08-28T19:00:00Z" (exact time from UI)
+    //          → Backend knows clinic timezone and converts to UTC for storage
+    //          → Backend returns dates in UTC, frontend converts back to local for display
     const startDateTime = new Date(date);
     startDateTime.setHours(hours, minutes, 0, 0);
 
@@ -804,7 +805,7 @@ const AppointmentModal = ({
       }
     }
 
-    // Convert dates to UTC ISO strings with 'Z' suffix for the backend
+    // Send exact local time to backend with 'Z' suffix - backend handles UTC conversion
     try {
       const updateData = {
         id: validatedForm.appointmentId,
@@ -814,8 +815,8 @@ const AppointmentModal = ({
         clinicId: selectedClinicId || undefined,
         resourceId: validatedForm.resourceId,
         serviceId: validatedForm.serviceId,
-        start_time: toUTCISOString(startDate),
-        end_time: toUTCISOString(endDate),
+        start_time: toLocalTimeWithZ(startDate),
+        end_time: toLocalTimeWithZ(endDate),
         status: finalStatus,
         notes: validatedForm.notes || "",
       };

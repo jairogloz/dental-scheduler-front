@@ -48,6 +48,23 @@ const locales = {
   "es-MX": es,
 };
 
+/**
+ * Convert Date to ISO string using LOCAL time with 'Z' suffix
+ * Sends the exact time the user selected without timezone conversion
+ * Example: User selects 19:00 → "2025-08-28T19:00:00Z"
+ */
+const toLocalTimeWithZ = (date: Date): string => {
+  const pad = (num: number) => String(num).padStart(2, '0');
+
+  return date.getFullYear() +
+    '-' + pad(date.getMonth() + 1) +
+    '-' + pad(date.getDate()) +
+    'T' + pad(date.getHours()) +
+    ':' + pad(date.getMinutes()) +
+    ':' + pad(date.getSeconds()) +
+    'Z';
+};
+
 const localizer = dateFnsLocalizer({
   format,
   parse,
@@ -594,25 +611,24 @@ function App() {
       });
 
       // TIMEZONE HANDLING:
-      // - User drags event to new local time (e.g., 2:00 PM in their timezone)
-      // - We send to backend using .toISOString() which converts to UTC
-      // - Backend stores UTC time
+      // - User drags event to new local time (e.g., 7:00 PM)
+      // - We send exact local time to backend with 'Z' suffix
+      // - Backend knows clinic timezone and converts to UTC for storage
       // - When reading back, new Date(utc_string) converts back to local time
-      // This ensures appointments appear at the correct local time regardless of user's timezone
-      const startTimeUTC = start.toISOString();
-      const endTimeUTC = end.toISOString();
+      const startTimeLocal = toLocalTimeWithZ(start);
+      const endTimeLocal = toLocalTimeWithZ(end);
 
-      console.log("📤 Sending update with UTC times:", {
+      console.log("📤 Sending update with local times:", {
         localStart: format(start, "yyyy-MM-dd HH:mm:ss"),
         localEnd: format(end, "yyyy-MM-dd HH:mm:ss"),
-        utcStart: startTimeUTC,
-        utcEnd: endTimeUTC,
+        sentStart: startTimeLocal,
+        sentEnd: endTimeLocal,
       });
 
       await updateAppointmentMutation.mutateAsync({
         id: appointment.id,
-        start_time: startTimeUTC,
-        end_time: endTimeUTC,
+        start_time: startTimeLocal,
+        end_time: endTimeLocal,
       });
 
       setShowDragConfirmation(false);
