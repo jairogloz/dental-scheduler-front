@@ -86,7 +86,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
       onPatientCreated(newPatient);
       onClose();
     } catch (err) {
-      console.error("Error creating patient:", err);
       setError(
         err instanceof Error
           ? err.message

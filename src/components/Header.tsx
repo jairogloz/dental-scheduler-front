@@ -18,8 +18,7 @@ const Header = () => {
 
       // Then call signOut to clean up auth state
       await signOut();
-    } catch (error) {
-      console.error("Error during logout:", error);
+    } catch (_error) {
       // Even if signOut fails, make sure we go to login
       navigate("/login", { replace: true });
     }

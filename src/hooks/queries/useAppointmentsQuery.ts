@@ -43,17 +43,7 @@ export const useAppointmentsQuery = (startDate: Date, endDate: Date) => {
       // Backend interprets "2025-10-05" as midnight start of that day, not end
       const endDatePlusOne = addDays(endDate, 1);
       const endStr = format(endDatePlusOne, "yyyy-MM-dd");
-      console.log('🔍 Fetching appointments:', { 
-        startStr, 
-        endStr, 
-        cacheKey,
-        originalEndDate: endDate,
-        endDatePlusOne,
-        endDateOriginalFormatted: format(endDate, "yyyy-MM-dd HH:mm:ss"),
-        note: 'Added 1 day to end date to ensure full last day is included'
-      });
       const appointments = await getAppointmentsByDateRange(startStr, endStr);
-      console.log(`✅ Fetched ${appointments.length} appointments for range ${startStr} to ${endStr}`);
       return appointments;
     },
     
@@ -122,7 +112,6 @@ export const useCreateAppointment = () => {
     
     // On success, invalidate and refetch
     onSuccess: () => {
-      console.log('✅ Create mutation success - invalidating all appointment queries');
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
         refetchType: 'all', // Refetch both active and inactive queries
@@ -211,16 +200,11 @@ export const useUpdateAppointment = () => {
       ),
     
     onSuccess: () => {
-      console.log('✅ Update mutation success - invalidating all appointment queries');
       // Invalidate appointments queries to refetch fresh data
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
         refetchType: 'all', // Refetch both active and inactive queries
       });
-    },
-    
-    onError: (error) => {
-      console.error("Failed to update appointment:", error);
     },
   });
 };
@@ -239,16 +223,11 @@ export const useCancelAppointmentMutation = () => {
       ),
     
     onSuccess: () => {
-      console.log('✅ Cancel mutation success - invalidating all appointment queries');
       // Invalidate appointments queries to refetch fresh data
       queryClient.invalidateQueries({
         queryKey: ["appointments", organizationId],
         refetchType: 'all', // Refetch both active and inactive queries
       });
-    },
-    
-    onError: (error) => {
-      console.error("Failed to cancel appointment:", error);
     },
   });
 };
@@ -293,12 +272,6 @@ export const useFilteredAppointments = (
       }
 
       return true;
-    });
-
-    console.log(`🎯 Filtered appointments: ${filtered.length} out of ${appointments.length} total`, {
-      excludeCancelled,
-      selectedClinicIds: selectedClinicIds.length,
-      selectedDoctorIds: selectedDoctorIds.length,
     });
 
     return filtered;

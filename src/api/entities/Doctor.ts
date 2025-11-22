@@ -24,9 +24,6 @@ export const getDoctors = async (): Promise<Doctor[]> => {
 
   // Extract the actual doctors array from the nested data property
   const result = response.data?.data ?? [];
-  if (result.length === 0) {
-    console.info('No doctors found for this organization. Please add some first.');
-  }
 
   return result;
 };

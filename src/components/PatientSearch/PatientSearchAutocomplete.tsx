@@ -76,8 +76,6 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
           return;
         }
 
-        console.error("❌ Patient search error:", err);
-
         // Provide more specific error messages
         let errorMessage = "Error searching patients. Please try again.";
         if (err instanceof Error) {
@@ -240,7 +238,6 @@ const PatientSearchAutocomplete: React.FC<PatientSearchAutocompleteProps> = ({
     if (isLoading) {
       // Setting safety timer for patient search loading state
       safetyTimer = setTimeout(() => {
-        console.warn("⚠️ Patient search loading timeout - forcing reset");
         setIsLoading(false);
         setError("Search timeout. Please try again.");
       }, 35000); // 35 second timeout to allow for token refresh (30s API timeout + 5s buffer)

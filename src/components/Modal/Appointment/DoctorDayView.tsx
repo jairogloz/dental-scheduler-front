@@ -54,18 +54,10 @@ const DoctorDayView = ({
         ); // Exclude cancelled appointments
       });
 
-      console.log(
-        `📅 DoctorDayView: Found ${
-          doctorAppointmentsForDate.length
-        } appointments for doctor ${doctorId} on ${selectedDate.toDateString()}`
-      );
       setAppointments(doctorAppointmentsForDate);
       setIsLoading(false);
     } else {
       // Fallback to the old API call if no existing appointments are provided
-      console.log(
-        `📅 DoctorDayView: No existing appointments provided, falling back to API call`
-      );
       const fetchAppointments = async () => {
         setIsLoading(true);
         try {
@@ -74,11 +66,7 @@ const DoctorDayView = ({
             selectedDate
           );
           setAppointments(doctorAppointments);
-          console.log(
-            `📅 DoctorDayView: Fetched ${doctorAppointments.length} appointments from API`
-          );
         } catch (error) {
-          console.error("Error fetching appointments:", error);
           setAppointments([]); // Set to empty array on error
         } finally {
           setIsLoading(false);

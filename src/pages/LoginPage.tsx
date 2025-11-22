@@ -26,14 +26,13 @@ const LoginPage = () => {
 
     if (error) {
       setError(error.message);
-      console.error("❌ Sign in error:", error);
     } else {
       // Sign in successful, navigating to dashboard
       try {
         navigate("/dashboard");
         // Navigate call completed
-      } catch (navError) {
-        console.error("❌ Navigation error:", navError);
+      } catch {
+        // Navigation errors are ignored because the router will handle redirects automatically
       }
     }
 

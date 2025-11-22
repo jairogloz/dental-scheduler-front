@@ -22,7 +22,6 @@ export const useOrganizationData = (params: GetOrganizationDataParams = {}) => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch organization data';
       setError(errorMessage);
-      console.error('❌ Failed to fetch organization data:', err);
     } finally {
       setLoading(false);
     }

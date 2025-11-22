@@ -21,22 +21,11 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
   onClose,
   onPatientUpdated,
 }) => {
-  console.log("📝 EditPatientModal - Received patient object:", patient);
-  console.log("📝 EditPatientModal - patient.first_name:", patient.first_name);
-  console.log("📝 EditPatientModal - patient.last_name:", patient.last_name);
-  console.log("📝 EditPatientModal - patient.name:", patient.name);
-
   // Get initial first and last name from patient data
   // Prefer the separate first_name/last_name fields from backend over parsing combined name
   const getInitialNames = () => {
-    console.log("🔍 getInitialNames - Checking patient fields");
-    console.log("  - first_name:", patient.first_name);
-    console.log("  - last_name:", patient.last_name);
-    console.log("  - name:", patient.name);
-
     // If we have separate first_name and last_name from backend, use them directly
     if (patient.first_name !== undefined || patient.last_name !== undefined) {
-      console.log("✅ Using first_name and last_name from backend");
       return {
         firstName: patient.first_name || "",
         lastName: patient.last_name || "",
@@ -45,7 +34,6 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
 
     // Otherwise, parse the combined name (fallback for old data or constructed patient objects)
     if (patient.name) {
-      console.log("⚠️ Parsing combined name field");
       const parts = patient.name.trim().split(" ");
       if (parts.length === 1) {
         return { firstName: parts[0], lastName: "" };
@@ -56,17 +44,11 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
       };
     }
 
-    console.log("❌ No name data available");
     return { firstName: "", lastName: "" };
   };
 
   const { firstName: initialFirstName, lastName: initialLastName } =
     getInitialNames();
-
-  console.log("🎯 EditPatientModal - Initial names:", {
-    initialFirstName,
-    initialLastName,
-  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -236,8 +218,6 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
         updateRequest.email = formData.email;
       }
 
-      console.log("📝 Updating patient with changes:", updateRequest);
-
       const updatedPatient = await updatePatient(patient.id, updateRequest);
 
       // Show success modal
@@ -251,7 +231,6 @@ const EditPatientModal: React.FC<EditPatientModalProps> = ({
       // Notify parent component
       onPatientUpdated(updatedPatient);
     } catch (error) {
-      console.error("Failed to update patient:", error);
       setUniversalModal({
         isOpen: true,
         type: "error",

@@ -106,10 +106,8 @@ export const getOrganizationData = async (
       queryParams.append('limit', params.limit.toString());
     }
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
-    const url = `${API_BASE_URL}/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-    
-    console.log(`📤 API Request: GET ${url}`);
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1';
+  const url = `${API_BASE_URL}/organization${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
     // Use direct fetch with manual token handling
     const response = await fetch(url, {
@@ -120,16 +118,7 @@ export const getOrganizationData = async (
       },
     });
 
-    console.log(`📥 API Response: ${response.status} GET /organization`);
-    
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ API Error Details:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-        url
-      });
       throw new Error(`API Error: ${response.status} ${response.statusText}`);
     }
 
@@ -149,7 +138,6 @@ export const getOrganizationData = async (
 
     return organizationData;
   } catch (error) {
-    console.error('❌ Error fetching organization data:', error);
     throw error;
   }
 };

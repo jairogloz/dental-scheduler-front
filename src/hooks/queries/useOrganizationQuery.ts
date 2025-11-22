@@ -28,8 +28,6 @@ export const useOrganizationQuery = () => {
         throw new Error("No access token available");
       }
       
-      console.log("🔄 Fetching organization data for org ID:", organizationId);
-      
       // Get a broad date range to include sufficient appointments
       const today = new Date();
       const startDate = new Date(today);

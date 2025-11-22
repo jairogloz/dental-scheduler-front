@@ -56,7 +56,6 @@ export const searchPatients = async (
     );
 
     if (!response.data) {
-      console.warn('Patient search returned no data');
       return [];
     }
 
@@ -104,7 +103,6 @@ export const createPatient = async (
     );
 
     if (!response.data || !response.data.data) {
-      console.error('Patient creation returned no data:', response.data);
       throw new Error('Invalid response format: missing data');
     }
 
@@ -117,7 +115,6 @@ export const createPatient = async (
 
     return newPatient;
   } catch (error) {
-    console.error('Patient creation failed:', error);
     throw error;
   }
 };
@@ -128,8 +125,6 @@ export const updatePatient = async (
   patientData: UpdatePatientRequest
 ): Promise<Patient> => {
   try {
-    console.log('🔄 Updating patient:', { patientId, patientData });
-
     // Remove undefined or null fields to send only changed data
     const cleanedData: UpdatePatientRequest = {};
     Object.keys(patientData).forEach((key) => {
@@ -139,8 +134,6 @@ export const updatePatient = async (
       }
     });
 
-    console.log('📤 Sending PATCH request for patient update:', cleanedData);
-
     // Call backend API - organization_id will be extracted from JWT token by backend
     const response = await apiClient.patch<UpdatePatientResponse>(
       `/patients/${patientId}`,
@@ -148,11 +141,8 @@ export const updatePatient = async (
     );
 
     if (!response.data || !response.data.data) {
-      console.error('Patient update returned no data:', response.data);
       throw new Error('Invalid response format: missing data');
     }
-
-    console.log('✅ Patient updated successfully:', response.data.data);
 
     // Backend returns the updated patient object
     const updatedPatient = response.data.data;
@@ -167,7 +157,6 @@ export const updatePatient = async (
     
     return updatedPatient;
   } catch (error) {
-    console.error('❌ Patient update failed:', error);
     throw error;
   }
 };

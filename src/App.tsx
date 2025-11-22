@@ -294,14 +294,6 @@ function App() {
   // Calculate date range for appointments query
   const dateRange = useMemo(() => {
     const range = getCalendarDateRangeUtil(date, view);
-    console.log("📅 Date range for query:", {
-      view,
-      currentDate: date,
-      start: range.start,
-      end: range.end,
-      startFormatted: format(range.start, "yyyy-MM-dd HH:mm:ss"),
-      endFormatted: format(range.end, "yyyy-MM-dd HH:mm:ss"),
-    });
     return range;
   }, [date, view]);
 
@@ -455,14 +447,7 @@ function App() {
       );
       if (!appointment) return;
 
-      console.log("🎯 handleSelectEvent - Appointment clicked:", appointment);
-      console.log(
-        "👤 handleSelectEvent - appointment.patient:",
-        appointment.patient
-      );
-
       // Set the selected event ID for visual feedback
-      console.log("🎯 Setting selectedEventId to:", event.appointmentId);
       setSelectedEventId(event.appointmentId);
 
       const doctor = doctors.find((d) => d.id === appointment.doctorId);
@@ -490,7 +475,6 @@ function App() {
         notes: appointment.notes || "",
       };
 
-      console.log("📋 handleSelectEvent - Setting appointmentForm:", formData);
       setAppointmentForm(formData);
       setModalMode("see-only");
       setShowModal(true);
@@ -510,19 +494,9 @@ function App() {
   const handleAddAppointment = useCallback(
     async (appointmentData: any) => {
       try {
-        console.log("➕ Creating appointment with dates:", {
-          start: appointmentData.start,
-          end: appointmentData.end,
-          startFormatted: format(
-            appointmentData.start,
-            "yyyy-MM-dd HH:mm:ss EEEE"
-          ),
-          endFormatted: format(appointmentData.end, "yyyy-MM-dd HH:mm:ss EEEE"),
-        });
         await createAppointmentMutation.mutateAsync(appointmentData);
         // Don't close modal here - let the success modal handle it
       } catch (error) {
-        console.error("❌ Failed to create appointment:", error);
         alert("Failed to create appointment. Please try again.");
       }
     },
@@ -540,22 +514,8 @@ function App() {
       start: string | Date;
       end: string | Date;
     }) => {
-      console.log("🎯 RBC provided drag dates:", {
-        startType: typeof start,
-        endType: typeof end,
-        startRaw: start,
-        endRaw: end,
-        startString: start.toString(),
-        endString: end.toString(),
-      });
       const startDate = typeof start === "string" ? new Date(start) : start;
       const endDate = typeof end === "string" ? new Date(end) : end;
-      console.log("🎯 After conversion:", {
-        startDate,
-        endDate,
-        startISO: startDate.toISOString(),
-        endISO: endDate.toISOString(),
-      });
       setPendingEventChange({
         event,
         start: startDate,
@@ -608,20 +568,6 @@ function App() {
     }
 
     try {
-      console.log("🔄 Updating appointment to new dates:", {
-        appointmentId: appointment.id,
-        newStart: start,
-        newEnd: end,
-        startFormatted: format(start, "yyyy-MM-dd HH:mm:ss EEEE"),
-        endFormatted: format(end, "yyyy-MM-dd HH:mm:ss EEEE"),
-        currentDateRange: {
-          start: dateRange.start,
-          end: dateRange.end,
-          startFormatted: format(dateRange.start, "yyyy-MM-dd HH:mm:ss EEEE"),
-          endFormatted: format(dateRange.end, "yyyy-MM-dd HH:mm:ss EEEE"),
-        },
-      });
-
       // TIMEZONE HANDLING:
       // - User drags event to new local time (e.g., 7:00 PM)
       // - We send exact local time to backend with 'Z' suffix
@@ -629,13 +575,6 @@ function App() {
       // - When reading back, new Date(utc_string) converts back to local time
       const startTimeLocal = toLocalTimeWithZ(start);
       const endTimeLocal = toLocalTimeWithZ(end);
-
-      console.log("📤 Sending update with local times:", {
-        localStart: format(start, "yyyy-MM-dd HH:mm:ss"),
-        localEnd: format(end, "yyyy-MM-dd HH:mm:ss"),
-        sentStart: startTimeLocal,
-        sentEnd: endTimeLocal,
-      });
 
       await updateAppointmentMutation.mutateAsync({
         id: appointment.id,
@@ -646,7 +585,6 @@ function App() {
       setShowDragConfirmation(false);
       setPendingEventChange(null);
     } catch (error) {
-      console.error("❌ Failed to update appointment:", error);
       alert("Failed to update appointment. Please try again.");
       setShowDragConfirmation(false);
       setPendingEventChange(null);

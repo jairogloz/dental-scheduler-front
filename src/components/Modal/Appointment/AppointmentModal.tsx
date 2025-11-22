@@ -248,7 +248,6 @@ const AppointmentModal = ({
 
       return `Cita para el día ${dayName} ${dayNumber} de ${monthName} de ${year} a las ${time}`;
     } catch (error) {
-      console.warn("Error formatting appointment summary:", error);
       return "Error al formatear la fecha";
     }
   };
@@ -261,17 +260,11 @@ const AppointmentModal = ({
   ) => {
     // Validate inputs
     if (!date || !time || !duration || isNaN(date.getTime()) || duration <= 0) {
-      console.warn("Invalid parameters for updateAppointmentDateTime:", {
-        date,
-        time,
-        duration,
-      });
       return;
     }
 
     const timeMatch = time.match(/^(\d{1,2}):(\d{2})$/);
     if (!timeMatch) {
-      console.warn("Invalid time format:", time);
       return;
     }
 
@@ -279,7 +272,6 @@ const AppointmentModal = ({
 
     // Validate hours and minutes
     if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-      console.warn("Invalid time values:", { hours, minutes });
       return;
     }
 
@@ -296,7 +288,6 @@ const AppointmentModal = ({
 
     // Verify the date is valid after setting time
     if (isNaN(startDateTime.getTime())) {
-      console.warn("Invalid start date created:", startDateTime);
       return;
     }
 
@@ -306,7 +297,6 @@ const AppointmentModal = ({
 
     // Verify end date is valid
     if (isNaN(endDateTime.getTime())) {
-      console.warn("Invalid end date created:", endDateTime);
       return;
     }
 
@@ -319,17 +309,6 @@ const AppointmentModal = ({
 
   // Patient search handlers
   const handlePatientSelect = (patient: Patient | null) => {
-    console.log("👤 handlePatientSelect - Selected patient:", patient);
-    console.log(
-      "👤 handlePatientSelect - patient.first_name:",
-      patient?.first_name
-    );
-    console.log(
-      "👤 handlePatientSelect - patient.last_name:",
-      patient?.last_name
-    );
-    console.log("👤 handlePatientSelect - patient.name:", patient?.name);
-
     setSelectedPatient(patient);
 
     // Only update form data when actually selecting a patient (not when clearing)
@@ -380,24 +359,15 @@ const AppointmentModal = ({
 
   // Handle edit patient
   const handleEditPatient = () => {
-    console.log("🔍 handleEditPatient called");
-    console.log("📋 appointmentForm:", appointmentForm);
-    console.log("👤 selectedPatient:", selectedPatient);
-    console.log("👤 appointmentForm.patient:", appointmentForm.patient);
-
     // In see-only mode, we might not have selectedPatient set yet
     // So we get it from appointmentForm if needed
     let patientToEdit = selectedPatient;
 
     if (!patientToEdit && appointmentForm.patient) {
-      console.log(
-        "✅ Using appointmentForm.patient (full object from backend)"
-      );
       // Use the full patient object from the appointment (includes first_name and last_name separately)
       patientToEdit = appointmentForm.patient;
       setSelectedPatient(patientToEdit);
     } else if (!patientToEdit && appointmentForm.patientId) {
-      console.log("⚠️ Fallback: Constructing patient from form fields");
       // Fallback: construct patient object from form data (for backwards compatibility)
       // This should rarely happen now that backend returns full patient object
       patientToEdit = {
@@ -408,8 +378,6 @@ const AppointmentModal = ({
       };
       setSelectedPatient(patientToEdit);
     }
-
-    console.log("🎯 Final patientToEdit object:", patientToEdit);
 
     if (patientToEdit) {
       setShowEditPatientModal(true);
@@ -493,7 +461,6 @@ const AppointmentModal = ({
 
     // For existing appointments, make immediate API call
     if (!appointmentForm.appointmentId) {
-      console.error("❌ Cannot update status: No appointment ID");
       showErrorModal(
         "Error",
         "No se puede actualizar el estado: ID de cita no encontrado"
@@ -502,8 +469,6 @@ const AppointmentModal = ({
     }
 
     try {
-      console.log(`🔄 Quick status update to: ${newStatus}`);
-
       // Use existing updateAppointmentMutation with only status
       const updateData = {
         id: appointmentForm.appointmentId,
@@ -518,15 +483,12 @@ const AppointmentModal = ({
         status: newStatus,
       }));
 
-      console.log(`✅ Status updated successfully to: ${newStatus}`);
-
       // Show success feedback (brief message)
       showSuccessModal(
         "Estado actualizado",
         `El estado de la cita se ha actualizado correctamente.`
       );
     } catch (error: any) {
-      console.error("❌ Failed to update status:", error);
       showErrorModal(
         "Error al actualizar estado",
         "No se pudo actualizar el estado de la cita. Inténtalo de nuevo."
@@ -664,10 +626,6 @@ const AppointmentModal = ({
 
     // Enhanced date validation with debugging
     if (!validatedForm.start || !validatedForm.end) {
-      console.error("❌ Missing start or end dates:", {
-        start: validatedForm.start,
-        end: validatedForm.end,
-      });
       alert(
         "Por favor selecciona fecha, hora y duración válidas - fechas faltantes"
       );
@@ -679,12 +637,6 @@ const AppointmentModal = ({
     const endDate = new Date(validatedForm.end);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      console.error("❌ Invalid dates:", {
-        start: validatedForm.start,
-        end: validatedForm.end,
-        startValid: !isNaN(startDate.getTime()),
-        endValid: !isNaN(endDate.getTime()),
-      });
       alert(
         "Por favor selecciona fecha, hora y duración válidas - fechas inválidas"
       );
@@ -714,7 +666,6 @@ const AppointmentModal = ({
           "La nueva cita se ha agregado al calendario."
         );
       } catch (createError: any) {
-        console.error("❌ Failed to create appointment:", createError);
         showErrorModal(
           "Error al crear la cita",
           createError.message ||
@@ -722,7 +673,6 @@ const AppointmentModal = ({
         );
       }
     } catch (error) {
-      console.error("❌ Error converting dates to ISO:", error);
       showErrorModal(
         "Error en los datos",
         "Error al procesar las fechas. Por favor intenta de nuevo."
@@ -760,10 +710,6 @@ const AppointmentModal = ({
 
     // Enhanced date validation with debugging
     if (!validatedForm.start || !validatedForm.end) {
-      console.error("❌ Missing start or end dates:", {
-        start: validatedForm.start,
-        end: validatedForm.end,
-      });
       alert(
         "Por favor selecciona fecha, hora y duración válidas - fechas faltantes"
       );
@@ -775,12 +721,6 @@ const AppointmentModal = ({
     const endDate = new Date(validatedForm.end);
 
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-      console.error("❌ Invalid dates:", {
-        start: validatedForm.start,
-        end: validatedForm.end,
-        startValid: !isNaN(startDate.getTime()),
-        endValid: !isNaN(endDate.getTime()),
-      });
       alert(
         "Por favor selecciona fecha, hora y duración válidas - fechas inválidas"
       );
@@ -822,15 +762,11 @@ const AppointmentModal = ({
         notes: validatedForm.notes || "",
       };
 
-      console.log("🔄 Calling updateAppointment with:", updateData);
-
       try {
         // Use the mutation hook which handles cache invalidation automatically
         const updatedAppointment = await updateAppointmentMutation.mutateAsync(
           updateData
         );
-
-        console.log("✅ Appointment updated successfully:", updatedAppointment);
 
         // Update the appointment form with the response data to reflect changes
         setAppointmentForm({
@@ -850,12 +786,6 @@ const AppointmentModal = ({
           "Los cambios se han guardado correctamente."
         );
       } catch (updateError: any) {
-        console.error("❌ Update appointment failed:", updateError);
-        console.error("❌ Error details:", {
-          message: updateError.message,
-          response: updateError.response?.data,
-          status: updateError.response?.status,
-        });
         showErrorModal(
           "Error al actualizar la cita",
           updateError.message ||
@@ -863,7 +793,6 @@ const AppointmentModal = ({
         );
       }
     } catch (error: any) {
-      console.error("❌ Error in validation/preparation:", error);
       alert("Error al procesar los datos. Por favor intenta de nuevo.");
     }
   };
@@ -876,14 +805,10 @@ const AppointmentModal = ({
     setShowCancelConfirmation(false);
 
     try {
-      console.log(`🚫 Cancelling appointment ${appointmentForm.appointmentId}`);
-
       // Use the mutation hook which handles cache invalidation automatically
       await cancelAppointmentMutation.mutateAsync(
         appointmentForm.appointmentId
       );
-
-      console.log("✅ Appointment cancelled successfully");
 
       // Show success modal
       showSuccessModal(
@@ -891,7 +816,6 @@ const AppointmentModal = ({
         "La cita ha sido cancelada correctamente."
       );
     } catch (error: any) {
-      console.error("❌ Failed to cancel appointment:", error);
       showErrorModal(
         "Error al cancelar la cita",
         error.message ||

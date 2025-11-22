@@ -116,7 +116,6 @@ export const getAppointments = async (): Promise<Appointment[]> => {
     // For now, returning empty array until backend endpoint is ready
     return [];
   } catch (error) {
-    console.error("Error fetching appointments:", error);
     return [];
   }
 };
@@ -141,8 +140,6 @@ export const createAppointment = async (
       notes: appointment.notes || undefined,
     };
 
-    console.log('📤 Sending POST request to create appointment:', requestData);
-
     // Log transformed data for debugging
   // Transformed request data ready to send to backend
 
@@ -160,10 +157,6 @@ export const createAppointment = async (
 
     // Access the nested appointment data
     const appointmentData = response.data.data;
-
-    console.log('🔍 CREATE - Backend appointmentData:', appointmentData);
-    console.log('🔍 CREATE - appointmentData.patient:', appointmentData.patient);
-    console.log('🔍 CREATE - appointmentData.patient_id:', appointmentData.patient_id);
 
     // TIMEZONE: Backend sends dates in UTC format with 'Z' suffix: "2025-08-28T15:04:05Z"
     // JavaScript automatically converts to local timezone when creating Date object
@@ -201,18 +194,6 @@ export const createAppointment = async (
     };
   } catch (error: any) {
     // Log detailed error information for debugging
-    console.error("❌ Error completo al crear cita:", error);
-    console.error("📋 Detalles del error:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.config?.data
-      }
-    });
-
     // Handle backend errors
     if (error.response?.status === 409) {
       const errorData = error.response.data;
@@ -224,7 +205,6 @@ export const createAppointment = async (
       };
     } else if (error.response?.status === 400) {
       const errorData = error.response.data;
-      console.error("🚫 Error 400 - Datos inválidos:", errorData);
       throw {
         code: 400,
         message: errorData.message || "Los datos de la cita son inválidos"
@@ -235,7 +215,6 @@ export const createAppointment = async (
         message: "Se requiere autenticación"
       };
     } else {
-      console.error("💥 Error inesperado creando cita:", error);
       throw {
         code: 500,
         message: "Ocurrió un error inesperado al crear la cita"
@@ -246,8 +225,6 @@ export const createAppointment = async (
 
 export const updateAppointment = async (id: string, appointmentData: any): Promise<Appointment> => {
   try {
-    console.log('🔄 Updating appointment:', { id, appointmentData });
-
     // Transform frontend format to backend format
     const normalizedStatus: AppointmentStatus =
       typeof appointmentData.status === "string" && appointmentData.status.trim() !== ""
@@ -273,28 +250,13 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       }
     });
 
-    console.log('📤 Sending PATCH request for update:', requestData);
-
     let response;
-    const startTime = Date.now();
     try {
-      console.log('⏳ Making update API call...');
       response = await apiClient.patch<AppointmentApiResponse>(
         `/appointments/${id}`,
         requestData
       );
-      const endTime = Date.now();
-      console.log(`✅ Update response received in ${endTime - startTime}ms:`, response.data);
     } catch (apiError: any) {
-      const endTime = Date.now();
-      console.error(`❌ Update API call failed after ${endTime - startTime}ms:`, apiError);
-      console.error('❌ Update API Error details:', {
-        status: apiError.response?.status,
-        statusText: apiError.response?.statusText,
-        data: apiError.response?.data,
-        message: apiError.message,
-        isTimeout: apiError.code === 'ECONNABORTED'
-      });
       throw apiError;
     }
 
@@ -334,18 +296,6 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
       is_first_visit: updatedAppointment.is_first_visit,
     };
   } catch (error: any) {
-    console.error("❌ Error updating appointment:", error);
-    console.error("📋 Update error details:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.config?.data
-      }
-    });
-
     // Handle specific error cases
     if (error.response?.status === 404) {
       throw new Error("Appointment not found");
@@ -360,35 +310,17 @@ export const updateAppointment = async (id: string, appointmentData: any): Promi
 
 export const cancelAppointment = async (id: string): Promise<Appointment> => {
   try {
-    console.log(`🚫 Cancelling appointment ${id}`);
-
     // Send PATCH request with status="cancelled"
     const requestData = {
       status: "cancelled"
     };
-
-    console.log('📤 Sending PATCH request to cancel appointment:', requestData);
-
     let response;
-    const startTime = Date.now();
     try {
-      console.log('⏳ Making cancel API call...');
       response = await apiClient.patch<AppointmentApiResponse>(
         `/appointments/${id}`,
         requestData
       );
-      const endTime = Date.now();
-      console.log(`✅ Cancel response received in ${endTime - startTime}ms:`, response.data);
     } catch (apiError: any) {
-      const endTime = Date.now();
-      console.error(`❌ Cancel API call failed after ${endTime - startTime}ms:`, apiError);
-      console.error('❌ Cancel API Error details:', {
-        status: apiError.response?.status,
-        statusText: apiError.response?.statusText,
-        data: apiError.response?.data,
-        message: apiError.message,
-        isTimeout: apiError.code === 'ECONNABORTED'
-      });
       throw apiError;
     }
 
@@ -428,18 +360,6 @@ export const cancelAppointment = async (id: string): Promise<Appointment> => {
       notes: cancelledAppointment.notes ?? undefined,
     };
   } catch (error: any) {
-    console.error("❌ Error cancelling appointment:", error);
-    console.error("📋 Cancel error details:", {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        data: error.config?.data
-      }
-    });
-
     // Handle specific error cases
     if (error.response?.status === 404) {
       throw new Error("Appointment not found");
@@ -456,7 +376,6 @@ export const deleteAppointment = async (id: string): Promise<void> => {
   try {
     await apiClient.delete(`/appointments/${id}`);
   } catch (error) {
-    console.error("Error eliminando cita:", error);
     throw { code: 500, message: "Error al eliminar la cita" };
   }
 };
@@ -490,14 +409,12 @@ export const getAppointmentsByDateRange = async (
       if (responseData && 'appointments' in responseData && Array.isArray(responseData.appointments)) {
         appointmentsData = responseData.appointments;
       } else {
-        console.error('❌ No appointments array found in response.data.data:', responseData);
         throw new Error('Invalid response format: no appointments array found');
       }
     } else if (response.data && typeof response.data === 'object' && 'appointments' in response.data) {
       // Handle case where data is wrapped in an object like { appointments: [...] }
       appointmentsData = (response.data as any).appointments;
     } else {
-      console.error('❌ Unexpected response data structure:', response.data);
       throw new Error('Invalid response format from appointments API');
     }
     
@@ -512,20 +429,12 @@ export const getAppointmentsByDateRange = async (
       
       // Validate dates
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        console.warn("Invalid appointment dates:", {
-          id: appt.id,
-          start_time: appt.start_time,
-          end_time: appt.end_time
-        });
         // Skip invalid appointments
         return null;
       }
       
       // Log first appointment to check structure
       if (appt.id === appointmentsData[0].id) {
-        console.log('🔍 FETCH - First appointment from backend:', appt);
-        console.log('🔍 FETCH - appt.patient:', appt.patient);
-        console.log('🔍 FETCH - appt.patient_id:', appt.patient_id);
       }
       
       return {
@@ -554,30 +463,9 @@ export const getAppointmentsByDateRange = async (
     }).filter((appt): appt is Appointment => appt !== null); // Remove null entries
     
     // Debug: Log appointments with is_first_visit after transformation
-    const firstVisitAppointments = appointments.filter(apt => apt.is_first_visit);
-    if (firstVisitAppointments.length > 0) {
-      console.log(`✅ Found ${firstVisitAppointments.length} first visit appointments after transformation:`, 
-        firstVisitAppointments.map(apt => ({
-          patient_name: apt.patient_name,
-          is_first_visit: apt.is_first_visit,
-        }))
-      );
-    } else {
-      console.log("⚠️ No first visit appointments found after transformation");
-    }
-    
   // Loaded appointments for date range
     return appointments;
   } catch (error) {
-    console.error('❌ Error fetching appointments by date range:', error);
-    
-    // Log more details about the error
-    if (error && typeof error === 'object' && 'response' in error) {
-      const apiError = error as any;
-      console.error('❌ API Error Status:', apiError.response?.status);
-      console.error('❌ API Error Data:', apiError.response?.data);
-    }
-    
     throw error;
   }
 };
@@ -590,7 +478,6 @@ export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date
       end_time: toLocalTimeWithZ(dateRange.end),
     });
   } catch (error) {
-    console.error("Error bloqueando tiempo del doctor:", error);
     throw { code: 500, message: "Error al bloquear el tiempo del doctor" };
   }
 };
