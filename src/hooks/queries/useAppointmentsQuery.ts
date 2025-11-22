@@ -20,7 +20,7 @@ import { useOrganizationQuery } from "./useOrganizationQuery";
  * - Automatic cache invalidation
  */
 export const useAppointmentsQuery = (startDate: Date, endDate: Date) => {
-  const { organizationId } = useAuth();
+  const { organizationId, readyForFetches } = useAuth();
 
   // Create stable cache key based on date range and organization
   const cacheKey = [
@@ -48,7 +48,7 @@ export const useAppointmentsQuery = (startDate: Date, endDate: Date) => {
     },
     
     // Only run when we have organizationId and valid dates
-    enabled: !!organizationId && startDate <= endDate,
+  enabled: readyForFetches && !!organizationId && startDate <= endDate,
     
     // Appointments change frequently - refresh every 2 minutes
     staleTime: 2 * 60 * 1000,

@@ -13,7 +13,7 @@ import { useAuth } from "../../contexts/AuthContext";
  * - Stale-while-revalidate pattern
  */
 export const useOrganizationQuery = () => {
-  const { organizationId, session } = useAuth();
+  const { organizationId, session, readyForFetches } = useAuth();
 
   return useQuery<OrganizationData, Error>({
     // Query key includes organizationId for cache segmentation
@@ -43,7 +43,7 @@ export const useOrganizationQuery = () => {
     },
     
     // Only run query when we have both organizationId and session
-    enabled: !!organizationId && !!session?.access_token,
+  enabled: readyForFetches && !!organizationId && !!session?.access_token,
     
     // Organization data is relatively static - cache for 10 minutes
     staleTime: 10 * 60 * 1000,

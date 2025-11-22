@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { supabase } from "../lib/supabase";
-import type { Session, User } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
@@ -14,6 +14,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   organizationId: string | null;
+  readyForFetches: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signUp: (
     email: string,
@@ -30,31 +31,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [readyForFetches, setReadyForFetches] = useState(false);
   const navigate = useNavigate();
 
   // Extract organizationId from user metadata
   const organizationId = user?.user_metadata?.organization_id || null;
 
   useEffect(() => {
-    // Al montar, obtener la sesión existente
+    let readyTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const armReadyTimer = (
+      newSession: Session | null,
+      { immediate }: { immediate: boolean }
+    ) => {
+      if (readyTimer) {
+        clearTimeout(readyTimer);
+        readyTimer = null;
+      }
+
+      if (!newSession?.access_token) {
+        setReadyForFetches(false);
+        return;
+      }
+
+      if (immediate) {
+        setReadyForFetches(true);
+        return;
+      }
+
+      setReadyForFetches(false);
+      readyTimer = setTimeout(() => {
+        setReadyForFetches(true);
+      }, 5000);
+    };
+
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
+      const currentSession = data.session ?? null;
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setLoading(false);
+      armReadyTimer(currentSession, { immediate: true });
     });
 
-    // Escuchar cambios de auth
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      (event: AuthChangeEvent, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        const shouldDelay =
+          event === "SIGNED_IN" || event === "TOKEN_REFRESHED";
+        armReadyTimer(newSession, { immediate: !shouldDelay });
       }
     );
 
     return () => {
       listener.subscription.unsubscribe();
+      if (readyTimer) {
+        clearTimeout(readyTimer);
+      }
     };
-  }, [navigate]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -91,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setSession(null);
     setUser(null);
+    setReadyForFetches(false);
     navigate("/login");
   };
 
@@ -106,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         organizationId,
+        readyForFetches,
         signIn,
         signUp,
         signOut,
