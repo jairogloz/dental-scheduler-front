@@ -145,7 +145,12 @@ type BlockingDialogState = {
 
 function App() {
   const { isMobile } = useWindowSize();
-  const { organizationId, signOut } = useAuth();
+  const {
+    organizationId,
+    signOut,
+    readyForFetches,
+    loading: authLoading,
+  } = useAuth();
 
   // UI State
   const [view, setView] = useState<View>(isMobile ? "day" : "week");
@@ -197,7 +202,7 @@ function App() {
   const services = organizationData?.services ?? [];
 
   useEffect(() => {
-    if (organizationLoading) {
+    if (authLoading || !readyForFetches || organizationLoading) {
       return;
     }
 
@@ -258,6 +263,8 @@ function App() {
 
     setBlockingDialog(null);
   }, [
+    authLoading,
+    readyForFetches,
     organizationLoading,
     organizationId,
     organizationData,
@@ -603,7 +610,11 @@ function App() {
   }, []);
 
   // Show loading state
-  if (organizationLoading && !organizationData) {
+  if (
+    authLoading ||
+    !readyForFetches ||
+    (organizationLoading && !organizationData)
+  ) {
     return (
       <div
         style={{
