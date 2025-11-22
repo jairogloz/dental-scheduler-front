@@ -359,6 +359,7 @@ function App() {
         resourceId: appointment.doctorId,
         appointmentId: appointment.id,
         clinicId,
+        clinicColor: getClinicColor(clinicId, clinics),
         patientName: patientLabel,
         doctorName: doctorLabel,
         patientPhone:
@@ -391,6 +392,8 @@ function App() {
         fontWeight: "500",
         outline: `2px solid ${clinicColor}`,
         outlineOffset: "-1px",
+        // Pass clinic color to CSS for ribbon
+        "--clinic-ribbon-color": clinicColor,
       };
 
       if (isSelected) {
