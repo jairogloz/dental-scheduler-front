@@ -8,6 +8,7 @@ import {
 } from "../../api/entities/Appointment";
 import { useAuth } from "../../contexts/AuthContext";
 import { useOrganizationQuery } from "./useOrganizationQuery";
+import { APPOINTMENT_STATUS } from "../../utils/appointmentStatus";
 
 /**
  * TanStack Query hook for appointments within a date range
@@ -251,6 +252,9 @@ export const useFilteredAppointments = (
     if (!appointments || !organizationData) return [];
 
     const filtered = appointments.filter((appointment) => {
+      if (appointment.status === APPOINTMENT_STATUS.RESCHEDULE_REQUESTED) {
+        return false;
+      }
       // Exclude cancelled appointments if requested
       if (excludeCancelled && appointment.status === "cancelled") {
         return false;
