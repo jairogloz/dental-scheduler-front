@@ -82,6 +82,10 @@ const AppointmentModal = ({
 
   const [currentMode, setCurrentMode] = useState(mode); // Internal mode state for switching
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [
+    showRescheduleRequestConfirmation,
+    setShowRescheduleRequestConfirmation,
+  ] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [originalAppointmentForm, setOriginalAppointmentForm] =
     useState<any>(null); // Store original form data
@@ -169,6 +173,11 @@ const AppointmentModal = ({
   };
 
   const isReadOnly = currentMode === "see-only";
+  const isRescheduleRequestDisabled = [
+    APPOINTMENT_STATUS.RESCHEDULE_REQUESTED,
+    APPOINTMENT_STATUS.RESCHEDULED,
+    APPOINTMENT_STATUS.CANCELLED,
+  ].includes(appointmentForm?.status);
 
   // Generate time options with 5-minute intervals for finer control
   const generateTimeOptions = () => {
@@ -446,6 +455,11 @@ const AppointmentModal = ({
 
     // Clear any patient selection
     setSelectedPatient(null);
+  };
+
+  const handleConfirmRescheduleRequest = () => {
+    setShowRescheduleRequestConfirmation(false);
+    void handleQuickStatusUpdate(APPOINTMENT_STATUS.RESCHEDULE_REQUESTED);
   };
 
   // Quick status update handler - makes immediate API call
@@ -1197,6 +1211,7 @@ const AppointmentModal = ({
             {currentMode === "see-only" && (
               <>
                 <button
+                  type="button"
                   onClick={handleCancel}
                   style={{
                     padding: "10px 20px",
@@ -1210,6 +1225,27 @@ const AppointmentModal = ({
                   Cancelar Cita
                 </button>
                 <button
+                  type="button"
+                  onClick={() => setShowRescheduleRequestConfirmation(true)}
+                  disabled={isRescheduleRequestDisabled}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: isRescheduleRequestDisabled
+                      ? "#fcd34d"
+                      : "#fbbf24",
+                    color: "#1f2937",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: isRescheduleRequestDisabled
+                      ? "not-allowed"
+                      : "pointer",
+                    opacity: isRescheduleRequestDisabled ? 0.7 : 1,
+                  }}
+                >
+                  Solicita Reagendar
+                </button>
+                <button
+                  type="button"
                   onClick={handleEditAppointment}
                   style={{
                     padding: "10px 20px",
@@ -1358,6 +1394,19 @@ const AppointmentModal = ({
           onPatientUpdated={handlePatientUpdated}
         />
       )}
+
+      <ConfirmationDialog
+        isOpen={showRescheduleRequestConfirmation}
+        title="Solicita Reagendar"
+        message={
+          '¿Seguro que deseas cambiar el estatus de esta cita a "Solicita Reagendar"? Si confirmas, el espacio en la agenda se liberará.'
+        }
+        confirmText="Sí, solicitar"
+        cancelText="No, mantener"
+        onConfirm={handleConfirmRescheduleRequest}
+        onCancel={() => setShowRescheduleRequestConfirmation(false)}
+        confirmButtonStyle="primary"
+      />
 
       {/* Cancel Confirmation Dialog */}
       <ConfirmationDialog

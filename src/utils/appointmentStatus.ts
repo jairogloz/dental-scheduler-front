@@ -8,6 +8,7 @@ export const APPOINTMENT_STATUS = {
   COMPLETED: 'completed',
   CANCELLED: 'cancelled',
   RESCHEDULED: 'rescheduled',
+  RESCHEDULE_REQUESTED: 'reschedule-requested',
   NO_SHOW: 'no-show'
 } as const;
 
@@ -53,6 +54,13 @@ export const getAvailableStatusOptions = (
     options.unshift({ value: APPOINTMENT_STATUS.RESCHEDULED, label: 'Reagendada' });
   }
 
+  if (currentStatus === APPOINTMENT_STATUS.RESCHEDULE_REQUESTED) {
+    options.unshift({
+      value: APPOINTMENT_STATUS.RESCHEDULE_REQUESTED,
+      label: 'Solicita reagendar',
+    });
+  }
+
   return options;
 };
 
@@ -68,6 +76,7 @@ export const getStatusLabel = (status: AppointmentStatus): string => {
     [APPOINTMENT_STATUS.COMPLETED]: 'Completada',
     [APPOINTMENT_STATUS.CANCELLED]: 'Cancelada',
     [APPOINTMENT_STATUS.RESCHEDULED]: 'Reagendada', 
+    [APPOINTMENT_STATUS.RESCHEDULE_REQUESTED]: 'Solicita reagendar',
     [APPOINTMENT_STATUS.NO_SHOW]: 'No se presentó'
   };
 
