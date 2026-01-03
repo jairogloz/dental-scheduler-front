@@ -3,6 +3,7 @@ import { useWindowSize } from "./hooks/useWindowSize";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import AppointmentsPage from "./pages/AppointmentsPage";
+import PatientsPage from "./pages/PatientsPage";
 
 function App() {
   const { isMobile } = useWindowSize();
@@ -26,28 +27,34 @@ function App() {
           transition: "margin-left 0.3s ease",
           minHeight: "100vh",
           backgroundColor: "#f8fafc",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
         <Header />
 
-        {isAppointmentsSection ? (
-          <AppointmentsPage isMobile={isMobile} />
-        ) : (
-          <div style={{ padding: isMobile ? "10px" : "20px" }}>
-            <div
-              style={{
-                textAlign: "center",
-                padding: "60px 20px",
-                backgroundColor: "white",
-                borderRadius: "8px",
-                minHeight: "400px",
-              }}
-            >
-              <h1 style={{ margin: 0 }}>Próximamente</h1>
-              <p>Esta sección estará disponible pronto.</p>
+        <div style={{ width: "100%" }}>
+          {isAppointmentsSection ? (
+            <AppointmentsPage isMobile={isMobile} />
+          ) : activeSection === "patients" ? (
+            <PatientsPage isMobile={isMobile} />
+          ) : (
+            <div style={{ padding: isMobile ? "10px" : "20px" }}>
+              <div
+                style={{
+                  textAlign: "center",
+                  padding: "60px 20px",
+                  backgroundColor: "white",
+                  borderRadius: "8px",
+                  minHeight: "400px",
+                }}
+              >
+                <h1 style={{ margin: 0 }}>Próximamente</h1>
+                <p>Esta sección estará disponible pronto.</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );
