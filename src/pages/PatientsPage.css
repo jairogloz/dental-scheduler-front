@@ -2,19 +2,133 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 
-.patients-card {
-  width: 100%;
-  background-color: white;
-  border-radius: 12px;
-  padding: 48px 32px;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-  text-align: center;
+.patients-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.patients-card h1 {
+.section-title {
   margin: 0;
-  font-size: 32px;
-  letter-spacing: 2px;
+  color: #0a2540;
+  font-size: 28px;
+}
+
+.section-subtitle {
+  margin: 4px 0 0;
+  color: #4b5563;
+  font-size: 14px;
+}
+
+.patients-actions {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.patients-search-input {
+  width: 100%;
+  max-width: 340px;
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: 1px solid #cbd5f5;
+  background: #fdfefe;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.patients-list-wrapper {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.patients-table {
+  width: 100%;
+}
+
+.patients-table-header,
+.patients-table-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr 1fr 2fr;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 24px;
+}
+
+.patients-table-header {
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #475467;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.patients-table-row {
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 15px;
+  color: #0f172a;
+}
+
+.patients-table-row:last-child {
+  border-bottom: none;
+}
+
+.patients-placeholder {
+  padding: 80px 24px;
+  text-align: center;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.patients-row-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ghost-button {
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  color: #4f46e5;
+  background: transparent;
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ghost-button:hover {
+  background: rgba(79, 70, 229, 0.08);
+}
+
+.patients-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #475467;
+}
+
+.patients-pagination button {
+  border: none;
+  background: #0f172a;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.patients-pagination button:disabled {
+  background: #cbd5f5;
+  cursor: not-allowed;
 }
