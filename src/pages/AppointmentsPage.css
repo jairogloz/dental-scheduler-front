@@ -42,7 +42,6 @@
 
 /* Improve readability of event text */
 .rbc-event-content {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
   font-weight: 500 !important;
 }
 
@@ -73,7 +72,6 @@
 
 /* Enhanced text readability on dark backgrounds */
 .calendar-event-with-clinic-outline {
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
   font-weight: 600 !important;
 }
 
@@ -126,7 +124,6 @@
    we increase the font-weight of the entire event to emphasize patient names */
 .rbc-event-content {
   font-weight: 600 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
 }
 
 /* Make patient lines stand out more */
