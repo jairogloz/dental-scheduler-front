@@ -3,8 +3,8 @@ import {
   createPatient,
   type Patient,
   type CreatePatientRequest,
-} from "../../api/entities/Patient";
-import "../../styles/Modal.css";
+} from "../../../api/entities/Patient";
+import "../../../styles/Modal.css";
 import "./AddPatientModal.css";
 
 export interface AddPatientModalProps {
@@ -30,7 +30,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
 
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (isOpen) {
       const trimmedInitial = initialName.trim();
@@ -43,29 +42,24 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
         phone: "",
       });
       setError(null);
-      // Focus the name input when modal opens
       setTimeout(() => {
         nameInputRef.current?.focus();
       }, 100);
     }
   }, [isOpen, initialName]);
 
-  // Handle form input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear error when user starts typing
     if (error) {
       setError(null);
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validate required fields
     if (!formData.first_name.trim()) {
       setError("El nombre del paciente es requerido");
       nameInputRef.current?.focus();
@@ -82,7 +76,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
         phone: formData.phone?.trim() || undefined,
       });
 
-      // Success - notify parent and close modal
       onPatientCreated(newPatient);
       onClose();
     } catch (err) {
@@ -96,7 +89,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
     }
   };
 
-  // Handle escape key to close modal
   useEffect(() => {
     const handleEscapeKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen && !isSubmitting) {
@@ -112,13 +104,11 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
     }
   }, [isOpen, isSubmitting, onClose]);
 
-  // Don't render if not open
   if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" style={{ zIndex: 1100 }}>
       <div className="modal-content add-patient-modal">
-        {/* Close button */}
         <button
           onClick={onClose}
           disabled={isSubmitting}
@@ -128,21 +118,17 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
           ×
         </button>
 
-        {/* Modal header */}
         <div className="modal-header">
           <h3>Agregar Nuevo Paciente</h3>
         </div>
 
-        {/* Modal body */}
         <form onSubmit={handleSubmit} className="add-patient-form">
-          {/* Error message */}
           {error && (
             <div className="error-message" role="alert">
               {error}
             </div>
           )}
 
-          {/* Name field */}
           <div className="form-group">
             <label htmlFor="patient-first-name">
               Nombre(s) <span className="required">*</span>
@@ -178,7 +164,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
             />
           </div>
 
-          {/* Phone field */}
           <div className="form-group">
             <label htmlFor="patient-phone">Teléfono</label>
             <input
@@ -194,7 +179,6 @@ const AddPatientModal: React.FC<AddPatientModalProps> = ({
             />
           </div>
 
-          {/* Form actions */}
           <div className="form-actions">
             <button
               type="button"

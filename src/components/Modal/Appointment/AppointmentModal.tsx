@@ -13,7 +13,7 @@ import {
 } from "../../../hooks/queries/useAppointmentsQuery";
 import PatientSearchAutocomplete from "../../PatientSearch/PatientSearchAutocomplete";
 import PatientDisplay from "../../PatientSearch/PatientDisplay";
-import AddPatientModal from "../../PatientSearch/AddPatientModal";
+import AddPatientModal from "../Patient/AddPatientModal";
 import EditPatientModal from "../Patient/EditPatientModal";
 import ConfirmationDialog from "../ConfirmationDialog";
 import UniversalModal from "../UniversalModal";
