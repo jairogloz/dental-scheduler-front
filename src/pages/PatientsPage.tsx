@@ -112,7 +112,6 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
             <span>Nombre completo</span>
             <span>Email</span>
             <span>Teléfono</span>
-            <span>Última cita</span>
             <span>Acciones</span>
           </div>
           <div className="patients-table-body">
@@ -137,7 +136,6 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
                   </span>
                   <span>{patient.email || "-"}</span>
                   <span>{patient.phone || "-"}</span>
-                  <span>-</span>
                   <span className="patients-row-actions">
                     <button
                       className="ghost-button"
@@ -145,8 +143,12 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
                     >
                       Editar
                     </button>
-                    <button className="ghost-button">Historial</button>
-                    <button className="ghost-button">Nueva cita</button>
+                    <button className="ghost-button" disabled>
+                      Historial
+                    </button>
+                    <button className="ghost-button" disabled>
+                      Nueva cita
+                    </button>
                   </span>
                 </div>
               ))

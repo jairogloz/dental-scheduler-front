@@ -84,7 +84,7 @@
 .patients-table-header,
 .patients-table-row {
   display: grid;
-  grid-template-columns: 2fr 2fr 1.5fr 1fr 2fr;
+  grid-template-columns: 2fr 2fr 1.5fr 2fr;
   gap: 12px;
   align-items: center;
   padding: 12px 24px;
@@ -136,6 +136,13 @@
 
 .ghost-button:hover {
   background: rgba(79, 70, 229, 0.08);
+}
+
+.ghost-button:disabled {
+  border-color: rgba(79, 70, 229, 0.15);
+  color: rgba(79, 70, 229, 0.4);
+  cursor: not-allowed;
+  background: transparent;
 }
 
 .patients-pagination {
