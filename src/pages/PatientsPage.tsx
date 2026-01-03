@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { searchPatients } from "../api/entities/Patient";
+import { searchPatients, type Patient } from "../api/entities/Patient";
 import "./PatientsPage.css";
 
 interface PatientsPageProps {
@@ -23,15 +23,18 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  const { data: patients = [], isLoading } = useQuery({
+  const { data: patients = [], isLoading } = useQuery<
+    Patient[],
+    Error,
+    Patient[]
+  >({
     queryKey: ["patients-search", debouncedTerm],
     queryFn: () => searchPatients(debouncedTerm, 200),
     enabled: debouncedTerm.length >= 2,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
   });
 
-  const filteredPatients = useMemo(() => {
+  const filteredPatients = useMemo<Patient[]>(() => {
     if (debouncedTerm.length < 2) return [];
     return patients;
   }, [debouncedTerm, patients]);
@@ -42,7 +45,7 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
   );
   const currentPage = Math.min(page, totalPages);
 
-  const pageItems = useMemo(() => {
+  const pageItems = useMemo<Patient[]>(() => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredPatients.slice(start, start + PAGE_SIZE);
   }, [currentPage, filteredPatients]);
@@ -105,7 +108,7 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
                   <span>{patient.phone || "-"}</span>
                   <span>-</span>
                   <span className="patients-row-actions">
-                    <button className="ghost-button">Ver / Editar</button>
+                    <button className="ghost-button">Editar</button>
                     <button className="ghost-button">Historial</button>
                     <button className="ghost-button">Nueva cita</button>
                   </span>

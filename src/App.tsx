@@ -3,7 +3,7 @@ import { useWindowSize } from "./hooks/useWindowSize";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import AppointmentsPage from "./pages/AppointmentsPage";
-import PatientsPage from "./pages/PatientsPage";
+import PatientsPage from "./pages/PatientsPage.tsx";
 
 function App() {
   const { isMobile } = useWindowSize();
