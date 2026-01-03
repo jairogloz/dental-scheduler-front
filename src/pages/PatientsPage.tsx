@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchPatients, type Patient } from "../api/entities/Patient";
 import "./PatientsPage.css";
+import EditPatientModal from "../components/Modal/Patient/EditPatientModal";
 
 interface PatientsPageProps {
   isMobile: boolean;
@@ -13,6 +14,8 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const [page, setPage] = useState(1);
+  const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -49,8 +52,17 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
     const start = (currentPage - 1) * PAGE_SIZE;
     return filteredPatients.slice(start, start + PAGE_SIZE);
   }, [currentPage, filteredPatients]);
-
   const paginationLabel = `Página ${currentPage} de ${totalPages}`;
+
+  const handlePatientUpdated = (_updated: Patient) => {
+    queryClient.invalidateQueries({
+      queryKey: ["patients-search"],
+      exact: false,
+    });
+    setEditingPatient(null);
+  };
+
+  const closeEditModal = () => setEditingPatient(null);
 
   return (
     <div
@@ -108,7 +120,12 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
                   <span>{patient.phone || "-"}</span>
                   <span>-</span>
                   <span className="patients-row-actions">
-                    <button className="ghost-button">Editar</button>
+                    <button
+                      className="ghost-button"
+                      onClick={() => setEditingPatient(patient)}
+                    >
+                      Editar
+                    </button>
                     <button className="ghost-button">Historial</button>
                     <button className="ghost-button">Nueva cita</button>
                   </span>
@@ -134,6 +151,14 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
           Siguiente
         </button>
       </div>
+      {editingPatient && (
+        <EditPatientModal
+          isOpen={Boolean(editingPatient)}
+          patient={editingPatient}
+          onClose={closeEditModal}
+          onPatientUpdated={handlePatientUpdated}
+        />
+      )}
     </div>
   );
 };
