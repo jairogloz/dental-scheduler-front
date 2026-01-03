@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { searchPatients, type Patient } from "../api/entities/Patient";
 import "./PatientsPage.css";
 import EditPatientModal from "../components/Modal/Patient/EditPatientModal";
+import AddPatientModal from "../components/Modal/Patient/AddPatientModal";
 
 interface PatientsPageProps {
   isMobile: boolean;
@@ -15,6 +16,7 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
   const [debouncedTerm, setDebouncedTerm] = useState("");
   const [page, setPage] = useState(1);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -62,6 +64,20 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
     setEditingPatient(null);
   };
 
+  const handleAddPatient = () => setShowAddPatientModal(true);
+
+  const handlePatientCreated = (patient: Patient) => {
+    queryClient.invalidateQueries({
+      queryKey: ["patients-search"],
+      exact: false,
+    });
+    const suggestedName =
+      patient.name ||
+      `${patient.first_name || ""} ${patient.last_name || ""}`.trim();
+    setSearchTerm(suggestedName);
+    setShowAddPatientModal(false);
+  };
+
   const closeEditModal = () => setEditingPatient(null);
 
   return (
@@ -77,6 +93,9 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
           </p>
         </div>
         <div className="patients-actions">
+          <button className="patients-add-button" onClick={handleAddPatient}>
+            Agregar Paciente
+          </button>
           <input
             type="text"
             className="patients-search-input"
@@ -157,6 +176,14 @@ const PatientsPage = ({ isMobile }: PatientsPageProps) => {
           patient={editingPatient}
           onClose={closeEditModal}
           onPatientUpdated={handlePatientUpdated}
+        />
+      )}
+      {showAddPatientModal && (
+        <AddPatientModal
+          isOpen={showAddPatientModal}
+          onClose={() => setShowAddPatientModal(false)}
+          onPatientCreated={handlePatientCreated}
+          initialName={searchTerm.trim()}
         />
       )}
     </div>
