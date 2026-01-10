@@ -374,12 +374,17 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr 1fr 1fr",
-            gap: "15px",
+            gridTemplateColumns: isMobile
+              ? "1fr"
+              : window.innerWidth < 1200
+              ? "1fr 1fr"
+              : "1.8fr 1fr 1fr 1fr",
+            gap: "32px",
+            gridRowGap: "20px",
           }}
         >
           {/* Patient Search */}
-          <div>
+          <div style={{ boxSizing: "border-box" }}>
             <label
               style={{
                 display: "block",
@@ -446,7 +451,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
           </div>
 
           {/* Clinic Filter */}
-          <div>
+          <div style={{ boxSizing: "border-box" }}>
             <label
               style={{
                 display: "block",
@@ -500,7 +505,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
           </div>
 
           {/* Doctor Filter */}
-          <div>
+          <div style={{ boxSizing: "border-box" }}>
             <label
               style={{
                 display: "block",
@@ -545,7 +550,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
           </div>
 
           {/* Sort Filter */}
-          <div>
+          <div style={{ boxSizing: "border-box" }}>
             <label
               style={{
                 display: "block",
