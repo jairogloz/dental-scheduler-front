@@ -658,6 +658,34 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                 overflow: "hidden",
               }}
             >
+              {/* Table Headers */}
+              {!isMobile && (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "minmax(200px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(240px, auto)",
+                    gap: "15px",
+                    alignItems: "center",
+                    padding: "15px",
+                    backgroundColor: "#f8fafc",
+                    borderBottom: "1px solid #e5e7eb",
+                    fontSize: "13px",
+                    fontWeight: "600",
+                    color: "#374151",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <div>Paciente</div>
+                  <div>Fecha Original</div>
+                  <div>Doctor</div>
+                  <div>Pendiente por</div>
+                  <div style={{ textAlign: "center" }}>Acciones</div>
+                </div>
+              )}
+
               {queueData.items.map((item, index) => (
                 <div
                   key={item.id}
@@ -670,9 +698,10 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                     display: "grid",
                     gridTemplateColumns: isMobile
                       ? "1fr"
-                      : "2fr 1fr 1fr 1fr auto",
+                      : "minmax(200px, 2fr) minmax(120px, 1fr) minmax(120px, 1fr) minmax(100px, 1fr) minmax(240px, auto)",
                     gap: "15px",
                     alignItems: "center",
+                    boxSizing: "border-box",
                   }}
                 >
                   <div>
@@ -702,7 +731,15 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                     {item.days_in_queue} días
                   </div>
 
-                  <div style={{ display: "flex", gap: "8px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                      justifyContent: "center",
+                      flexWrap: "wrap",
+                      minWidth: "240px",
+                    }}
+                  >
                     <button
                       onClick={() => handleRescheduleClick(item)}
                       disabled={rescheduleMutation.isPending}
