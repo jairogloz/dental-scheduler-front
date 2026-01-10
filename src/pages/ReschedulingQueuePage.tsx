@@ -524,7 +524,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                 color: "#333",
               }}
             >
-              Citas pendientes ({queueData.items.length})
+              Citas pendientes de reagendar ({queueData.items.length})
             </h3>
 
             {/* TODO: Replace with proper QueueList component */}
@@ -775,7 +775,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                   cursor: "pointer",
                 }}
               >
-                Cancelar
+                Atrás
               </button>
               <button
                 onClick={handleConfirmCancel}
