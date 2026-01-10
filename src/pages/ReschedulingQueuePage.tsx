@@ -3,9 +3,11 @@ import {
   useReschedulingQueueQuery,
   useCancelFromQueue,
   useRescheduleFromQueue,
+  useSnoozeFromQueue,
 } from "../hooks/queries/useReschedulingQueueQuery";
 import { useOrganizationQuery } from "../hooks/queries/useOrganizationQuery";
 import AppointmentModal from "../components/Modal/Appointment/AppointmentModal";
+import { SnoozeModal } from "../components/Modal/SnoozeModal";
 import type { ReschedulingQueueItem } from "../api/entities/Appointment";
 
 interface ReschedulingQueuePageProps {
@@ -25,6 +27,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   // Modal states for actions
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showSnoozeModal, setShowSnoozeModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<ReschedulingQueueItem | null>(null);
 
@@ -41,6 +44,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   // Mutation hooks for actions
   const cancelMutation = useCancelFromQueue();
   const rescheduleMutation = useRescheduleFromQueue();
+  const snoozeMutation = useSnoozeFromQueue();
 
   // Extract data for AppointmentModal props
   const doctors = organizationData?.doctors || [];
@@ -160,9 +164,36 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
     setShowRescheduleModal(true);
   };
 
+  const handleSnoozeClick = (item: ReschedulingQueueItem) => {
+    setSelectedAppointment(item);
+    setShowSnoozeModal(true);
+  };
+
+  const handleSnoozeSubmit = async (number: number, time_unit: string) => {
+    if (!selectedAppointment) return;
+
+    try {
+      await snoozeMutation.mutateAsync({
+        appointmentId: selectedAppointment.id,
+        number,
+        time_unit: time_unit as "days" | "weeks" | "months",
+      });
+
+      alert(`Cita pospuesta por ${number} ${time_unit}`);
+      handleCloseModals();
+    } catch (error) {
+      console.error("Error snoozing appointment:", error);
+      alert(
+        "Error al posponer la cita: " +
+          (error instanceof Error ? error.message : "Error desconocido")
+      );
+    }
+  };
+
   const handleCloseModals = () => {
     setShowCancelModal(false);
     setShowRescheduleModal(false);
+    setShowSnoozeModal(false);
     setSelectedAppointment(null);
     setCancelReason("");
     setAppointmentForm(null);
@@ -684,6 +715,22 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                       Reagendar
                     </button>
                     <button
+                      onClick={() => handleSnoozeClick(item)}
+                      disabled={snoozeMutation.isPending}
+                      style={{
+                        padding: "6px 12px",
+                        backgroundColor: "#f59e0b",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        opacity: snoozeMutation.isPending ? 0.5 : 1,
+                      }}
+                    >
+                      Posponer
+                    </button>
+                    <button
                       onClick={() => handleCancelClick(item)}
                       disabled={cancelMutation.isPending}
                       style={{
@@ -907,6 +954,21 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
           appointments={[]} // Empty array since we don't need conflict checking here
         />
       )}
+
+      {/* Snooze Modal */}
+      <SnoozeModal
+        isOpen={showSnoozeModal}
+        onClose={handleCloseModals}
+        onSubmit={handleSnoozeSubmit}
+        appointmentTitle={
+          selectedAppointment
+            ? `${selectedAppointment.patient?.first_name || ""} ${
+                selectedAppointment.patient?.last_name || ""
+              } - ${selectedAppointment.service_name}`.trim()
+            : undefined
+        }
+        isLoading={snoozeMutation.isPending}
+      />
     </div>
   );
 };

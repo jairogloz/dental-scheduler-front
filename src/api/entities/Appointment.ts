@@ -644,3 +644,24 @@ export const rescheduleAppointment = async (
     throw new Error('Error rescheduling appointment');
   }
 };
+
+/**
+ * Snooze appointment - temporarily hide from rescheduling queue
+ */
+export const snoozeAppointment = async (
+  appointmentId: string,
+  snoozeData: {
+    number: number; // 1-10
+    time_unit: 'days' | 'weeks' | 'months';
+  }
+): Promise<void> => {
+  try {
+    await apiClient.post(`/appointments/${appointmentId}/snooze`, snoozeData);
+  } catch (error: any) {
+    console.error('Error snoozing appointment:', error);
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error.message);
+    }
+    throw new Error('Error snoozing appointment');
+  }
+};

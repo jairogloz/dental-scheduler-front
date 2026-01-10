@@ -3,6 +3,7 @@ import {
   getReschedulingQueue,
   cancelAppointmentFromQueue,
   rescheduleAppointment,
+  snoozeAppointment,
   type ReschedulingQueueParams,
   type ReschedulingQueueResponse,
 } from "../../api/entities/Appointment";
@@ -210,6 +211,75 @@ export const useRescheduleFromQueue = () => {
     meta: {
       errorMessage: "Failed to reschedule appointment",
       successMessage: "Appointment rescheduled successfully",
+    },
+  });
+};
+
+/**
+ * Hook for snoozing appointments in the queue
+ */
+export const useSnoozeFromQueue = () => {
+  const queryClient = useQueryClient();
+  const { organizationId } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ 
+      appointmentId, 
+      number, 
+      time_unit 
+    }: { 
+      appointmentId: string; 
+      number: number; 
+      time_unit: "days" | "weeks" | "months";
+    }) => snoozeAppointment(appointmentId, { number, time_unit }),
+    
+    // Optimistic update - remove from queue cache temporarily
+    onMutate: async ({ appointmentId }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({
+        queryKey: ["rescheduling-queue", organizationId],
+      });
+
+      // Snapshot previous value for rollback
+      const previousQueueData = queryClient.getQueriesData({
+        queryKey: ["rescheduling-queue", organizationId],
+      });
+
+      // Remove from queue cache (appointment is snoozed)
+      queryClient.setQueriesData<ReschedulingQueueResponse>(
+        { queryKey: ["rescheduling-queue", organizationId] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.filter(item => item.id !== appointmentId),
+            total: old.total - 1,
+          };
+        }
+      );
+
+      return { previousQueueData };
+    },
+    
+    // Revert optimistic update on error
+    onError: (_error, _variables, context) => {
+      if (context?.previousQueueData) {
+        context.previousQueueData.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+    },
+    
+    // Refetch queue data on success/error to ensure consistency
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["rescheduling-queue", organizationId],
+      });
+    },
+    
+    meta: {
+      errorMessage: "Failed to snooze appointment",
+      successMessage: "Appointment snoozed successfully",
     },
   });
 };
