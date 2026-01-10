@@ -174,7 +174,7 @@ const AppointmentModal = ({
 
   const isReadOnly = currentMode === "see-only";
   const isRescheduleRequestDisabled = [
-    APPOINTMENT_STATUS.RESCHEDULE_REQUESTED,
+    APPOINTMENT_STATUS.NEEDS_RESCHEDULING,
     APPOINTMENT_STATUS.RESCHEDULED,
     APPOINTMENT_STATUS.CANCELLED,
   ].includes(appointmentForm?.status);
@@ -459,7 +459,7 @@ const AppointmentModal = ({
 
   const handleConfirmRescheduleRequest = () => {
     setShowRescheduleRequestConfirmation(false);
-    void handleQuickStatusUpdate(APPOINTMENT_STATUS.RESCHEDULE_REQUESTED);
+    void handleQuickStatusUpdate(APPOINTMENT_STATUS.NEEDS_RESCHEDULING);
   };
 
   // Quick status update handler - makes immediate API call

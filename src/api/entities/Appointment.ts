@@ -481,3 +481,166 @@ export const blockDoctorTime = async (doctorId: string, dateRange: { start: Date
     throw { code: 500, message: "Error al bloquear el tiempo del doctor" };
   }
 };
+
+// Rescheduling Queue API Functions
+export interface ReschedulingQueueParams {
+  clinic_id?: string;
+  doctor_id?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sort?: 'oldest' | 'newest';
+}
+
+export interface ReschedulingQueueItem {
+  id: string;
+  patient: {
+    id: string;
+    first_name: string;
+    last_name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+  doctor_id: string;
+  doctor_name: string;
+  clinic_id: string;
+  clinic_name: string;
+  unit_id?: string | null;
+  unit_name?: string | null;
+  original_start: Date;
+  original_end: Date;
+  service_name: string;
+  notes: string;
+  moved_to_needs_rescheduling_at: Date;
+  days_in_queue: number;
+  last_action_timestamp: Date;
+}
+
+export interface ReschedulingQueueResponse {
+  items: ReschedulingQueueItem[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
+
+/**
+ * Get appointments in the rescheduling queue (status = 'needs-rescheduling')
+ */
+export const getReschedulingQueue = async (params: ReschedulingQueueParams = {}): Promise<ReschedulingQueueResponse> => {
+  try {
+    const searchParams = new URLSearchParams();
+    
+    if (params.clinic_id) searchParams.append('clinic_id', params.clinic_id);
+    if (params.doctor_id) searchParams.append('doctor_id', params.doctor_id);
+    if (params.search) searchParams.append('search', params.search);
+    if (params.page) searchParams.append('page', params.page.toString());
+    if (params.limit) searchParams.append('limit', params.limit.toString());
+    if (params.sort) searchParams.append('sort', params.sort);
+    
+    const url = `/appointments/rescheduling-queue?${searchParams.toString()}`;
+    const response = await apiClient.get<ReschedulingQueueResponse>(url);
+    
+    // Transform dates from string to Date objects
+    const items = response.data.items.map(item => ({
+      ...item,
+      original_start: new Date(item.original_start),
+      original_end: new Date(item.original_end),
+      moved_to_needs_rescheduling_at: new Date(item.moved_to_needs_rescheduling_at),
+      last_action_timestamp: new Date(item.last_action_timestamp),
+    }));
+    
+    return {
+      ...response.data,
+      items,
+    };
+  } catch (error: any) {
+    console.error('Error fetching rescheduling queue:', error);
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error.message);
+    }
+    throw new Error('Error loading rescheduling queue');
+  }
+};
+
+/**
+ * Cancel appointment from rescheduling queue
+ */
+export const cancelAppointmentFromQueue = async (
+  appointmentId: string,
+  reason: string
+): Promise<void> => {
+  try {
+    await apiClient.post(`/appointments/${appointmentId}/cancel`, {
+      reason,
+    });
+  } catch (error: any) {
+    console.error('Error canceling appointment from queue:', error);
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error.message);
+    }
+    throw new Error('Error canceling appointment');
+  }
+};
+
+/**
+ * Reschedule appointment - creates new appointment and marks old as rescheduled
+ */
+export const rescheduleAppointment = async (
+  appointmentId: string, 
+  rescheduleData: {
+    doctor_id: string;
+    unit_id: string;
+    start_time: string; // ISO string in clinic timezone
+    end_time: string;   // ISO string in clinic timezone
+    service_id: string;
+    notes?: string;
+  }
+): Promise<Appointment> => {
+  try {
+    const response = await apiClient.post<{
+      success: boolean;
+      data: {
+        id: string;
+        patient_id?: string | null;
+        patient_name: string;
+        doctor_id?: string | null;
+        unit_id?: string | null;
+        service_id?: string | null;
+        service_name?: string | null;
+        status: string;
+        start_time: string;
+        end_time: string;
+        notes?: string | null;
+        is_first_visit: boolean;
+        created_at: string;
+        updated_at: string;
+      };
+    }>(`/appointments/${appointmentId}/reschedule`, rescheduleData);
+    
+    const appointmentData = response.data.data;
+    
+    // Transform backend response to frontend format
+    return {
+      id: appointmentData.id,
+      patient: undefined, // Will be populated by other queries
+      patientId: appointmentData.patient_id || "",
+      doctorId: appointmentData.doctor_id || "sin-doctor",
+      unitId: appointmentData.unit_id || "",
+      start: new Date(appointmentData.start_time),
+      end: new Date(appointmentData.end_time),
+      serviceId: appointmentData.service_id || "",
+      serviceName: appointmentData.service_name || undefined,
+      notes: appointmentData.notes || undefined,
+      patient_name: appointmentData.patient_name,
+      status: appointmentData.status,
+      is_first_visit: appointmentData.is_first_visit,
+    };
+  } catch (error: any) {
+    console.error('Error rescheduling appointment:', error);
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error.message);
+    }
+    throw new Error('Error rescheduling appointment');
+  }
+};

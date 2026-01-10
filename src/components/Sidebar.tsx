@@ -16,6 +16,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { id: "appointments", label: "Citas", icon: "📅" },
   { id: "patients", label: "Pacientes", icon: "👥" },
+  { id: "rescheduling-queue", label: "Pendientes", icon: "⏰" },
   { id: "doctors", label: "Doctores", icon: "👨‍⚕️", disabled: true },
   { id: "expenses", label: "Gastos", icon: "💰", disabled: true },
   { id: "reports", label: "Reportes", icon: "📊", disabled: true },

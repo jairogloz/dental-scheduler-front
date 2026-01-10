@@ -252,7 +252,7 @@ export const useFilteredAppointments = (
     if (!appointments || !organizationData) return [];
 
     const filtered = appointments.filter((appointment) => {
-      if (appointment.status === APPOINTMENT_STATUS.RESCHEDULE_REQUESTED) {
+      if (appointment.status === APPOINTMENT_STATUS.NEEDS_RESCHEDULING) {
         return false;
       }
       // Exclude cancelled appointments if requested

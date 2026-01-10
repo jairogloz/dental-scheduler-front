@@ -4,6 +4,7 @@ import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import AppointmentsPage from "./pages/AppointmentsPage";
 import PatientsPage from "./pages/PatientsPage.tsx";
+import ReschedulingQueuePage from "./pages/ReschedulingQueuePage";
 
 function App() {
   const { isMobile } = useWindowSize();
@@ -38,6 +39,8 @@ function App() {
             <AppointmentsPage isMobile={isMobile} />
           ) : activeSection === "patients" ? (
             <PatientsPage isMobile={isMobile} />
+          ) : activeSection === "rescheduling-queue" ? (
+            <ReschedulingQueuePage isMobile={isMobile} />
           ) : (
             <div style={{ padding: isMobile ? "10px" : "20px" }}>
               <div
