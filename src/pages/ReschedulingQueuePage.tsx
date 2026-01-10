@@ -52,6 +52,24 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   const units = organizationData?.units || [];
   const services = organizationData?.services || [];
 
+  // Helper function to format time periods more granularly
+  const formatTimePending = (movedToQueueAt: Date): string => {
+    const now = new Date();
+    const diffMs = now.getTime() - movedToQueueAt.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffHours < 1) {
+      return "< 1h";
+    } else if (diffHours < 24) {
+      return `${diffHours}h`;
+    } else if (diffDays === 1) {
+      return "1 día";
+    } else {
+      return `${diffDays} días`;
+    }
+  };
+
   // Helper function to find service_id from service_name
   const findServiceIdByName = (serviceName: string): string => {
     const service = services.find((s) => s.name === serviceName);
@@ -728,7 +746,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
                   </div>
 
                   <div style={{ fontSize: "14px", color: "#6b7280" }}>
-                    {item.days_in_queue} días
+                    {formatTimePending(item.moved_to_needs_rescheduling_at)}
                   </div>
 
                   <div
