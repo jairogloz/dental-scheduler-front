@@ -5,6 +5,7 @@ import {
   useRescheduleFromQueue,
 } from "../hooks/queries/useReschedulingQueueQuery";
 import { useOrganizationQuery } from "../hooks/queries/useOrganizationQuery";
+import AppointmentModal from "../components/Modal/Appointment/AppointmentModal";
 import type { ReschedulingQueueItem } from "../api/entities/Appointment";
 
 interface ReschedulingQueuePageProps {
@@ -30,6 +31,9 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   // Cancel form state
   const [cancelReason, setCancelReason] = useState("");
 
+  // Appointment form for the reschedule modal
+  const [appointmentForm, setAppointmentForm] = useState<any>(null);
+
   // Get organization data for filter options
   const { data: organizationData, isLoading: isLoadingOrg } =
     useOrganizationQuery();
@@ -37,6 +41,18 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   // Mutation hooks for actions
   const cancelMutation = useCancelFromQueue();
   const rescheduleMutation = useRescheduleFromQueue();
+
+  // Extract data for AppointmentModal props
+  const doctors = organizationData?.doctors || [];
+  const clinics = organizationData?.clinics || [];
+  const units = organizationData?.units || [];
+  const services = organizationData?.services || [];
+
+  // Helper function to find service_id from service_name
+  const findServiceIdByName = (serviceName: string): string => {
+    const service = services.find((s) => s.name === serviceName);
+    return service?.id || "";
+  };
 
   // Debounce search input to avoid too many API calls
   useEffect(() => {
@@ -120,6 +136,27 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
 
   const handleRescheduleClick = (item: ReschedulingQueueItem) => {
     setSelectedAppointment(item);
+
+    // Pre-populate the appointment form with existing data (except times)
+    const now = new Date();
+    setAppointmentForm({
+      appointmentId: item.id, // Keep reference to original appointment
+      patientId: item.patient?.id || "",
+      patient_name: item.patient
+        ? `${item.patient.first_name} ${item.patient.last_name || ""}`.trim()
+        : "Paciente no disponible",
+      doctorId: item.doctor_id,
+      unitId: item.unit_id || "",
+      resourceId: item.unit_id || "", // AppointmentModal uses resourceId for unit
+      serviceId: findServiceIdByName(item.service_name),
+      serviceName: item.service_name,
+      notes: item.notes,
+      status: "scheduled", // New appointment will be scheduled
+      // Times left empty for user to select
+      start: now,
+      end: new Date(now.getTime() + 60 * 60 * 1000), // Default 1 hour
+    });
+
     setShowRescheduleModal(true);
   };
 
@@ -128,6 +165,56 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
     setShowRescheduleModal(false);
     setSelectedAppointment(null);
     setCancelReason("");
+    setAppointmentForm(null);
+  };
+
+  const handleRescheduleSubmit = async (formData: any) => {
+    if (!selectedAppointment) return;
+
+    // Convert Date to local time string with Z suffix (same format as appointment creation)
+    const toLocalTimeWithZ = (date: Date): string => {
+      const pad = (num: number) => String(num).padStart(2, "0");
+      return (
+        date.getFullYear() +
+        "-" +
+        pad(date.getMonth() + 1) +
+        "-" +
+        pad(date.getDate()) +
+        "T" +
+        pad(date.getHours()) +
+        ":" +
+        pad(date.getMinutes()) +
+        ":" +
+        pad(date.getSeconds()) +
+        "Z"
+      );
+    };
+
+    try {
+      // Convert to the format expected by the reschedule API
+      const rescheduleData = {
+        doctor_id: formData.doctorId,
+        unit_id: formData.resourceId || formData.unitId,
+        start_time: toLocalTimeWithZ(formData.start),
+        end_time: toLocalTimeWithZ(formData.end),
+        service_id: formData.serviceId,
+        notes: formData.notes || undefined,
+      };
+
+      await rescheduleMutation.mutateAsync({
+        appointmentId: selectedAppointment.id,
+        rescheduleData,
+      });
+
+      alert("Cita reagendada exitosamente");
+      handleCloseModals();
+    } catch (error) {
+      console.error("Error rescheduling appointment:", error);
+      alert(
+        "Error al reagendar la cita: " +
+          (error instanceof Error ? error.message : "Error desconocido")
+      );
+    }
   };
 
   return (
@@ -804,89 +891,21 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
         </div>
       )}
 
-      {/* Reschedule Modal - Placeholder */}
-      {showRescheduleModal && selectedAppointment && (
-        <div
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 1000,
-          }}
-          onClick={handleCloseModals}
-        >
-          <div
-            style={{
-              backgroundColor: "white",
-              borderRadius: "8px",
-              padding: "24px",
-              minWidth: "400px",
-              maxWidth: "500px",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2 style={{ margin: "0 0 16px 0", color: "#374151" }}>
-              Reagendar Cita
-            </h2>
-            <div style={{ marginBottom: "16px", color: "#6b7280" }}>
-              <strong>Paciente:</strong>{" "}
-              {selectedAppointment.patient
-                ? `${selectedAppointment.patient.first_name} ${
-                    selectedAppointment.patient.last_name || ""
-                  }`.trim()
-                : "Paciente no disponible"}
-              <br />
-              <strong>Fecha actual:</strong>{" "}
-              {selectedAppointment.original_start.toLocaleDateString()}{" "}
-              {selectedAppointment.original_start.toLocaleTimeString()}
-              <br />
-              <strong>Doctor:</strong> {selectedAppointment.doctor_name}
-            </div>
-
-            <div
-              style={{
-                padding: "20px",
-                backgroundColor: "#f9fafb",
-                borderRadius: "4px",
-                marginBottom: "24px",
-              }}
-            >
-              <p style={{ margin: 0, color: "#6b7280" }}>
-                La funcionalidad de reagendado estará disponible próximamente.
-                Por favor, utilice el sistema principal para reagendar esta
-                cita.
-              </p>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "12px",
-                justifyContent: "flex-end",
-              }}
-            >
-              <button
-                onClick={handleCloseModals}
-                style={{
-                  padding: "8px 16px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: "4px",
-                  backgroundColor: "white",
-                  color: "#374151",
-                  cursor: "pointer",
-                }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Reschedule Modal */}
+      {showRescheduleModal && appointmentForm && (
+        <AppointmentModal
+          showModal={showRescheduleModal}
+          mode="reschedule"
+          appointmentForm={appointmentForm}
+          doctors={doctors}
+          clinics={clinics}
+          units={units}
+          services={services}
+          handleCloseModal={handleCloseModals}
+          handleAddAppointment={handleRescheduleSubmit}
+          setAppointmentForm={setAppointmentForm}
+          appointments={[]} // Empty array since we don't need conflict checking here
+        />
       )}
     </div>
   );

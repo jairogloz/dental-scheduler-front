@@ -61,7 +61,7 @@ const TIME_INTERVAL_MINUTES = 5;
 
 const AppointmentModal = ({
   showModal,
-  mode = "create", // "create", "edit", or "see-only"
+  mode = "create", // "create", "edit", "see-only", or "reschedule"
   appointmentForm, // Includes appointmentId
   doctors,
   clinics, // Passed as prop
@@ -676,8 +676,12 @@ const AppointmentModal = ({
 
         // Show success modal
         showSuccessModal(
-          "¡Cita creada exitosamente!",
-          "La nueva cita se ha agregado al calendario."
+          currentMode === "reschedule"
+            ? "¡Cita reagendada exitosamente!"
+            : "¡Cita creada exitosamente!",
+          currentMode === "reschedule"
+            ? "La cita ha sido reagendada correctamente."
+            : "La nueva cita se ha agregado al calendario."
         );
       } catch (createError: any) {
         showErrorModal(
@@ -860,7 +864,8 @@ const AppointmentModal = ({
           : {})}
         style={{
           maxWidth:
-            appointmentForm.doctorId && currentMode === "create"
+            appointmentForm.doctorId &&
+            (currentMode === "create" || currentMode === "reschedule")
               ? "900px"
               : "400px",
           display: "flex",
@@ -903,6 +908,8 @@ const AppointmentModal = ({
             <h3>
               {currentMode === "create"
                 ? "Nueva Cita Dental"
+                : currentMode === "reschedule"
+                ? "Reagendar Cita Dental"
                 : currentMode === "edit"
                 ? "Editar Cita Dental"
                 : "Detalles de la Cita"}
@@ -984,15 +991,17 @@ const AppointmentModal = ({
 
           <div className="form-field">
             <label>Nombre del Paciente:</label>
-            {currentMode === "see-only" ? (
+            {currentMode === "see-only" || currentMode === "reschedule" ? (
               <PatientDisplay
-                patientName={appointmentForm.patientName}
+                patientName={
+                  appointmentForm.patientName || appointmentForm.patient_name
+                }
                 patientId={appointmentForm.patientId}
                 placeholder="Sin paciente asignado"
-                showActions={true}
+                showActions={currentMode === "see-only"}
                 onEdit={handleEditPatient}
                 onRemove={handleRemovePatient}
-                disableRemove={true} // Disable remove in view-only mode
+                disableRemove={true} // Disable remove in reschedule mode
               />
             ) : (
               <PatientSearchAutocomplete
@@ -1324,57 +1333,75 @@ const AppointmentModal = ({
                 Agregar Cita
               </button>
             )}
+
+            {/* Reschedule Mode Buttons */}
+            {currentMode === "reschedule" && (
+              <button
+                onClick={handleValidatedAddAppointment}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#3b82f6",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                }}
+              >
+                Reagendar Cita
+              </button>
+            )}
           </div>
         </div>
 
         {/* Calendar Section */}
-        {appointmentForm.doctorId && currentMode === "create" && (
-          <div
-            style={{
-              flex: isMobile ? "none" : "1",
-              borderLeft: isMobile ? "none" : "1px solid #eee",
-              borderTop: isMobile ? "1px solid #eee" : "none",
-              paddingLeft: "20px",
-              paddingTop: isMobile ? "20px" : "0",
-              minHeight: isMobile ? "500px" : "auto",
-            }}
-          >
-            <DoctorDayView
-              doctorId={appointmentForm.doctorId}
-              selectedDate={appointmentForm.start}
-              selectedInterval={{
-                start: appointmentForm.start,
-                end: appointmentForm.end,
+        {appointmentForm.doctorId &&
+          (currentMode === "create" || currentMode === "reschedule") && (
+            <div
+              style={{
+                flex: isMobile ? "none" : "1",
+                borderLeft: isMobile ? "none" : "1px solid #eee",
+                borderTop: isMobile ? "1px solid #eee" : "none",
+                paddingLeft: "20px",
+                paddingTop: isMobile ? "20px" : "0",
+                minHeight: isMobile ? "500px" : "auto",
               }}
-              onSlotSelect={(start, end) => {
-                // Update appointmentForm
-                setAppointmentForm({
-                  ...appointmentForm,
-                  start,
-                  end,
-                });
+            >
+              <DoctorDayView
+                doctorId={appointmentForm.doctorId}
+                selectedDate={appointmentForm.start}
+                selectedInterval={{
+                  start: appointmentForm.start,
+                  end: appointmentForm.end,
+                }}
+                onSlotSelect={(start, end) => {
+                  // Update appointmentForm
+                  setAppointmentForm({
+                    ...appointmentForm,
+                    start,
+                    end,
+                  });
 
-                // Update local state to sync form fields
-                setSelectedDate(start);
-                const timeString = `${start
-                  .getHours()
-                  .toString()
-                  .padStart(2, "0")}:${start
-                  .getMinutes()
-                  .toString()
-                  .padStart(2, "0")}`;
-                setSelectedTime(timeString);
+                  // Update local state to sync form fields
+                  setSelectedDate(start);
+                  const timeString = `${start
+                    .getHours()
+                    .toString()
+                    .padStart(2, "0")}:${start
+                    .getMinutes()
+                    .toString()
+                    .padStart(2, "0")}`;
+                  setSelectedTime(timeString);
 
-                // Calculate duration in minutes
-                const durationMinutes = Math.round(
-                  (end.getTime() - start.getTime()) / (1000 * 60)
-                );
-                setSelectedDuration(durationMinutes);
-              }}
-              existingAppointments={appointments}
-            />
-          </div>
-        )}
+                  // Calculate duration in minutes
+                  const durationMinutes = Math.round(
+                    (end.getTime() - start.getTime()) / (1000 * 60)
+                  );
+                  setSelectedDuration(durationMinutes);
+                }}
+                existingAppointments={appointments}
+              />
+            </div>
+          )}
       </div>
 
       {/* Add Patient Modal */}
