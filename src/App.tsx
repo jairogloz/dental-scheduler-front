@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWindowSize } from "./hooks/useWindowSize";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
@@ -9,8 +9,19 @@ import ReschedulingQueuePage from "./pages/ReschedulingQueuePage";
 function App() {
   const { isMobile } = useWindowSize();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeSection, setActiveSection] = useState("appointments");
+  
+  // Initialize activeSection from localStorage, fallback to "appointments"
+  const [activeSection, setActiveSection] = useState(() => {
+    const saved = localStorage.getItem("activeSection");
+    return saved || "appointments";
+  });
+  
   const isAppointmentsSection = activeSection === "appointments";
+
+  // Save activeSection to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem("activeSection", activeSection);
+  }, [activeSection]);
 
   return (
     <>
