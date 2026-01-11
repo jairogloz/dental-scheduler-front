@@ -9,13 +9,13 @@ import ReschedulingQueuePage from "./pages/ReschedulingQueuePage";
 function App() {
   const { isMobile } = useWindowSize();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  
+
   // Initialize activeSection from localStorage, fallback to "appointments"
   const [activeSection, setActiveSection] = useState(() => {
     const saved = localStorage.getItem("activeSection");
     return saved || "appointments";
   });
-  
+
   const isAppointmentsSection = activeSection === "appointments";
 
   // Save activeSection to localStorage whenever it changes
