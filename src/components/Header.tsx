@@ -8,6 +8,17 @@ const Header = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Get app title based on environment
+  const getAppTitle = () => {
+    const env = import.meta.env.VITE_ENV;
+    if (env === "stage") {
+      return "Hola Brackets (Modo Prueba)";
+    } else if (env === "prod") {
+      return "Hola Brackets";
+    }
+    return "Hola Brackets (Dev mode)"; // Default for dev
+  };
+
   const handleSignOut = async () => {
     try {
       // Close dropdown first
@@ -76,7 +87,7 @@ const Header = () => {
               color: "#2c3e50",
             }}
           >
-            Dental Scheduler
+            {getAppTitle()}
           </h1>
         </div>
 
