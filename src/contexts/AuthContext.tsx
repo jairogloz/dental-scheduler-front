@@ -19,7 +19,11 @@ interface AuthContextType {
   signUp: (
     email: string,
     password: string,
-    fullName?: string
+    fullName?: string,
+  ) => Promise<{ error: any }>;
+  acceptInvitation: (
+    password: string,
+    fullName?: string,
   ) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: any }>;
@@ -51,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         setReadyForFetches(!!newSession?.access_token);
-      }
+      },
     );
 
     return () => {
@@ -90,6 +94,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  const acceptInvitation = async (password: string, fullName?: string) => {
+    // When accepting an invitation, the user is already authenticated via the email link
+    // We just need to update their password and optionally their full_name
+    const { error } = await supabase.auth.updateUser({
+      password,
+      data: {
+        full_name: fullName,
+      },
+    });
+    return { error };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -113,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         readyForFetches,
         signIn,
         signUp,
+        acceptInvitation,
         signOut,
         resetPassword,
       }}

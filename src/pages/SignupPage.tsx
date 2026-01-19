@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const SignupPage = () => {
@@ -10,8 +10,25 @@ const SignupPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isInvitation, setIsInvitation] = useState(false);
 
-  const { signUp } = useAuth();
+  const { signUp, acceptInvitation, user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check if this is an invitation link by looking for hash parameters
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const type = hashParams.get("type");
+    const accessToken = hashParams.get("access_token");
+
+    if (type === "invite" && accessToken) {
+      setIsInvitation(true);
+      // If user is already authenticated from the invitation link, populate their email
+      if (user?.email) {
+        setEmail(user.email);
+      }
+    }
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,12 +48,25 @@ const SignupPage = () => {
       return;
     }
 
-    const { error } = await signUp(email, password, fullName);
+    let result;
+    if (isInvitation) {
+      // Accept invitation by setting password for existing user
+      result = await acceptInvitation(password, fullName);
+    } else {
+      // Regular signup
+      result = await signUp(email, password, fullName);
+    }
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error.message);
     } else {
       setSuccess(true);
+      // For invitations, redirect to dashboard after a short delay
+      if (isInvitation) {
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      }
     }
 
     setLoading(false);
@@ -75,26 +105,32 @@ const SignupPage = () => {
               marginBottom: "20px",
             }}
           >
-            <h3 style={{ margin: "0 0 10px 0" }}>¡Registro exitoso!</h3>
+            <h3 style={{ margin: "0 0 10px 0" }}>
+              {isInvitation ? "¡Invitación aceptada!" : "¡Registro exitoso!"}
+            </h3>
             <p style={{ margin: 0, fontSize: "14px" }}>
-              Tu cuenta ha sido creada. Ya puedes iniciar sesión.
+              {isInvitation
+                ? "Tu contraseña ha sido configurada. Redirigiendo al dashboard..."
+                : "Tu cuenta ha sido creada. Ya puedes iniciar sesión."}
             </p>
           </div>
 
-          <Link
-            to="/login"
-            style={{
-              display: "inline-block",
-              padding: "12px 24px",
-              backgroundColor: "#3498db",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontWeight: "500",
-            }}
-          >
-            Ir a iniciar sesión
-          </Link>
+          {!isInvitation && (
+            <Link
+              to="/login"
+              style={{
+                display: "inline-block",
+                padding: "12px 24px",
+                backgroundColor: "#3498db",
+                color: "white",
+                textDecoration: "none",
+                borderRadius: "6px",
+                fontWeight: "500",
+              }}
+            >
+              Ir a iniciar sesión
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -131,10 +167,12 @@ const SignupPage = () => {
               fontWeight: "600",
             }}
           >
-            Crear cuenta
+            {isInvitation ? "Configura tu cuenta" : "Crear cuenta"}
           </h1>
           <p style={{ color: "#64748b", margin: 0 }}>
-            Regístrate para acceder al sistema
+            {isInvitation
+              ? "Establece tu contraseña para completar el registro"
+              : "Regístrate para acceder al sistema"}
           </p>
         </div>
 
@@ -199,6 +237,7 @@ const SignupPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={isInvitation}
               style={{
                 width: "100%",
                 padding: "12px",
@@ -206,6 +245,8 @@ const SignupPage = () => {
                 borderRadius: "6px",
                 fontSize: "16px",
                 boxSizing: "border-box",
+                backgroundColor: isInvitation ? "#f3f4f6" : "white",
+                cursor: isInvitation ? "not-allowed" : "text",
               }}
               placeholder="tu@email.com"
             />
@@ -284,32 +325,40 @@ const SignupPage = () => {
               transition: "background-color 0.2s",
             }}
           >
-            {loading ? "Creando cuenta..." : "Crear cuenta"}
+            {loading
+              ? isInvitation
+                ? "Configurando..."
+                : "Creando cuenta..."
+              : isInvitation
+                ? "Configurar contraseña"
+                : "Crear cuenta"}
           </button>
         </form>
 
-        <div
-          style={{
-            textAlign: "center",
-            marginTop: "25px",
-            paddingTop: "25px",
-            borderTop: "1px solid #e5e7eb",
-          }}
-        >
-          <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>
-            ¿Ya tienes una cuenta?{" "}
-            <Link
-              to="/login"
-              style={{
-                color: "#3498db",
-                textDecoration: "none",
-                fontWeight: "500",
-              }}
-            >
-              Inicia sesión
-            </Link>
-          </p>
-        </div>
+        {!isInvitation && (
+          <div
+            style={{
+              textAlign: "center",
+              marginTop: "25px",
+              paddingTop: "25px",
+              borderTop: "1px solid #e5e7eb",
+            }}
+          >
+            <p style={{ color: "#64748b", margin: 0, fontSize: "14px" }}>
+              ¿Ya tienes una cuenta?{" "}
+              <Link
+                to="/login"
+                style={{
+                  color: "#3498db",
+                  textDecoration: "none",
+                  fontWeight: "500",
+                }}
+              >
+                Inicia sesión
+              </Link>
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
