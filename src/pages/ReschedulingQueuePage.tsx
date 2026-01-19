@@ -6,6 +6,8 @@ import {
   useSnoozeFromQueue,
 } from "../hooks/queries/useReschedulingQueueQuery";
 import { useOrganizationQuery } from "../hooks/queries/useOrganizationQuery";
+import { useAppointmentsQuery } from "../hooks/queries/useAppointmentsQuery";
+import { addDays, startOfDay, endOfDay } from "date-fns";
 import AppointmentModal from "../components/Modal/Appointment/AppointmentModal";
 import { SnoozeModal } from "../components/Modal/SnoozeModal";
 import type { ReschedulingQueueItem } from "../api/entities/Appointment";
@@ -37,6 +39,12 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   // Appointment form for the reschedule modal
   const [appointmentForm, setAppointmentForm] = useState<any>(null);
 
+  // Date range for fetching appointments (for doctor availability view)
+  const [appointmentDateRange, setAppointmentDateRange] = useState<{
+    start: Date;
+    end: Date;
+  } | null>(null);
+
   // Get organization data for filter options
   const { data: organizationData, isLoading: isLoadingOrg } =
     useOrganizationQuery();
@@ -45,6 +53,12 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   const cancelMutation = useCancelFromQueue();
   const rescheduleMutation = useRescheduleFromQueue();
   const snoozeMutation = useSnoozeFromQueue();
+
+  // Fetch appointments for doctor availability view when rescheduling
+  const { data: appointmentsForRescheduling = [] } = useAppointmentsQuery(
+    appointmentDateRange?.start || new Date(),
+    appointmentDateRange?.end || new Date()
+  );
 
   // Extract data for AppointmentModal props
   const doctors = organizationData?.doctors || [];
@@ -89,6 +103,20 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
   useEffect(() => {
     setPage(1);
   }, [clinicFilter, doctorFilter]);
+
+  // Update appointment date range when modal opens or date changes
+  useEffect(() => {
+    if (showRescheduleModal && appointmentForm?.start) {
+      const centerDate = appointmentForm.start;
+      setAppointmentDateRange({
+        start: startOfDay(addDays(centerDate, -7)),
+        end: endOfDay(addDays(centerDate, 7)),
+      });
+    } else if (!showRescheduleModal) {
+      // Clear date range when modal closes to prevent unnecessary queries
+      setAppointmentDateRange(null);
+    }
+  }, [showRescheduleModal, appointmentForm?.start]);
 
   // Prepare filter options
   const clinicOptions = useMemo(() => {
@@ -1011,7 +1039,7 @@ const ReschedulingQueuePage: React.FC<ReschedulingQueuePageProps> = ({
           handleCloseModal={handleCloseModals}
           handleAddAppointment={handleRescheduleSubmit}
           setAppointmentForm={setAppointmentForm}
-          appointments={[]} // Empty array since we don't need conflict checking here
+          appointments={appointmentsForRescheduling}
         />
       )}
 
