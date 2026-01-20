@@ -23,12 +23,15 @@ const SignupPage = () => {
 
     if (type === "invite" && accessToken) {
       setIsInvitation(true);
-      // If user is already authenticated from the invitation link, populate their email
-      if (user?.email) {
-        setEmail(user.email);
-      }
     }
-  }, [user]);
+  }, []);
+
+  // Separate effect to populate email when user becomes available
+  useEffect(() => {
+    if (isInvitation && user?.email && !email) {
+      setEmail(user.email);
+    }
+  }, [isInvitation, user, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
