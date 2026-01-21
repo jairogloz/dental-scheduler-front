@@ -207,7 +207,9 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <div
+        {/* TODO: Registration feature - This section will be uncommented once the registration 
+            feature is fully developed and ready to be made available to users in the near future. */}
+        {/* <div
           style={{
             textAlign: "center",
             marginTop: "25px",
@@ -228,7 +230,7 @@ const LoginPage = () => {
               Regístrate
             </Link>
           </p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
