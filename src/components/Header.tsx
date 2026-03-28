@@ -14,7 +14,7 @@ const Header = () => {
     if (env === "stage") {
       return "🧪 Hola Brackets (Modo Prueba/Staging)";
     } else if (env === "prod") {
-      return "Hola Brackets";
+      return "🦷 Hola Brackets";
     }
     return "⚙️ Hola Brackets (Dev mode)"; // Default for dev
   };
