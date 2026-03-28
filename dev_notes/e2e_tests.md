@@ -60,25 +60,25 @@ Vercel's **automatic production deployment from GitHub must be disabled**
 
 ## Files to Create
 
-| File | Purpose |
-|---|---|
-| `playwright.config.ts` | Playwright config, reads `SMOKE_TEST_URL` from env |
-| `e2e/smoke.spec.ts` | The 5 smoke test scenarios |
+| File                                | Purpose                                                       |
+| ----------------------------------- | ------------------------------------------------------------- |
+| `playwright.config.ts`              | Playwright config, reads `SMOKE_TEST_URL` from env            |
+| `e2e/smoke.spec.ts`                 | The 5 smoke test scenarios                                    |
 | `.github/workflows/smoke-tests.yml` | Full CI pipeline: build → deploy → test → rollback on failure |
 
 ---
 
 ## Required GitHub Secrets
 
-| Secret | Description |
-|---|---|
-| `VERCEL_TOKEN` | Personal access token from Vercel dashboard |
-| `VERCEL_ORG_ID` | Found in `.vercel/project.json` or Vercel project settings |
-| `VERCEL_PROJECT_ID` | Same as above |
-| `SMOKE_TEST_EMAIL` | Login email for the test account |
-| `SMOKE_TEST_PASSWORD` | Login password for the test account |
+| Secret                    | Description                                                   |
+| ------------------------- | ------------------------------------------------------------- |
+| `VERCEL_TOKEN`            | Personal access token from Vercel dashboard                   |
+| `VERCEL_ORG_ID`           | Found in `.vercel/project.json` or Vercel project settings    |
+| `VERCEL_PROJECT_ID`       | Same as above                                                 |
+| `SMOKE_TEST_EMAIL`        | Login email for the test account                              |
+| `SMOKE_TEST_PASSWORD`     | Login password for the test account                           |
 | `SMOKE_TEST_PATIENT_NAME` | Name of a known patient in prod to use for lookup/appointment |
-| `SMOKE_TEST_DOCTOR_ID` | ID of a known doctor in prod to use for appointment creation |
+| `SMOKE_TEST_DOCTOR_ID`    | ID of a known doctor in prod to use for appointment creation  |
 
 ---
 
