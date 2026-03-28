@@ -6,6 +6,13 @@ import AppRouter from "./AppRouter";
 
 // Auth debugging removed - using simplified auth system
 
+// Set favicon based on environment
+const faviconHref =
+  import.meta.env.VITE_ENV === "prod" ? "/dental.svg" : "/dental-preview.svg";
+const faviconLink =
+  document.querySelector<HTMLLinkElement>("link[rel~='icon']");
+if (faviconLink) faviconLink.href = faviconHref;
+
 // Create a query client with optimized defaults
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,5 +39,5 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={queryClient}>
     <AppRouter />
     <ReactQueryDevtools initialIsOpen={false} />
-  </QueryClientProvider>
+  </QueryClientProvider>,
 );
