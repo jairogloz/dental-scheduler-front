@@ -7,8 +7,13 @@ import AppRouter from "./AppRouter";
 // Auth debugging removed - using simplified auth system
 
 // Set favicon based on environment
+const env = import.meta.env.VITE_ENV;
 const faviconHref =
-  import.meta.env.VITE_ENV === "prod" ? "/dental.svg" : "/dental-preview.svg";
+  env === "prod"
+    ? "/dental.svg"
+    : env === "stage"
+      ? "/dental-preview.svg"
+      : "/gear.svg";
 const faviconLink =
   document.querySelector<HTMLLinkElement>("link[rel~='icon']");
 if (faviconLink) faviconLink.href = faviconHref;
