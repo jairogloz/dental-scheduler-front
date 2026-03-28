@@ -12,11 +12,11 @@ const Header = () => {
   const getAppTitle = () => {
     const env = import.meta.env.VITE_ENV;
     if (env === "stage") {
-      return "Hola Brackets (Modo Prueba)";
+      return "🧪 Hola Brackets (Modo Prueba/Staging)";
     } else if (env === "prod") {
       return "Hola Brackets";
     }
-    return "Hola Brackets (Dev mode)"; // Default for dev
+    return "⚙️ Hola Brackets (Dev mode)"; // Default for dev
   };
 
   const handleSignOut = async () => {
